@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platnumz Cuesport | OBS Scoreboard Broadcast Overlay</title>
+
+  <style>
+    :root {
+      --gold: #e8bd61;
+      --gold-light: #ffe3a0;
+      --gold-glow: rgba(232, 189, 97, 0.4);
+      --white: #ffffff;
+      --theme-bg-1: #050b15;
+      --theme-bg-2: #0a182c;
+      --theme-accent: #1257a4;
+      --theme-accent-light: #1c6ed0;
+      --theme-accent-dark: #07172b;
+      --font-stack: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    }
+
+    /* Themes */
+    body.theme-emerald {
+      --gold: #f5d77f;
+      --gold-light: #fff0be;
+      --gold-glow: rgba(245, 215, 127, 0.4);
+      --theme-bg-1: #04140c;
+      --theme-bg-2: #0a2618;
+      --theme-accent: #0f683a;
+      --theme-accent-light: #169352;
+      --theme-accent-dark: #061f12;
+    }
+    body.theme-crimson {
+      --gold: #f7ca78;
+      --gold-light: #ffe5b0;
+      --gold-glow: rgba(247, 202, 120, 0.4);
+      --theme-bg-1: #170507;
+      --theme-bg-2: #280a0f;
+      --theme-accent: #87192b;
+      --theme-accent-light: #b8273f;
+      --theme-accent-dark: #200408;
+    }
+    body.theme-cyber {
+      --gold: #00f0ff;
+      --gold-light: #8bf8ff;
+      --gold-glow: rgba(0, 240, 255, 0.45);
+      --theme-bg-1: #060913;
+      --theme-bg-2: #0d1527;
+      --theme-accent: #1d3557;
+      --theme-accent-light: #2a4c7c;
+      --theme-accent-dark: #080e1c;
+    }
+    body.theme-royal {
+      --gold: #ffcf40;
+      --gold-light: #ffe799;
+      --gold-glow: rgba(255, 207, 64, 0.4);
+      --theme-bg-1: #100619;
+      --theme-bg-2: #200d33;
+      --theme-accent: #5e1c8a;
+      --theme-accent-light: #7b29b3;
+      --theme-accent-dark: #1b0728;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: transparent !important;
+      font-family: var(--font-stack);
+    }
+
+    body {
+      color: var(--white);
+      user-select: none;
+    }
+
+    #canvas {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Position Modes */
+    .pos-bottom #overlay-wrapper {
+      position: absolute;
+      left: 2.5%;
+      bottom: 2%;
+      width: 95%;
+    }
+    .pos-top #overlay-wrapper {
+      position: absolute;
+      left: 2.5%;
+      top: 2%;
+      width: 95%;
+    }
+    .pos-floating #overlay-wrapper {
+      position: absolute;
+      left: 5%;
+      bottom: 5%;
+      width: 90%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    #scoreboard {
+      position: relative;
+      width: 100%;
+      min-height: 100px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 140px minmax(0, 1fr);
+      align-items: stretch;
+      overflow: visible;
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      background: linear-gradient(110deg, var(--theme-bg-1) 0%, var(--theme-bg-2) 50%, var(--theme-bg-1) 100%);
+      box-shadow: 0 10px 32px rgba(0,0,0,0.65), 0 0 20px var(--gold-glow);
+      transition: all 0.3s ease;
+    }
+
+    /* Player panels */
+    .player {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 22px;
+      background: linear-gradient(105deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%);
+      position: relative;
+      transition: all 0.25s ease;
+    }
+
+    .player.right {
+      flex-direction: row-reverse;
+      text-align: right;
+      background: linear-gradient(255deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%);
+    }
+
+    /* Active shooter table glow */
+    .player.active-shooter {
+      box-shadow: inset 0 0 25px rgba(255, 230, 140, 0.45);
+    }
+    .player.active-shooter::before {
+      content: "ON BREAK / TABLE";
+      position: absolute;
+      top: -11px;
+      padding: 2px 10px;
+      background: linear-gradient(90deg, #ffdc8a, var(--gold));
+      color: #0b0f19;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      animation: pulse 1.8s infinite;
+    }
+    .player.left.active-shooter::before { left: 20px; }
+    .player.right.active-shooter::before { right: 20px; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.95; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(0.97); }
+    }
+
+    .avatar-box {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+    .player-flag {
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .player-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .player-label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .player.right .player-label-row {
+      justify-content: flex-end;
+    }
+
+    .player-label {
+      color: var(--gold-light);
+      font-size: clamp(11px, 1vw, 14px);
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .match-point-badge {
+      display: none;
+      padding: 1px 7px;
+      background: #e63946;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      border-radius: 3px;
+      animation: badgeBlink 1.2s infinite;
+    }
+    @keyframes badgeBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.75; transform: scale(0.96); }
+    }
+
+    .player-name {
+      overflow: hidden;
+      color: var(--white);
+      font-size: clamp(20px, 2.3vw, 36px);
+      font-weight: 900;
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .player-stats {
+      margin-top: 3px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      display: flex;
+      gap: 12px;
+    }
+    .player.right .player-stats {
+      justify-content: flex-end;
+    }
+
+    .score-container {
+      flex-shrink: 0;
+      min-width: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score {
+      color: var(--gold-light);
+      font-size: clamp(38px, 4.6vw, 68px);
+      font-weight: 900;
+      line-height: 1;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.6);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .score.bump {
+      transform: scale(1.25);
+      color: #ffffff;
+    }
+
+    /* Center Match Details */
+    .match-center {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 6px;
+      border-left: 2px solid var(--gold);
+      border-right: 2px solid var(--gold);
+      background: linear-gradient(180deg, #f4d485 0%, #bd852d 100%);
+      color: #0d121c;
+      text-align: center;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.25);
+    }
+
+    .race-label {
+      font-size: clamp(9px, 0.85vw, 12px);
+      font-weight: 900;
+      letter-spacing: 1.4px;
+    }
+
+    .race-number {
+      margin-top: 2px;
+      font-size: clamp(28px, 3.2vw, 44px);
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .race-caption {
+      margin-top: 3px;
+      font-size: clamp(8px, 0.75vw, 11px);
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    /* Hill-Hill Center Banner */
+    .hill-hill-banner {
+      display: none;
+      position: absolute;
+      top: -12px;
+      padding: 3px 10px;
+      background: #d90429;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: 1.5px;
+      border-radius: 4px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+      white-space: nowrap;
+      animation: hillPulse 1s infinite alternate;
+    }
+    @keyframes hillPulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 4px #ff0055); }
+      100% { transform: scale(1.08); filter: drop-shadow(0 0 10px #ff0055); }
+    }
+
+    /* Shot Clock Floating Module */
+    #shot-clock-pill {
+      display: none;
+      position: absolute;
+      top: -38px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 16, 26, 0.95);
+      border: 2px solid var(--gold);
+      border-radius: 20px;
+      padding: 4px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+      z-index: 5;
+    }
+    #shot-clock-pill.warning {
+      border-color: #ff9f1c;
+      background: rgba(45, 25, 5, 0.96);
+    }
+    #shot-clock-pill.danger {
+      border-color: #e63946;
+      background: rgba(60, 10, 18, 0.98);
+      animation: clockAlarm 0.5s infinite alternate;
+    }
+    @keyframes clockAlarm {
+      from { transform: translateX(-50%) scale(1); }
+      to { transform: translateX(-50%) scale(1.06); }
+    }
+    .shot-clock-icon {
+      font-size: 15px;
+      color: var(--gold);
+    }
+    .shot-clock-time {
+      font-size: 22px;
+      font-weight: 1000;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .shot-clock-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--gold-light);
+      letter-spacing: 1px;
+    }
+
+    /* Lower Information Bar */
+    #information-bar {
+      margin-top: 5px;
+      width: 100%;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(232, 189, 97, 0.7);
+      border-radius: 8px;
+      background: rgba(6, 12, 22, 0.96);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    .info-item {
+      min-width: 0;
+      padding: 7px 14px;
+      overflow: hidden;
+      color: var(--white);
+      font-size: clamp(10px, 1vw, 14px);
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+
+    .info-item + .info-item {
+      border-left: 1px solid rgba(232, 189, 97, 0.35);
+    }
+
+    .info-item .label {
+      margin-right: 6px;
+      color: var(--gold);
+      font-size: 0.85em;
+      letter-spacing: 0.8px;
+      font-weight: 900;
+    }
+
+    #customLogoItem {
+      display: none;
+      padding: 4px 10px;
+      height: 34px;
+    }
+    #customLogoImg {
+      max-height: 26px;
+      max-width: 90px;
+      object-fit: contain;
+    }
+
+    #tournamentItem { flex: 1.4; }
+    #venueItem { flex: 1; }
+    #potItem { flex: 0.75; text-align: center; }
+    #ballsItem {
+      flex: 0.85;
+      display: none;
+      background: rgba(20, 35, 60, 0.5);
+    }
+
+    #brandItem {
+      flex: 1.25;
+      background: linear-gradient(100deg, #c28b32, #f0d18a);
+      color: #0e121a;
+      justify-content: center;
+      font-size: clamp(10px, 1.05vw, 15px);
+      font-weight: 1000;
+      letter-spacing: 0.8px;
+    }
+
+    /* Winner Celebration Modal / Banner */
+    #winner-banner {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(ellipse at center, rgba(14,24,44,0.98) 0%, rgba(5,10,18,0.99) 100%);
+      border: 3px solid var(--gold);
+      border-radius: 18px;
+      padding: 30px 50px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(232, 189, 97, 0.6), 0 20px 40px rgba(0,0,0,0.9);
+      z-index: 100;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    .winner-trophy { font-size: 50px; margin-bottom: 8px; }
+    .winner-title {
+      font-size: 16px;
+      color: var(--gold);
+      letter-spacing: 3px;
+      font-weight: 900;
+    }
+    .winner-player-name {
+      font-size: 42px;
+      font-weight: 1000;
+      color: #fff;
+      margin: 8px 0;
+      text-shadow: 0 0 15px var(--gold-glow);
+    }
+    .winner-subtitle {
+      font-size: 14px;
+      color: var(--gold-light);
+    }
+
+    /* Connection notification */
+    #connectionWarning {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      max-width: 90%;
+      padding: 6px 16px;
+      border: 1px solid #e63946;
+      border-radius: 6px;
+      background: rgba(35, 7, 12, 0.94);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 50;
+    }
+    #connectionWarning.visible { display: block; }
+
+    @media (max-width: 768px) {
+      #scoreboard {
+        grid-template-columns: minmax(0,1fr) 90px minmax(0,1fr);
+        min-height: 80px;
+      }
+      .avatar-box { width: 44px; height: 44px; }
+      .player-flag { font-size: 24px; }
+      .player { padding: 8px 12px; gap: 8px; }
+    }
+  </style>
+</head>
+
+<body class="pos-bottom theme-platnumz">
+  <main id="canvas">
+    <div id="overlay-wrapper">
+
+      <!-- Shot clock HUD -->
+      <div id="shot-clock-pill">
+        <span class="shot-clock-icon">⏱️</span>
+        <span class="shot-clock-label">SHOT CLOCK</span>
+        <span id="shotClockTime" class="shot-clock-time">30</span>
+      </div>
+
+      <!-- Main Scoreboard -->
+      <section id="scoreboard" aria-label="Platnumz Pool match scoreboard">
+        <!-- Player 1 -->
+        <div id="playerCard1" class="player left">
+          <div class="avatar-box">
+            <img id="avatar1" class="avatar-img" alt="Player 1 Avatar" />
+            <span id="flag1" class="player-flag">🇿🇼</span>
+          </div>
+          <div class="player-info">
+            <div class="player-label-row">
+              <span class="player-label">PLAYER 1</span>
+              <span id="matchPoint1" class="match-point-badge">MATCH POINT</span>
+            </div>
+            <div id="name1" class="player-name">PLAYER ONE</div>
+            <div class="player-stats">
+              <span id="breakStats1" style="display:none;">B&R: <strong id="brCount1">0</strong></span>
+              <span id="extStats1" style="display:none;">EXT: <strong id="extCount1">0</strong></span>
+            </div>
+          </div>
+          <div class="score-container">
+            <div id="score1" class="score">0</div>
+          </div>
+        </div>
+
+        <!-- Center Match Details -->
+        <div class="match-center">
+          <div id="hillHillBanner" class="hill-hill-banner">⚡ HILL-HILL ⚡</div>
+          <div class="race-label">RACE TO</div>
+          <div id="raceTo" class="race-number">13</div>
+          <div class="race-caption">FRAMES</div>
+        </div>
+
+        <!-- Player 2 -->
+        <div id="playerCard2" class="player right">
+          <div class="avatar-box">
+            <img id="avatar2" class="avatar-img" alt="Player 2 Avatar" />
+            <span id="flag2" class="player-flag">🇿🇦</span>
+          </div>
+          <div class="score-container">
+            <div id="score2" class="score">0</div>
+          </div>
+          <div class="player-info">
+            <div class="player-label-row">
+              <span id="matchPoint2" class="match-point-badge">MATCH POINT</span>
+              <span class="player-label">PLAYER 2</span>
+            </div>
+            <div id="name2" class="player-name">PLAYER TWO</div>
+            <div class="player-stats">
+              <span id="breakStats2" style="display:none;">B&R: <strong id="brCount2">0</strong></span>
+              <span id="extStats2" style="display:none;">EXT: <strong id="extCount2">0</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Information Bar -->
+      <section id="information-bar" aria-label="Match information">
+        <div id="customLogoItem" class="info-item">
+          <img id="customLogoImg" alt="Tournament Logo" />
+        </div>
+
+        <div id="tournamentItem" class="info-item">
+          <span class="label">MATCH</span>
+          <span id="tournament">PLATNUMZ CUESPORT</span>
+        </div>
+
+        <div id="venueItem" class="info-item">
+          <span class="label">VENUE</span>
+          <span id="venue">QUEENS POOL ARCADE</span>
+        </div>
+
+        <div id="ballsItem" class="info-item">
+          <span class="label">BALLS</span>
+          <span id="ballsCount">15 Remaining</span>
+        </div>
+
+        <div id="potItem" class="info-item">
+          <span class="label">POT</span>
+          <span id="pot">$1,000</span>
+        </div>
+
+        <div id="brandItem" class="info-item">
+          <span id="brand">KRAVO PLATNUMZ OFFICIAL</span>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Winner Celebration Overlay -->
+    <div id="winner-banner">
+      <div class="winner-trophy">🏆</div>
+      <div class="winner-title">MATCH CHAMPION</div>
+      <div id="winnerPlayerName" class="winner-player-name">PLAYER ONE</div>
+      <div id="winnerDetails" class="winner-subtitle">VICTORY REACHED · PLATNUMZ CUESPORT</div>
+    </div>
+
+    <div id="connectionWarning">
+      Waiting for scoreboard connection…
+    </div>
+  </main>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <script>
+    "use strict";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOYLehDw-FqIwfv5jdzbcADk82N99phw",
+      authDomain: "platnumz-scoreboard.firebaseapp.com",
+      databaseURL: "https://platnumz-scoreboard-default-rtdb.firebaseio.com",
+      projectId: "platnumz-scoreboard",
+      storageBucket: "platnumz-scoreboard.firebasestorage.app",
+      messagingSenderId: "449320511110",
+      appId: "1:449320511110:web:feb8734394c319f3971307",
+      measurementId: "G-GL4PE857GF"
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const requestedRoom = params.get("room") || "platnumz-live-match";
+    const room = requestedRoom.replace(/[^a-zA-Z0-9_-]/g,"").slice(0,80) || "platnumz-live-match";
+
+    const $ = id => document.getElementById(id);
+    let lastScore1 = 0;
+    let lastScore2 = 0;
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    // Web Audio Synthesizer
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playBeep(freq = 600, duration = 0.12, type = 'sine') {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {
+        console.warn('Audio play error', e);
+      }
+    }
+
+    function playBuzzer() {
+      if (!soundEnabled) return;
+      playBeep(220, 0.6, 'sawtooth');
+    }
+
+    function playScoreChime() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + (i * 0.08));
+          gain.gain.setValueAtTime(0.15, now + (i * 0.08));
+          gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.08) + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + (i * 0.08));
+          osc.stop(now + (i * 0.08) + 0.3);
+        });
+      } catch(e) {}
+    }
+
+    function showWarning(message) {
+      $("connectionWarning").textContent = message;
+      $("connectionWarning").classList.add("visible");
+    }
+
+    function hideWarning() {
+      $("connectionWarning").classList.remove("visible");
+    }
+
+    function safeScore(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? Math.max(0, Math.min(999, Math.floor(n))) : 0;
+    }
+
+    function setText(id, value, fallback = "") {
+      const el = $(id);
+      if (!el) return;
+      el.textContent = (value === null || value === undefined || value === "") ? fallback : String(value);
+    }
+
+    function applyThemeAndPosition(state) {
+      const body = document.body;
+      const theme = state.theme || "platnumz";
+      body.className = body.className.replace(/theme-\w+/g, "").trim();
+      body.classList.add("theme-" + theme);
+
+      const pos = state.overlayPosition || "bottom";
+      body.className = body.className.replace(/pos-\w+/g, "").trim();
+      body.classList.add("pos-" + pos);
+    }
+
+    function renderScoreboard(state) {
+      if (!state || typeof state !== "object") return;
+
+      applyThemeAndPosition(state);
+
+      const s1 = safeScore(state.score1);
+      const s2 = safeScore(state.score2);
+      const race = Math.max(1, Math.min(999, parseInt(state.raceTo, 10) || 13));
+
+      // Check score change for visual bump and sound chime
+      if (s1 !== lastScore1 && s1 > lastScore1) {
+        triggerScoreBump("score1");
+        playScoreChime();
+      }
+      if (s2 !== lastScore2 && s2 > lastScore2) {
+        triggerScoreBump("score2");
+        playScoreChime();
+      }
+      lastScore1 = s1;
+      lastScore2 = s2;
+
+      setText("name1", state.name1, "PLAYER ONE");
+      setText("name2", state.name2, "PLAYER TWO");
+      setText("flag1", state.flag1, "🇿🇼");
+      setText("flag2", state.flag2, "🇿🇦");
+      setText("score1", s1, "0");
+      setText("score2", s2, "0");
+      setText("raceTo", race, "13");
+
+      setText("tournament", state.tournament, "PLATNUMZ CUESPORT");
+      setText("venue", state.venue, "QUEENS POOL ARCADE");
+      setText("pot", state.pot, "$1,000");
+      setText("brand", state.brand, "KRAVO PLATNUMZ OFFICIAL");
+
+      // Custom avatars / photos
+      if (state.avatar1) {
+        $("avatar1").src = state.avatar1;
+        $("avatar1").style.display = "block";
+        $("flag1").style.display = "none";
+      } else {
+        $("avatar1").style.display = "none";
+        $("flag1").style.display = "block";
+      }
+
+      if (state.avatar2) {
+        $("avatar2").src = state.avatar2;
+        $("avatar2").style.display = "block";
+        $("flag2").style.display = "none";
+      } else {
+        $("avatar2").style.display = "none";
+        $("flag2").style.display = "block";
+      }
+
+      // Custom Tournament Logo
+      if (state.customLogo) {
+        $("customLogoImg").src = state.customLogo;
+        $("customLogoItem").style.display = "flex";
+      } else {
+        $("customLogoItem").style.display = "none";
+      }
+
+      // Active Shooter Table Glow
+      const shooter = state.activeShooter || 0;
+      $("playerCard1").classList.toggle("active-shooter", shooter === 1);
+      $("playerCard2").classList.toggle("active-shooter", shooter === 2);
+
+      // Match Point and Hill-Hill calculations
+      const hillHill = (s1 === race - 1 && s2 === race - 1);
+      $("hillHillBanner").style.display = hillHill ? "block" : "none";
+
+      const mp1 = !hillHill && (s1 === race - 1 && s1 < race);
+      const mp2 = !hillHill && (s2 === race - 1 && s2 < race);
+      $("matchPoint1").style.display = mp1 ? "inline-block" : "none";
+      $("matchPoint2").style.display = mp2 ? "inline-block" : "none";
+
+      // Break & Run counters
+      if (state.br1 !== undefined && state.br1 > 0) {
+        $("breakStats1").style.display = "inline";
+        $("brCount1").textContent = state.br1;
+      } else {
+        $("breakStats1").style.display = "none";
+      }
+      if (state.br2 !== undefined && state.br2 > 0) {
+        $("breakStats2").style.display = "inline";
+        $("brCount2").textContent = state.br2;
+      } else {
+        $("breakStats2").style.display = "none";
+      }
+
+      // Remaining balls
+      if (state.ballsRemaining !== undefined && state.ballsRemaining !== "") {
+        $("ballsItem").style.display = "flex";
+        $("ballsCount").textContent = state.ballsRemaining;
+      } else {
+        $("ballsItem").style.display = "none";
+      }
+
+      // Shot Clock
+      if (state.shotClock && state.shotClock.visible) {
+        $("shot-clock-pill").style.display = "flex";
+        const sec = Math.max(0, parseInt(state.shotClock.seconds, 10) || 0);
+        $("shotClockTime").textContent = sec;
+
+        const pill = $("shot-clock-pill");
+        pill.classList.remove("warning", "danger");
+        if (sec <= 5) {
+          pill.classList.add("danger");
+          if (state.shotClock.running && sec <= 5 && sec > 0) {
+            playBeep(880, 0.08);
+          } else if (state.shotClock.running && sec === 0) {
+            playBuzzer();
+          }
+        } else if (sec <= 10) {
+          pill.classList.add("warning");
+          if (state.shotClock.running && sec === 10) {
+            playBeep(440, 0.1);
+          }
+        }
+      } else {
+        $("shot-clock-pill").style.display = "none";
+      }
+
+      // Winner Banner celebration
+      if (s1 >= race || s2 >= race) {
+        const winner = s1 >= race ? (state.name1 || "PLAYER ONE") : (state.name2 || "PLAYER TWO");
+        $("winnerPlayerName").textContent = winner;
+        $("winnerDetails").textContent = `${s1 >= race ? s1 : s2} - ${s1 >= race ? s2 : s1} (Race to ${race}) · ${state.tournament || "PLATNUMZ CUESPORT"}`;
+        $("winner-banner").style.display = "block";
+      } else {
+        $("winner-banner").style.display = "none";
+      }
+    }
+
+    function triggerScoreBump(id) {
+      const el = $(id);
+      if (!el) return;
+      el.classList.add("bump");
+      setTimeout(() => el.classList.remove("bump"), 250);
+    }
+
+    // BroadcastChannel for instant local cross-tab sync
+    try {
+      const channel = new BroadcastChannel("platnumz_scoreboard_bus");
+      channel.onmessage = (event) => {
+        if (event.data && typeof event.data === "object") {
+          renderScoreboard(event.data);
+          hideWarning();
+        }
+      };
+    } catch (e) {
+      console.warn("BroadcastChannel not supported", e);
+    }
+
+    // Window storage listener
+    window.addEventListener("storage", (e) => {
+      if (e.key === "platnumz-scoreboard-state" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          renderScoreboard(parsed);
+          hideWarning();
+        } catch (err) {}
+      }
+    });
+
+    // Check localStorage initial
+    try {
+      const saved = localStorage.getItem("platnumz-scoreboard-state");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        renderScoreboard(parsed);
+      }
+    } catch (e) {}
+
+    // Allow clicking canvas once to unlock Web Audio in OBS if needed
+    window.addEventListener("click", () => {
+      getAudioContext();
+    }, { once: true });
+
+    // Firebase Listener
+    async function startOverlay() {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        if (!auth.currentUser) {
+          await auth.signInAnonymously();
+        }
+
+        database.ref(".info/connected").on("value", snapshot => {
+          if (snapshot.val() !== true) {
+            showWarning("Connecting to scoreboard…");
+          }
+        });
+
+        const stateRef = database.ref("rooms/" + room + "/state");
+        stateRef.on("value", snapshot => {
+          const state = snapshot.val();
+          if (state && typeof state === "object") {
+            renderScoreboard(state);
+            hideWarning();
+          } else {
+            showWarning("Waiting for controller data…");
+          }
+        }, error => {
+          console.error("Firebase database error:", error);
+          showWarning("Database error: " + error.message);
+        });
+
+      } catch (error) {
+        console.error("Overlay Firebase connection failed:", error);
+        showWarning("Connection fallback (Local Broadcast active)");
+      }
+    }
+
+    startOverlay();
+  </script>
+</body>
+</html>
