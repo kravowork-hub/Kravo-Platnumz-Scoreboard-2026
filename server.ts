@@ -15,6 +15,83 @@ async function startServer() {
   // Serve static files from public
   app.use(express.static(path.join(__dirname, 'public')));
 
+  // Real-time synchronization memory hub
+  const roomStates = new Map<string, any>();
+  const roomListeners = new Map<string, Set<express.Response>>();
+
+  // Default state matching reference image
+  roomStates.set('platnumz-live-match', {
+    name1: 'CHAIRMAN TINDO',
+    name2: 'BOSS OWIZA',
+    score1: 2,
+    score2: 1,
+    raceTo: 3,
+    flag1: '🇿🇼',
+    flag2: '🇿🇼',
+    tournament: 'PLATINUM SKILLS OPEN',
+    venue: 'HARARE, ZIMBABWE',
+    pot: '$500',
+    brand: 'KRAVO PLATNUMZ OFFICIAL',
+    updatedAt: Date.now()
+  });
+
+  // Get current state of a room
+  app.get('/api/sync/:room', (req, res) => {
+    const room = req.params.room || 'platnumz-live-match';
+    const state = roomStates.get(room) || roomStates.get('platnumz-live-match');
+    res.json({ success: true, state });
+  });
+
+  // Publish state update to a room
+  app.post('/api/sync/:room', (req, res) => {
+    const room = req.params.room || 'platnumz-live-match';
+    const newState = req.body;
+    if (newState && typeof newState === 'object') {
+      roomStates.set(room, newState);
+      const listeners = roomListeners.get(room);
+      if (listeners) {
+        const payload = `data: ${JSON.stringify(newState)}\n\n`;
+        listeners.forEach((clientRes) => {
+          try {
+            clientRes.write(payload);
+          } catch (err) {}
+        });
+      }
+    }
+    res.json({ success: true });
+  });
+
+  // Real-time Server-Sent Events stream for instant OBS overlay updates
+  app.get('/api/sync/:room/events', (req, res) => {
+    const room = req.params.room || 'platnumz-live-match';
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.flushHeaders?.();
+
+    if (!roomListeners.has(room)) {
+      roomListeners.set(room, new Set());
+    }
+    roomListeners.get(room)!.add(res);
+
+    const currentState = roomStates.get(room) || roomStates.get('platnumz-live-match');
+    if (currentState) {
+      res.write(`data: ${JSON.stringify(currentState)}\n\n`);
+    }
+
+    const pingInterval = setInterval(() => {
+      try {
+        res.write(': ping\n\n');
+      } catch (e) {}
+    }, 20000);
+
+    req.on('close', () => {
+      clearInterval(pingInterval);
+      roomListeners.get(room)?.delete(res);
+    });
+  });
+
   // Git Status API
   app.get('/api/git-status', async (_req, res) => {
     try {

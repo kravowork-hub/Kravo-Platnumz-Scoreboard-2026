@@ -212,40 +212,7 @@
     </div>
   </header>
 
-  <!-- SHOT CLOCK & TABLE CONTROL -->
-  <section class="card">
-    <div class="section-title">
-      <span>⏱️ Shot Clock & Table Action</span>
-      <span class="stat-pill">Hotkey: <kbd class="hotkey-tag">SPACE</kbd></span>
-    </div>
 
-    <div class="shot-clock-bar">
-      <div>
-        <div style="font-size: 11px; color: var(--muted); font-weight: 800; letter-spacing: 1px;">SHOT CLOCK</div>
-        <div id="shotClockDisplay" class="clock-display">30</div>
-      </div>
-
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button id="btnClockToggle" class="btn-primary" type="button" onclick="toggleShotClock()">▶ START</button>
-        <button class="btn-secondary" type="button" onclick="resetShotClock()">↺ RESET</button>
-        <button class="btn-accent" type="button" onclick="addExtension()">+30s EXTENSION</button>
-      </div>
-
-      <div style="display: flex; gap: 6px;">
-        <button id="clockPreset30" class="btn-secondary" style="min-height:36px; padding:6px 10px;" onclick="setClockPreset(30)">30s</button>
-        <button id="clockPreset45" class="btn-secondary" style="min-height:36px; padding:6px 10px;" onclick="setClockPreset(45)">45s</button>
-        <button id="clockPreset60" class="btn-secondary" style="min-height:36px; padding:6px 10px;" onclick="setClockPreset(60)">60s</button>
-      </div>
-    </div>
-
-    <!-- Active Shooter indicator -->
-    <label>Active Player At Table (Highlights on OBS overlay):</label>
-    <div class="button-row three">
-      <button id="btnShooter1" class="btn-secondary" type="button" onclick="setActiveShooter(1)">🎱 Player 1 Table</button>
-      <button id="btnShooter0" class="btn-secondary" type="button" onclick="setActiveShooter(0)">Neutral</button>
-      <button id="btnShooter2" class="btn-secondary" type="button" onclick="setActiveShooter(2)">🎱 Player 2 Table</button>
-    </div>
-  </section>
 
   <!-- PLAYERS & SCORE CONTROL -->
   <section class="card">
@@ -264,7 +231,7 @@
 
         <div class="field">
           <label for="name1">Player 1 Name</label>
-          <input id="name1" maxlength="50" value="PLAYER ONE" autocomplete="off" />
+          <input id="name1" maxlength="50" value="CHAIRMAN TINDO" autocomplete="off" />
         </div>
 
         <div class="field">
@@ -282,7 +249,7 @@
         </div>
 
         <div class="score-display">
-          <div id="scoreDisplay1" class="score-number">0</div>
+          <div id="scoreDisplay1" class="score-number">2</div>
           <div class="score-label">FRAMES WON</div>
         </div>
 
@@ -314,7 +281,7 @@
 
         <div class="field">
           <label for="name2">Player 2 Name</label>
-          <input id="name2" maxlength="50" value="PLAYER TWO" autocomplete="off" />
+          <input id="name2" maxlength="50" value="BOSS OWIZA" autocomplete="off" />
         </div>
 
         <div class="field">
@@ -332,7 +299,7 @@
         </div>
 
         <div class="score-display">
-          <div id="scoreDisplay2" class="score-number">0</div>
+          <div id="scoreDisplay2" class="score-number">1</div>
           <div class="score-label">FRAMES WON</div>
         </div>
 
@@ -364,11 +331,11 @@
     <div class="grid">
       <div class="field">
         <label for="raceTo">Race To (Frames)</label>
-        <input id="raceTo" type="number" min="1" max="999" value="13" />
+        <input id="raceTo" type="number" min="1" max="999" value="3" />
       </div>
       <div class="field">
         <label for="pot">Prize Pot</label>
-        <input id="pot" maxlength="80" value="$1,000" placeholder="$1,000" />
+        <input id="pot" maxlength="80" value="$500" placeholder="$500" />
       </div>
     </div>
 
@@ -400,13 +367,13 @@
 
     <div class="field">
       <label for="tournament">Tournament Title</label>
-      <input id="tournament" maxlength="100" value="PLATNUMZ CUESPORT" />
+      <input id="tournament" maxlength="100" value="PLATINUM SKILLS OPEN" />
     </div>
 
     <div class="grid">
       <div class="field">
         <label for="venue">Venue</label>
-        <input id="venue" maxlength="100" value="QUEENS POOL ARCADE" />
+        <input id="venue" maxlength="100" value="HARARE, ZIMBABWE" />
       </div>
       <div class="field">
         <label for="brand">Branding</label>
@@ -602,12 +569,12 @@ function populateCountrySelectors() {
 
 function defaultState() {
   return {
-    name1: "PLAYER ONE", name2: "PLAYER TWO",
-    flag1: "🇿🇼", flag2: "🇿🇦",
+    name1: "CHAIRMAN TINDO", name2: "BOSS OWIZA",
+    flag1: "🇿🇼", flag2: "🇿🇼",
     avatar1: "", avatar2: "",
-    score1: 0, score2: 0, raceTo: 13,
-    tournament: "PLATNUMZ CUESPORT",
-    venue: "QUEENS POOL ARCADE", pot: "$1,000",
+    score1: 2, score2: 1, raceTo: 3,
+    tournament: "PLATINUM SKILLS OPEN",
+    venue: "HARARE, ZIMBABWE", pot: "$500",
     brand: "KRAVO PLATNUMZ OFFICIAL",
     customLogo: "",
     theme: "platnumz",
@@ -771,6 +738,14 @@ function saveLocally(state) {
   } catch (e) {
     console.warn("Local storage write failed", e);
   }
+  // Real-time server sync
+  try {
+    fetch('/api/sync/' + encodeURIComponent(getRoomName()), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 function scheduleCloudWrite() {
