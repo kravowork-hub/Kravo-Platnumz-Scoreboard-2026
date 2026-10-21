@@ -19,38 +19,19 @@ import {
   Gamepad2,
   Globe,
   Download,
-  Upload,
-  Trash2,
   Flame,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Smartphone,
+  X,
+  Share2,
+  Search,
+  Sparkles
 } from 'lucide-react';
+import { usePWAInstall } from './usePWAInstall';
+import { WORLD_COUNTRIES, Country, getCountryCode, getFlagEmoji } from './countries';
+import { FlagBadge } from './FlagBadge';
 
-// Comprehensive Country Flags Database
-const ALL_COUNTRIES = [
-  { name: 'Zimbabwe', code: 'ZW', flag: '🇿🇼', region: 'Africa' },
-  { name: 'South Africa', code: 'ZA', flag: '🇿🇦', region: 'Africa' },
-  { name: 'Botswana', code: 'BW', flag: '🇧🇼', region: 'Africa' },
-  { name: 'Zambia', code: 'ZM', flag: '🇿🇲', region: 'Africa' },
-  { name: 'Kenya', code: 'KE', flag: '🇰🇪', region: 'Africa' },
-  { name: 'Nigeria', code: 'NG', flag: '🇳🇬', region: 'Africa' },
-  { name: 'Ghana', code: 'GH', flag: '🇬🇭', region: 'Africa' },
-  { name: 'Egypt', code: 'EG', flag: '🇪🇬', region: 'Africa' },
-  { name: 'Uganda', code: 'UG', flag: '🇺🇬', region: 'Africa' },
-  { name: 'Tanzania', code: 'TZ', flag: '🇹🇿', region: 'Africa' },
-  { name: 'Malawi', code: 'MW', flag: '🇲🇼', region: 'Africa' },
-  { name: 'Mozambique', code: 'MZ', flag: '🇲🇿', region: 'Africa' },
-  { name: 'Namibia', code: 'NA', flag: '🇳🇦', region: 'Africa' },
-  { name: 'United Kingdom', code: 'GB', flag: '🇬🇧', region: 'Europe' },
-  { name: 'United States', code: 'US', flag: '🇺🇸', region: 'Americas' },
-  { name: 'Philippines', code: 'PH', flag: '🇵🇭', region: 'Asia' },
-  { name: 'China', code: 'CN', flag: '🇨🇳', region: 'Asia' },
-  { name: 'Australia', code: 'AU', flag: '🇦🇺', region: 'Oceania' },
-  { name: 'Canada', code: 'CA', flag: '🇨🇦', region: 'Americas' },
-  { name: 'Germany', code: 'DE', flag: '🇩🇪', region: 'Europe' },
-  { name: 'Ireland', code: 'IE', flag: '🇮🇪', region: 'Europe' }
-];
-
-interface ScoreState {
+export interface ScoreState {
   name1: string;
   name2: string;
   flag1: string;
@@ -59,6 +40,8 @@ interface ScoreState {
   avatar2?: string;
   score1: number;
   score2: number;
+  br1: number;
+  br2: number;
   raceTo: number;
   tournament: string;
   venue: string;
@@ -69,7 +52,12 @@ interface ScoreState {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'controller' | 'preview' | 'flags' | 'github'>('controller');
+  const [activeTab, setActiveTab] = useState<'controller' | 'preview' | 'flags' | 'install' | 'github'>('controller');
+
+  // PWA Install Hook
+  const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
   // Core state initialized to match reference image
   const [state, setState] = useState<ScoreState>(() => {
@@ -83,6 +71,8 @@ export default function App() {
           flag2: '🇿🇼',
           score1: 2,
           score2: 1,
+          br1: 0,
+          br2: 0,
           raceTo: 3,
           tournament: 'PLATINUM SKILLS OPEN',
           venue: 'HARARE, ZIMBABWE',
@@ -102,6 +92,8 @@ export default function App() {
       flag2: '🇿🇼',
       score1: 2,
       score2: 1,
+      br1: 0,
+      br2: 0,
       raceTo: 3,
       tournament: 'PLATINUM SKILLS OPEN',
       venue: 'HARARE, ZIMBABWE',
@@ -115,7 +107,11 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [flagSearch, setFlagSearch] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('All');
   const [syncStatus, setSyncStatus] = useState<'connected' | 'syncing' | 'offline'>('connected');
+
+  // Quick flag picker modal for cards
+  const [targetPlayerForFlag, setTargetPlayerForFlag] = useState<1 | 2 | null>(null);
 
   // Git state
   const [githubToken, setGithubToken] = useState('');
@@ -130,6 +126,18 @@ export default function App() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  // Online status tracker
+  useEffect(() => {
+    const handleOnline = () => { setIsOnline(true); showToast('Online mode restored'); };
+    const handleOffline = () => { setIsOnline(false); showToast('Offline mode — Local cache active'); };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Web Audio Synthesizer
   const getAudioContext = useCallback(() => {
@@ -160,6 +168,27 @@ export default function App() {
         gain.connect(ctx.destination);
         osc.start(now + idx * 0.08);
         osc.stop(now + idx * 0.08 + 0.25);
+      });
+    } catch (e) {}
+  }, [soundEnabled, getAudioContext]);
+
+  const playBreakAndRunChime = useCallback(() => {
+    if (!soundEnabled) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+        gain.gain.setValueAtTime(0.2, now + idx * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.06);
+        osc.stop(now + idx * 0.06 + 0.22);
       });
     } catch (e) {}
   }, [soundEnabled, getAudioContext]);
@@ -247,10 +276,10 @@ export default function App() {
     };
   }, [state.room]);
 
-  // Keyboard hotkeys: Q/A for P1, P/L for P2, S for swap, R for reset
+  // Keyboard hotkeys
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['INPUT', 'SELECT', 'TEXTAREA'].includes((document.activeElement?.tagName || ''))) return;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName || '')) return;
 
       const k = e.key.toUpperCase();
       if (k === 'Q') {
@@ -289,6 +318,19 @@ export default function App() {
     });
   };
 
+  const updateBreakAndRun = (player: 1 | 2, delta: number) => {
+    setState((prev) => {
+      const key = player === 1 ? 'br1' : 'br2';
+      const current = prev[key] || 0;
+      const nextVal = Math.max(0, Math.min(99, current + delta));
+      if (delta > 0) playBreakAndRunChime();
+      const updated = { ...prev, [key]: nextVal, updatedAt: Date.now() };
+      syncState(updated);
+      showToast(`P${player} Break & Run: ${nextVal}`);
+      return updated;
+    });
+  };
+
   const swapPlayers = () => {
     setState((prev) => {
       const updated = {
@@ -301,22 +343,35 @@ export default function App() {
         avatar2: prev.avatar1,
         score1: prev.score2,
         score2: prev.score1,
+        br1: prev.br2 || 0,
+        br2: prev.br1 || 0,
         updatedAt: Date.now()
       };
       syncState(updated);
-      showToast('Swapped Players 1 and 2');
+      showToast('Swapped Players, Flags & Stats');
       return updated;
     });
   };
 
   const resetScores = () => {
-    if (!window.confirm("Reset both players' scores to zero?")) return;
+    if (!window.confirm("Reset both players' scores and Break & Run counters to zero?")) return;
     setState((prev) => {
-      const updated = { ...prev, score1: 0, score2: 0, updatedAt: Date.now() };
+      const updated = { ...prev, score1: 0, score2: 0, br1: 0, br2: 0, updatedAt: Date.now() };
       syncState(updated);
-      showToast('Scores reset to 0 - 0');
+      showToast('Scores & Break/Run reset to 0');
       return updated;
     });
+  };
+
+  const selectCountryForPlayer = (c: Country, player: 1 | 2) => {
+    setState((prev) => {
+      const key = player === 1 ? 'flag1' : 'flag2';
+      const updated = { ...prev, [key]: c.flag, updatedAt: Date.now() };
+      syncState(updated);
+      showToast(`Player ${player} flag set to ${c.name} ${c.flag}`);
+      return updated;
+    });
+    setTargetPlayerForFlag(null);
   };
 
   const fetchGitStatus = async () => {
@@ -384,6 +439,15 @@ export default function App() {
   const winner = state.score1 >= state.raceTo ? state.name1 : state.score2 >= state.raceTo ? state.name2 : null;
   const overlayUrl = `${window.location.origin}/overlay.html?room=${encodeURIComponent(state.room)}`;
 
+  // Filter countries
+  const filteredCountries = WORLD_COUNTRIES.filter((c) => {
+    const matchesSearch =
+      c.name.toLowerCase().includes(flagSearch.toLowerCase()) ||
+      c.code.toLowerCase().includes(flagSearch.toLowerCase());
+    const matchesRegion = selectedRegion === 'All' || c.region === selectedRegion;
+    return matchesSearch && matchesRegion;
+  });
+
   return (
     <div className="min-h-screen bg-[#050811] text-slate-100 flex flex-col font-sans select-none">
       {/* Toast popup */}
@@ -394,63 +458,133 @@ export default function App() {
         </div>
       )}
 
-      {/* Top Navbar */}
-      <header className="border-b border-slate-800 bg-[#090f1d]/95 backdrop-blur sticky top-0 z-40 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      {/* Offline Toast Indicator */}
+      {!isOnline && (
+        <div className="fixed bottom-4 left-4 z-50 bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-lg flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          Offline Mode — Local Cache Active
+        </div>
+      )}
+
+      {/* iOS Install Guide Modal */}
+      {showIOSGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-amber-400" /> Install on iPhone / iPad
+              </h3>
+              <button onClick={() => setShowIOSGuide(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              To install <strong>Platnumz Scoreboard</strong> as a standalone app on your home screen:
+            </p>
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0">1</span>
+                <span>Tap the <strong className="text-white">Share</strong> button <Share2 className="w-3.5 h-3.5 inline text-blue-400" /> in Safari’s bottom toolbar.</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0">2</span>
+                <span>Scroll down and tap <strong className="text-white">"Add to Home Screen"</strong>.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Flag Selector Modal */}
+      {targetPlayerForFlag !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl bg-slate-900 border border-slate-700 p-5 shadow-2xl flex flex-col space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-black text-white">
+                  Select Flag for Player {targetPlayerForFlag}
+                </h3>
+              </div>
+              <button onClick={() => setTargetPlayerForFlag(null)} className="text-slate-400 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search countries by name or code (e.g. Zimbabwe, ZW, South Africa)..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-amber-400"
+                  value={flagSearch}
+                  onChange={(e) => setFlagSearch(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 overflow-y-auto max-h-[50vh] p-1">
+              {filteredCountries.map((c) => (
+                <button
+                  key={c.code}
+                  onClick={() => selectCountryForPlayer(c, targetPlayerForFlag)}
+                  className="bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-400/60 rounded-xl p-2.5 flex items-center gap-2.5 text-left transition group active:scale-95"
+                >
+                  <FlagBadge codeOrFlag={c.code} alt={c.name} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-white block truncate group-hover:text-amber-300">
+                      {c.name}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">{c.code}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Header */}
+      <header className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-3 sticky top-0 z-40 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-500/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-base shadow-md shadow-amber-500/20">
               P
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-widest text-amber-400 font-extrabold">Broadcast Scoreboard</span>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  {syncStatus === 'syncing' ? 'Syncing...' : 'Real-Time Sync Active'}
+                <h1 className="text-sm font-black tracking-wide text-white">PLATNUMZ SCOREBOARD</h1>
+                <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-bold">
+                  PRO CUESPORT
                 </span>
               </div>
-              <h1 className="text-lg md:text-xl font-black tracking-tight text-white flex items-center gap-1.5">
-                PLATNUMZ <span className="text-amber-400">SCOREBOARD</span>
-              </h1>
+              <p className="text-[11px] text-slate-400">Master Controller & OBS Overlay Synchronizer</p>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs">
-              <span className="text-slate-400 mr-1.5">Room:</span>
-              <input
-                className="bg-transparent text-amber-300 font-mono font-bold outline-none w-28 text-xs"
-                value={state.room}
-                onChange={(e) => {
-                  const updated = { ...state, room: e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''), updatedAt: Date.now() };
-                  syncState(updated);
-                }}
+          <div className="flex items-center gap-2">
+            {/* Real-time sync badge */}
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-bold">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  syncStatus === 'connected' ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-amber-400 animate-pulse'
+                }`}
               />
+              <span className="text-slate-300">
+                {syncStatus === 'connected' ? 'Live Synced' : 'Syncing…'}
+              </span>
             </div>
 
+            {/* Sound toggle */}
             <button
               onClick={() => {
-                navigator.clipboard.writeText(overlayUrl);
-                showToast('OBS Overlay URL copied!');
+                setSoundEnabled(!soundEnabled);
+                showToast(soundEnabled ? 'Muted' : 'Sound Enabled');
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition"
-            >
-              <Copy className="w-3.5 h-3.5" /> Copy OBS Link
-            </button>
-
-            <button
-              onClick={() => window.open(overlayUrl, '_blank')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> Open Overlay
-            </button>
-
-            <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`p-2 rounded-lg border text-xs transition ${
-                soundEnabled ? 'bg-amber-500/10 border-amber-500/40 text-amber-400' : 'bg-slate-900 border-slate-800 text-slate-500'
-              }`}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+              title="Toggle Audio Feedback"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
@@ -489,7 +623,18 @@ export default function App() {
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Globe className="w-3.5 h-3.5" /> Country Flags
+            <Globe className="w-3.5 h-3.5" /> All World Flags ({WORLD_COUNTRIES.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('install')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+              activeTab === 'install'
+                ? 'bg-amber-400 text-slate-950 font-black shadow'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Smartphone className="w-3.5 h-3.5" /> Standalone App
           </button>
 
           <button
@@ -500,7 +645,7 @@ export default function App() {
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Github className="w-3.5 h-3.5" /> GitHub Sync & Export
+            <Github className="w-3.5 h-3.5" /> GitHub Sync
           </button>
         </div>
       </header>
@@ -533,17 +678,32 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 1: SCORE CONTROLLER (Names & Scores 1st Priority) */}
+        {/* TAB 1: SCORE CONTROLLER */}
         {activeTab === 'controller' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* PLAYER 1 CARD */}
               <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border-2 border-blue-500/40 rounded-3xl p-6 shadow-2xl relative">
-                <span className="text-[11px] uppercase font-black tracking-widest text-blue-400 block mb-2">PLAYER 1</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] uppercase font-black tracking-widest text-blue-400">PLAYER 1</span>
+                  <button
+                    onClick={() => setTargetPlayerForFlag(1)}
+                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2.5 py-0.5 rounded-full border border-blue-400/30 font-bold transition flex items-center gap-1"
+                  >
+                    Change Flag <Globe className="w-3 h-3" />
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-4xl filter drop-shadow">{state.flag1}</span>
+                  <button
+                    type="button"
+                    onClick={() => setTargetPlayerForFlag(1)}
+                    className="p-1 rounded-lg hover:ring-2 hover:ring-amber-400 transition"
+                    title="Click to change flag"
+                  >
+                    <FlagBadge codeOrFlag={state.flag1} size="lg" alt="P1 Flag" />
+                  </button>
                   <input
                     className="flex-1 bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-2xl font-black text-white outline-none focus:border-amber-400 transition"
                     value={state.name1}
@@ -556,7 +716,7 @@ export default function App() {
                 </div>
 
                 {/* GIANT SCORE NUMBER */}
-                <div className="text-center my-6 py-2 bg-slate-950/50 rounded-2xl border border-white/5">
+                <div className="text-center my-5 py-2 bg-slate-950/50 rounded-2xl border border-white/5">
                   <div className="text-8xl md:text-9xl font-black tracking-tight text-white font-mono leading-none">
                     {state.score1}
                   </div>
@@ -578,14 +738,70 @@ export default function App() {
                     <Plus className="w-5 h-5" /> +1 Frame <kbd className="text-[10px] text-slate-900 bg-amber-300 px-1.5 py-0.5 rounded font-mono">Q</kbd>
                   </button>
                 </div>
+
+                {/* BREAK & RUN COUNTER SECTION */}
+                <div className="mt-4 pt-4 border-t border-slate-800/80 bg-slate-950/40 rounded-2xl p-3.5 border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm border border-amber-400/30 shadow-inner">
+                        🔥
+                      </div>
+                      <div>
+                        <span className="text-xs uppercase tracking-wider font-black text-amber-400 block">
+                          Break & Run
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">Table Run-Out Off Break</span>
+                      </div>
+                    </div>
+
+                    {/* Counter with + and - buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateBreakAndRun(1, -1)}
+                        className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-black text-base flex items-center justify-center border border-slate-700 transition"
+                        title="Decrease Break & Run"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <div className="min-w-12 text-center font-mono font-black text-2xl text-amber-300 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 shadow-inner">
+                        {state.br1 || 0}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateBreakAndRun(1, 1)}
+                        className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black text-base flex items-center justify-center shadow-md shadow-amber-500/20 transition"
+                        title="Increase Break & Run"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
               {/* PLAYER 2 CARD */}
               <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border-2 border-blue-500/40 rounded-3xl p-6 shadow-2xl relative">
-                <span className="text-[11px] uppercase font-black tracking-widest text-blue-400 block mb-2">PLAYER 2</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] uppercase font-black tracking-widest text-blue-400">PLAYER 2</span>
+                  <button
+                    onClick={() => setTargetPlayerForFlag(2)}
+                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2.5 py-0.5 rounded-full border border-blue-400/30 font-bold transition flex items-center gap-1"
+                  >
+                    Change Flag <Globe className="w-3 h-3" />
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-4xl filter drop-shadow">{state.flag2}</span>
+                  <button
+                    type="button"
+                    onClick={() => setTargetPlayerForFlag(2)}
+                    className="p-1 rounded-lg hover:ring-2 hover:ring-amber-400 transition"
+                    title="Click to change flag"
+                  >
+                    <FlagBadge codeOrFlag={state.flag2} size="lg" alt="P2 Flag" />
+                  </button>
                   <input
                     className="flex-1 bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-2xl font-black text-white outline-none focus:border-amber-400 transition"
                     value={state.name2}
@@ -598,7 +814,7 @@ export default function App() {
                 </div>
 
                 {/* GIANT SCORE NUMBER */}
-                <div className="text-center my-6 py-2 bg-slate-950/50 rounded-2xl border border-white/5">
+                <div className="text-center my-5 py-2 bg-slate-950/50 rounded-2xl border border-white/5">
                   <div className="text-8xl md:text-9xl font-black tracking-tight text-white font-mono leading-none">
                     {state.score2}
                   </div>
@@ -620,6 +836,47 @@ export default function App() {
                     <Plus className="w-5 h-5" /> +1 Frame <kbd className="text-[10px] text-slate-900 bg-amber-300 px-1.5 py-0.5 rounded font-mono">P</kbd>
                   </button>
                 </div>
+
+                {/* BREAK & RUN COUNTER SECTION */}
+                <div className="mt-4 pt-4 border-t border-slate-800/80 bg-slate-950/40 rounded-2xl p-3.5 border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm border border-amber-400/30 shadow-inner">
+                        🔥
+                      </div>
+                      <div>
+                        <span className="text-xs uppercase tracking-wider font-black text-amber-400 block">
+                          Break & Run
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">Table Run-Out Off Break</span>
+                      </div>
+                    </div>
+
+                    {/* Counter with + and - buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateBreakAndRun(2, -1)}
+                        className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-black text-base flex items-center justify-center border border-slate-700 transition"
+                        title="Decrease Break & Run"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <div className="min-w-12 text-center font-mono font-black text-2xl text-amber-300 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 shadow-inner">
+                        {state.br2 || 0}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateBreakAndRun(2, 1)}
+                        className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black text-base flex items-center justify-center shadow-md shadow-amber-500/20 transition"
+                        title="Increase Break & Run"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -627,15 +884,15 @@ export default function App() {
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button
                 onClick={swapPlayers}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs flex items-center gap-2 border border-slate-700 transition"
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs flex items-center gap-2 border border-slate-700 transition active:scale-95"
               >
                 <ArrowLeftRight className="w-4 h-4 text-amber-400" /> Swap Players & Flags (Hotkey S)
               </button>
               <button
                 onClick={resetScores}
-                className="px-5 py-2.5 rounded-xl bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 font-black text-xs flex items-center gap-2 transition"
+                className="px-5 py-2.5 rounded-xl bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 font-black text-xs flex items-center gap-2 transition active:scale-95"
               >
-                <RefreshCw className="w-4 h-4" /> Reset Scores to 0-0 (Hotkey R)
+                <RefreshCw className="w-4 h-4" /> Reset Scores & Break/Run (Hotkey R)
               </button>
             </div>
 
@@ -709,7 +966,7 @@ export default function App() {
                   <Tv className="w-4 h-4 text-amber-400" /> Live Broadcast Simulator
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Real-time view with large names and scores rendered at 1st priority.
+                  Real-time OBS stream overlay with styled flags, names, and Break & Run badges.
                 </p>
               </div>
 
@@ -743,48 +1000,90 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: FLAGS DIRECTORY */}
+        {/* TAB 3: FLAGS DIRECTORY (ALL WORLD FLAGS) */}
         {activeTab === 'flags' && (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between gap-4">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-black text-amber-400 uppercase tracking-wider">Country Flags</h3>
-                <p className="text-xs text-slate-400">Assign flags instantly to Player 1 or Player 2.</p>
+                <div className="flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-base font-black text-white uppercase tracking-wider">
+                    All World Flags ({WORLD_COUNTRIES.length} Countries)
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Uniform styled country flags for Zimbabwe and all nations. Assign to Player 1 or Player 2 with one click.
+                </p>
               </div>
-              <input
-                type="text"
-                placeholder="Search country..."
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-amber-400 w-64"
-                value={flagSearch}
-                onChange={(e) => setFlagSearch(e.target.value)}
-              />
+
+              <div className="relative w-full md:w-80">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search countries by name or code..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-amber-400"
+                  value={flagSearch}
+                  onChange={(e) => setFlagSearch(e.target.value)}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[450px] overflow-y-auto p-1">
-              {ALL_COUNTRIES.filter((c) => c.name.toLowerCase().includes(flagSearch.toLowerCase())).map((c) => (
-                <div key={c.code} className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col items-center text-center">
-                  <span className="text-3xl mb-1">{c.flag}</span>
-                  <span className="text-xs font-bold text-white truncate w-full">{c.name}</span>
-                  <div className="grid grid-cols-2 gap-1.5 w-full mt-2">
+            {/* Continent / Region Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              {['All', 'Africa', 'Europe', 'Americas', 'Asia', 'Oceania'].map((region) => (
+                <button
+                  key={region}
+                  onClick={() => setSelectedRegion(region)}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                    selectedRegion === region
+                      ? 'bg-amber-400 text-slate-950 shadow'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {region} {region === 'All' ? `(${WORLD_COUNTRIES.length})` : ''}
+                </button>
+              ))}
+            </div>
+
+            {/* Countries Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 max-h-[550px] overflow-y-auto p-1">
+              {filteredCountries.map((c) => (
+                <div
+                  key={c.code}
+                  className="bg-slate-950 border border-slate-800/90 hover:border-amber-400/50 rounded-xl p-3 flex flex-col items-center text-center transition group shadow-sm"
+                >
+                  <div className="my-1">
+                    <FlagBadge codeOrFlag={c.code} alt={c.name} size="md" />
+                  </div>
+                  <span className="text-xs font-bold text-white truncate w-full mt-1.5 group-hover:text-amber-300">
+                    {c.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono mb-2">
+                    {c.code} · {c.region}
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-1.5 w-full mt-auto">
                     <button
                       onClick={() => {
                         const updated = { ...state, flag1: c.flag, updatedAt: Date.now() };
                         syncState(updated);
-                        showToast(`P1 Flag set to ${c.flag}`);
+                        showToast(`P1 Flag set to ${c.name}`);
                       }}
-                      className="py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300"
+                      className="py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300 transition"
+                      title={`Assign ${c.name} to Player 1`}
                     >
-                      P1
+                      Set P1
                     </button>
                     <button
                       onClick={() => {
                         const updated = { ...state, flag2: c.flag, updatedAt: Date.now() };
                         syncState(updated);
-                        showToast(`P2 Flag set to ${c.flag}`);
+                        showToast(`P2 Flag set to ${c.name}`);
                       }}
-                      className="py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300"
+                      className="py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300 transition"
+                      title={`Assign ${c.name} to Player 2`}
                     >
-                      P2
+                      Set P2
                     </button>
                   </div>
                 </div>
@@ -793,7 +1092,91 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: GITHUB SYNC */}
+        {/* TAB 4: STANDALONE APP INSTALL HUB */}
+        {activeTab === 'install' && (
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-2xl shadow-lg shadow-amber-500/20">
+                  P
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">Standalone Progressive Web App (PWA)</h3>
+                  <p className="text-xs text-slate-400">Install Platnumz Scoreboard on your device to run without browser bars, full-screen like a native application.</p>
+                </div>
+              </div>
+
+              {/* Status Box */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current App State:</div>
+                  <div className="text-sm font-black text-white mt-0.5">
+                    {isInstalled ? '✅ Running as Standalone App (Installed)' : '🌐 Running in Web Browser (Installable)'}
+                  </div>
+                </div>
+
+                {!isInstalled && isInstallable && (
+                  <button
+                    onClick={install}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 text-white font-black text-xs shadow-md transition flex items-center gap-1.5"
+                  >
+                    <Download className="w-4 h-4" /> Install Now
+                  </button>
+                )}
+
+                {!isInstalled && isIOS && (
+                  <button
+                    onClick={() => setShowIOSGuide(true)}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md transition flex items-center gap-1.5"
+                  >
+                    <Smartphone className="w-4 h-4" /> iOS Install
+                  </button>
+                )}
+              </div>
+
+              {/* Platform Installation Guide Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    📱 Android & Google Chrome
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Tap the <strong>"Install App"</strong> button above, or open the Chrome menu (⋮) and select <strong>"Install application"</strong> or <strong>"Add to Home screen"</strong>.
+                  </p>
+                </div>
+
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    🍎 Apple iPhone & iPad (Safari)
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Tap Safari's <strong>Share</strong> button, then scroll down and tap <strong>"Add to Home Screen"</strong>. It launches as a full-screen app without Safari address bars.
+                  </p>
+                </div>
+
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    💻 Windows & Mac (Chrome / Edge)
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Click the install icon in the address bar (or the <strong>"Install App"</strong> button) to install Platnumz Scoreboard into your Windows Start Menu or Mac Applications.
+                  </p>
+                </div>
+
+                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    ⚡ Offline & Low-Latency Support
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Service Worker precaches the application assets so referees and streamers can operate matches smoothly even if internet coverage drops.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: GITHUB SYNC */}
         {activeTab === 'github' && (
           <div className="max-w-3xl mx-auto space-y-6">
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
@@ -810,83 +1193,92 @@ export default function App() {
 
                 <button
                   onClick={fetchGitStatus}
-                  className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1 border border-slate-700"
+                  disabled={gitLoading}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-slate-700"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${gitLoading ? 'animate-spin' : ''}`} /> Refresh
                 </button>
               </div>
 
-              {/* Status */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs space-y-2">
-                <div className="text-amber-400 font-bold uppercase text-[10px] tracking-wider">Repository Status:</div>
-                <div className="text-slate-300">{gitStatusData?.status || 'Working tree clean. Ready to push.'}</div>
-                <div className="border-t border-slate-800/80 pt-2 text-slate-400 text-[11px]">
-                  Recent Commits:
-                  <pre className="text-amber-300 mt-1 whitespace-pre-wrap">{gitStatusData?.log || 'Recent commits loading...'}</pre>
+              {/* Status Display */}
+              {gitStatusData && (
+                <div className="space-y-3">
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs">
+                    <div className="text-slate-400 text-[11px] mb-1">Recent Commits:</div>
+                    <pre className="text-amber-300/90 whitespace-pre-wrap">{gitStatusData.log || 'No commits yet.'}</pre>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Push in 1 Click */}
-              <div className="bg-slate-950/80 border border-amber-500/20 rounded-xl p-4 space-y-3">
-                <span className="text-xs font-black text-amber-400 uppercase tracking-wider block">Push to GitHub with Token</span>
+              {/* Git Push Action */}
+              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+                <h4 className="text-xs font-black text-amber-400 uppercase tracking-wider">
+                  Push Local Updates to GitHub Repository
+                </h4>
+                <p className="text-xs text-slate-400">
+                  Provide a GitHub Personal Access Token (with repo scope) to push all improvements to your GitHub repo.
+                </p>
                 <div className="flex gap-2">
                   <input
                     type="password"
-                    placeholder="GitHub Personal Access Token (ghp_...)"
-                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-amber-400"
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-amber-400"
                     value={githubToken}
                     onChange={(e) => setGithubToken(e.target.value)}
                   />
                   <button
                     onClick={handleGitPush}
-                    disabled={gitLoading || !githubToken}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs disabled:opacity-40 transition flex items-center gap-1.5 shadow"
+                    disabled={gitLoading}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-md transition disabled:opacity-50"
                   >
-                    {gitLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                    Push
+                    {gitLoading ? 'Pushing…' : 'Push to GitHub'}
                   </button>
                 </div>
 
                 {gitOutput && (
-                  <div className={`p-3 rounded-lg text-xs font-mono mt-2 ${gitOutput.success ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-red-950 text-red-300 border border-red-800'}`}>
+                  <div
+                    className={`p-3 rounded-xl text-xs font-mono ${
+                      gitOutput.success
+                        ? 'bg-emerald-950/80 border border-emerald-500 text-emerald-200'
+                        : 'bg-red-950/80 border border-red-500 text-red-200'
+                    }`}
+                  >
                     {gitOutput.message}
                   </div>
                 )}
               </div>
 
-              {/* Download Files */}
-              <div className="space-y-2 pt-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Download Files:</span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <button
-                    onClick={() => downloadFile('index.html')}
-                    className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-400 text-xs font-bold text-slate-200 flex items-center justify-center gap-2 transition"
-                  >
-                    <Download className="w-4 h-4 text-amber-400" /> index.html
-                  </button>
+              {/* Download standalone files */}
+              <div className="border-t border-slate-800 pt-4">
+                <div className="text-xs font-black text-slate-300 uppercase tracking-wider mb-2">
+                  Direct File Downloads
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => downloadFile('overlay.html')}
-                    className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-400 text-xs font-bold text-slate-200 flex items-center justify-center gap-2 transition"
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5"
                   >
-                    <Download className="w-4 h-4 text-amber-400" /> overlay.html
+                    <Download className="w-3.5 h-3.5" /> overlay.html
+                  </button>
+                  <button
+                    onClick={() => downloadFile('index.html')}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" /> index.html
                   </button>
                   <button
                     onClick={() => downloadFile('README.md')}
-                    className="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-400 text-xs font-bold text-slate-200 flex items-center justify-center gap-2 transition"
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5"
                   >
-                    <Download className="w-4 h-4 text-amber-400" /> README.md
+                    <Download className="w-3.5 h-3.5" /> README.md
                   </button>
                 </div>
               </div>
             </div>
           </div>
         )}
-      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-[#070b14] py-4 px-6 text-center text-xs text-slate-500">
-        <div>Branded for <strong className="text-amber-400">KRAVO PLATNUMZ OFFICIAL</strong> · Broadcast Scoreboard System</div>
-      </footer>
+      </main>
     </div>
   );
 }

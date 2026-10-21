@@ -81,12 +81,47 @@ An elite cuesport broadcast scoreboard controller and transparent OBS Studio ove
 
 ---
 
+## 🐧 Linux Mint Desktop Installation
+
+Platnumz Scoreboard provides native installation capability for **Linux Mint (Cinnamon, MATE, Xfce)** and Ubuntu-based distributions:
+
+### Option 1: Automated 1-Line Terminal Installer
+Run this command in your Linux Mint terminal:
+```bash
+curl -fsSL https://ais-dev-yxnie2e36phjg3qeo7atdj-703565137561.europe-west2.run.app/install-linux-mint.sh | bash
+```
+Or if running locally or from this repository:
+```bash
+chmod +x install-linux-mint.sh
+./install-linux-mint.sh
+```
+This automatically:
+- Installs the high-resolution Platnumz icons into `~/.local/share/icons/`
+- Creates `~/.local/share/applications/platnumz-scoreboard.desktop` (adding it to your Linux Mint Cinnamon start menu under *Sound & Video* / *Games*)
+- Creates an executable trusted shortcut on your Linux Mint Desktop (`~/Desktop/platnumz-scoreboard.desktop`)
+- Launches in standalone window mode (Chrome/Chromium/Brave/Firefox)
+
+### Option 2: Linux Mint Web App Manager (`webapp-manager`)
+Linux Mint includes a native **Web App Manager** built by the Linux Mint development team:
+1. Open the Linux Mint Menu and search for **Web App Manager**.
+2. Click **+** (Add a new Web App).
+3. Fill in:
+   - **Name**: `Platnumz Scoreboard`
+   - **Address**: `https://ais-dev-yxnie2e36phjg3qeo7atdj-703565137561.europe-west2.run.app` (or your local URL)
+   - **Icon**: Choose icon or paste `/pwa-512x512.png`
+   - **Category**: `Sound & Video` or `Games`
+   - **Browser**: Firefox, Chromium, or Google Chrome
+   - **Navigation bar**: Off
+4. Click **OK**. Platnumz Scoreboard is now integrated with your Cinnamon taskbar, alt-tab switcher, and system tray!
+
+---
+
 ## 🚀 Deploy on Vercel or GitHub Pages
 
 1. Push your changes to GitHub:
    ```bash
    git add .
-   git commit -m "Add shot clock, themes, avatars, hill-hill alert, and expanded countries"
+   git commit -m "Add shot clock, themes, avatars, hill-hill alert, expanded countries, and Linux Mint installer"
    git push origin main
    ```
 2. Link the repository in **Vercel** or enable **GitHub Pages** (Deploy from branch `main`, root `/`).

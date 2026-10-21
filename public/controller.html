@@ -223,7 +223,8 @@
         <div class="player-heading">
           <div class="avatar-preview-box">
             <img id="avatarPreview1" class="avatar-preview-img" alt="P1" />
-            <span id="previewFlag1" class="flag-preview">🇿🇼</span>
+            <img id="flagImgPreview1" style="width:34px; height:22px; border-radius:4px; object-fit:cover; display:inline-block; border:1px solid rgba(255,255,255,0.3);" />
+            <span id="previewFlag1" class="flag-preview" style="display:none;">🇿🇼</span>
             <span>PLAYER ONE</span>
           </div>
           <span id="p1ShooterBadge" class="stat-pill" style="display:none; color:var(--gold);">AT TABLE</span>
@@ -273,7 +274,8 @@
         <div class="player-heading">
           <div class="avatar-preview-box">
             <img id="avatarPreview2" class="avatar-preview-img" alt="P2" />
-            <span id="previewFlag2" class="flag-preview">🇿🇦</span>
+            <img id="flagImgPreview2" style="width:34px; height:22px; border-radius:4px; object-fit:cover; display:inline-block; border:1px solid rgba(255,255,255,0.3);" />
+            <span id="previewFlag2" class="flag-preview" style="display:none;">🇿🇦</span>
             <span>PLAYER TWO</span>
           </div>
           <span id="p2ShooterBadge" class="stat-pill" style="display:none; color:var(--gold);">AT TABLE</span>
@@ -713,9 +715,38 @@ function setActiveShooter(player) {
   scheduleCloudWrite();
 }
 
+function getIsoCode(flag) {
+  if (!flag) return "zw";
+  const str = String(flag).trim();
+  if (/^[a-zA-Z]{2}$/.test(str)) return str.toLowerCase();
+  if (/^[a-zA-Z]{2}-[a-zA-Z]{3}$/.test(str)) return str.toLowerCase();
+  const codePoints = Array.from(str).map(c => c.codePointAt(0) || 0);
+  const chars = codePoints
+    .filter(cp => cp >= 127462 && cp <= 127487)
+    .map(cp => String.fromCharCode(cp - 127397));
+  if (chars.length === 2) return chars.join("").toLowerCase();
+  return "zw";
+}
+
 function updateFlagPreviews() {
-  $("previewFlag1").textContent = $("country1").value || "🇿🇼";
-  $("previewFlag2").textContent = $("country2").value || "🇿🇦";
+  const v1 = $("country1").value || "🇿🇼";
+  const v2 = $("country2").value || "🇿🇼";
+  $("previewFlag1").textContent = v1;
+  $("previewFlag2").textContent = v2;
+  const c1 = getIsoCode(v1);
+  const c2 = getIsoCode(v2);
+  const img1 = $("flagImgPreview1");
+  const img2 = $("flagImgPreview2");
+  if (img1) {
+    img1.src = "https://flagcdn.com/w80/" + c1 + ".png";
+    img1.style.display = "inline-block";
+    img1.onerror = function() { this.style.display = "none"; $("previewFlag1").style.display = "inline"; };
+  }
+  if (img2) {
+    img2.src = "https://flagcdn.com/w80/" + c2 + ".png";
+    img2.style.display = "inline-block";
+    img2.onerror = function() { this.style.display = "none"; $("previewFlag2").style.display = "inline"; };
+  }
 }
 
 function setConnection(message, mode = "") {

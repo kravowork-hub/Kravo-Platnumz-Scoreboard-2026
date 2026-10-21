@@ -1,0 +1,25 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Platnumz Scoreboard
+GenericName=Cuesport Scoreboard & OBS Overlay
+Comment=Professional Cuesport Scoreboard and OBS Overlay System by Kravo Platnumz
+Exec=xdg-open https://ais-dev-yxnie2e36phjg3qeo7atdj-703565137561.europe-west2.run.app
+Icon=platnumz-scoreboard
+Terminal=false
+StartupNotify=true
+Categories=Game;AudioVideo;Video;Network;Utility;
+Keywords=pool;billiards;snooker;scoreboard;obs;overlay;stream;kravo;platnumz;
+Actions=Controller;Overlay;LocalHost;
+
+[Desktop Action Controller]
+Name=Open Scoreboard Controller
+Exec=xdg-open https://ais-dev-yxnie2e36phjg3qeo7atdj-703565137561.europe-west2.run.app
+
+[Desktop Action Overlay]
+Name=Open Transparent OBS Overlay
+Exec=xdg-open https://ais-dev-yxnie2e36phjg3qeo7atdj-703565137561.europe-west2.run.app/overlay.html
+
+[Desktop Action LocalHost]
+Name=Open Local Match (localhost:3000)
+Exec=xdg-open http://localhost:3000

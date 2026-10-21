@@ -115,9 +115,7 @@
       z-index: 2;
     }
 
-    /* ==========================================================
-       PLAYER 1 SECTION (Left-to-Right: Flag -> Name -> Score)
-       ========================================================== */
+    /* Player 1 Section (Left-to-Right: Flag -> Name -> Score) */
     .player-zone-1 {
       flex: 1;
       min-width: 0;
@@ -136,9 +134,7 @@
       min-width: 0;
     }
 
-    /* ==========================================================
-       PLAYER 2 SECTION (Left-to-Right: Score -> Name -> Flag)
-       ========================================================== */
+    /* Player 2 Section (Left-to-Right: Score -> Name -> Flag) */
     .player-zone-2 {
       flex: 1;
       min-width: 0;
@@ -158,39 +154,53 @@
       min-width: 0;
     }
 
-    /* Flags: Compact to preserve maximum room for names */
+    /* All Country Flags (Uniform High-Res Styling for Zimbabwe & All Nations) */
     .flag-box {
       flex-shrink: 0;
-      width: 52px;
-      height: 34px;
-      border-radius: 4px;
-      overflow: hidden;
-      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
+      width: 58px;
+      height: 38px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      position: relative;
     }
-    .flag-wave {
+    .flag-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
     }
-    .flag-emoji {
-      font-size: 34px;
+    .flag-display {
+      font-size: 30px;
       line-height: 1;
+      font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
       display: none;
     }
     .avatar-photo {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
-      border: 2px solid var(--gold);
       display: none;
     }
 
     /* Player Names: 1st Priority High Prominence */
+    .player-info-col {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+    .player-2-right .player-info-col {
+      align-items: flex-end;
+    }
+
     .player-name {
       font-size: clamp(22px, 2.5vw, 42px);
       font-weight: 900;
@@ -202,6 +212,23 @@
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 0;
+    }
+
+    /* Break and Run Badge */
+    .br-badge {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #ffd700, #ff9900);
+      color: #0b111c;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      width: fit-content;
     }
 
     /* Scores: 1st Priority High Prominence */
@@ -290,7 +317,6 @@
 
     /* ==========================================================
        BOTTOM INFORMATION / TICKER BAR
-       Compact & High Legibility
        ========================================================== */
     .bottom-ticker-bar {
       position: relative;
@@ -366,7 +392,6 @@
       margin: 0 2px;
     }
 
-    /* KP Monogram & Brand */
     .brand-group {
       display: inline-flex;
       align-items: center;
@@ -438,22 +463,14 @@
         <div class="player-zone-1">
           <div class="player-1-left">
             <div class="flag-box">
-              <svg id="flagSvg1" class="flag-wave" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="60" height="5.7" fill="#319241" />
-                <rect y="5.7" width="60" height="5.7" fill="#FDD734" />
-                <rect y="11.4" width="60" height="5.7" fill="#DE2026" />
-                <rect y="17.1" width="60" height="5.7" fill="#000000" />
-                <rect y="22.8" width="60" height="5.7" fill="#DE2026" />
-                <rect y="28.5" width="60" height="5.7" fill="#FDD734" />
-                <rect y="34.2" width="60" height="5.8" fill="#319241" />
-                <polygon points="0,0 23,20 0,40" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
-                <polygon points="8,15 9.5,19 13.5,19 10.5,21.5 11.5,25.5 8,23 4.5,25.5 5.5,21.5 2.5,19 6.5,19" fill="#DE2026" />
-                <circle cx="8" cy="20" r="2.2" fill="#FDD734" />
-              </svg>
-              <span id="flagEmoji1" class="flag-emoji">🇿🇼</span>
+              <img id="flagImg1" class="flag-img" alt="P1 Flag" />
+              <span id="flagDisplay1" class="flag-display">🇿🇼</span>
               <img id="avatarImg1" class="avatar-photo" alt="P1 Avatar" />
             </div>
-            <div id="name1" class="player-name">CHAIRMAN TINDO</div>
+            <div class="player-info-col">
+              <div id="name1" class="player-name">CHAIRMAN TINDO</div>
+              <div id="brBadge1" class="br-badge">B&R: <span id="brVal1">0</span></div>
+            </div>
           </div>
 
           <div id="score1" class="player-score">2</div>
@@ -472,21 +489,13 @@
           <div id="score2" class="player-score">1</div>
 
           <div class="player-2-right">
-            <div id="name2" class="player-name">BOSS OWIZA</div>
+            <div class="player-info-col">
+              <div id="name2" class="player-name">BOSS OWIZA</div>
+              <div id="brBadge2" class="br-badge">B&R: <span id="brVal2">0</span></div>
+            </div>
             <div class="flag-box">
-              <svg id="flagSvg2" class="flag-wave" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="60" height="5.7" fill="#319241" />
-                <rect y="5.7" width="60" height="5.7" fill="#FDD734" />
-                <rect y="11.4" width="60" height="5.7" fill="#DE2026" />
-                <rect y="17.1" width="60" height="5.7" fill="#000000" />
-                <rect y="22.8" width="60" height="5.7" fill="#DE2026" />
-                <rect y="28.5" width="60" height="5.7" fill="#FDD734" />
-                <rect y="34.2" width="60" height="5.8" fill="#319241" />
-                <polygon points="0,0 23,20 0,40" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
-                <polygon points="8,15 9.5,19 13.5,19 10.5,21.5 11.5,25.5 8,23 4.5,25.5 5.5,21.5 2.5,19 6.5,19" fill="#DE2026" />
-                <circle cx="8" cy="20" r="2.2" fill="#FDD734" />
-              </svg>
-              <span id="flagEmoji2" class="flag-emoji">🇿🇼</span>
+              <img id="flagImg2" class="flag-img" alt="P2 Flag" />
+              <span id="flagDisplay2" class="flag-display">🇿🇼</span>
               <img id="avatarImg2" class="avatar-photo" alt="P2 Avatar" />
             </div>
           </div>
@@ -572,10 +581,48 @@
       return Number.isFinite(n) ? Math.max(0, Math.min(999, Math.floor(n))) : 0;
     }
 
-    function setText(id, value, fallback = "") {
-      const el = $(id);
-      if (!el) return;
-      el.textContent = (value === null || value === undefined || value === "") ? fallback : String(value);
+    function getIsoCode(flag) {
+      if (!flag) return "zw";
+      const str = String(flag).trim();
+      if (/^[a-zA-Z]{2}$/.test(str)) return str.toLowerCase();
+      if (/^[a-zA-Z]{2}-[a-zA-Z]{3}$/.test(str)) return str.toLowerCase();
+      const codePoints = Array.from(str).map(c => c.codePointAt(0) || 0);
+      const chars = codePoints
+        .filter(cp => cp >= 127462 && cp <= 127487)
+        .map(cp => String.fromCharCode(cp - 127397));
+      if (chars.length === 2) return chars.join("").toLowerCase();
+      return "zw";
+    }
+
+    function updateFlagUI(flagVal, avatarVal, imgId, fallbackId, avatarId) {
+      const avatarEl = $(avatarId);
+      const flagImg = $(imgId);
+      const fallback = $(fallbackId);
+
+      if (avatarVal) {
+        avatarEl.src = avatarVal;
+        avatarEl.style.display = "block";
+        if (flagImg) flagImg.style.display = "none";
+        if (fallback) fallback.style.display = "none";
+        return;
+      }
+
+      if (avatarEl) avatarEl.style.display = "none";
+      const code = getIsoCode(flagVal);
+      if (flagImg) {
+        flagImg.src = "https://flagcdn.com/w160/" + code + ".png";
+        flagImg.style.display = "block";
+        flagImg.onerror = function() {
+          this.style.display = "none";
+          if (fallback) {
+            fallback.textContent = flagVal || "🇿🇼";
+            fallback.style.display = "block";
+          }
+        };
+      }
+      if (fallback) {
+        fallback.textContent = flagVal || "🇿🇼";
+      }
     }
 
     function renderScoreboard(state) {
@@ -601,40 +648,24 @@
       setText("pot", state.pot, "$500");
       setText("brand", state.brand, "KRAVO PLATNUMZ OFFICIAL");
 
-      // Flag handling
-      const flag1 = state.flag1 || "🇿🇼";
-      const flag2 = state.flag2 || "🇿🇼";
+      // Uniform Flag handling for Zimbabwe and all world countries
+      updateFlagUI(state.flag1 || "🇿🇼", state.avatar1, "flagImg1", "flagDisplay1", "avatarImg1");
+      updateFlagUI(state.flag2 || "🇿🇼", state.avatar2, "flagImg2", "flagDisplay2", "avatarImg2");
 
-      if (state.avatar1) {
-        $("avatarImg1").src = state.avatar1;
-        $("avatarImg1").style.display = "block";
-        $("flagSvg1").style.display = "none";
-        $("flagEmoji1").style.display = "none";
-      } else if (flag1 === "🇿🇼") {
-        $("avatarImg1").style.display = "none";
-        $("flagSvg1").style.display = "block";
-        $("flagEmoji1").style.display = "none";
+      // Break and Run badges
+      const br1 = parseInt(state.br1, 10) || 0;
+      const br2 = parseInt(state.br2, 10) || 0;
+      if (br1 > 0) {
+        $("brVal1").textContent = br1;
+        $("brBadge1").style.display = "inline-flex";
       } else {
-        $("avatarImg1").style.display = "none";
-        $("flagSvg1").style.display = "none";
-        $("flagEmoji1").textContent = flag1;
-        $("flagEmoji1").style.display = "block";
+        $("brBadge1").style.display = "none";
       }
-
-      if (state.avatar2) {
-        $("avatarImg2").src = state.avatar2;
-        $("avatarImg2").style.display = "block";
-        $("flagSvg2").style.display = "none";
-        $("flagEmoji2").style.display = "none";
-      } else if (flag2 === "🇿🇼") {
-        $("avatarImg2").style.display = "none";
-        $("flagSvg2").style.display = "block";
-        $("flagEmoji2").style.display = "none";
+      if (br2 > 0) {
+        $("brVal2").textContent = br2;
+        $("brBadge2").style.display = "inline-flex";
       } else {
-        $("avatarImg2").style.display = "none";
-        $("flagSvg2").style.display = "none";
-        $("flagEmoji2").textContent = flag2;
-        $("flagEmoji2").style.display = "block";
+        $("brBadge2").style.display = "none";
       }
 
       // Hill-Hill Badge
@@ -724,6 +755,8 @@
           raceTo: 3,
           flag1: "🇿🇼",
           flag2: "🇿🇼",
+          br1: 0,
+          br2: 0,
           tournament: "PLATINUM SKILLS OPEN",
           venue: "HARARE, ZIMBABWE",
           pot: "$500",

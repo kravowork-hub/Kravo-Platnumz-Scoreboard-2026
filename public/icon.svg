@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <!-- Gold Border Accent -->
+  <rect x="16" y="16" width="480" height="480" rx="96" stroke="url(#goldGrad)" stroke-width="8" stroke-opacity="0.8"/>
+  
+  <!-- Stylized KP Monogram -->
+  <g transform="translate(100, 110) scale(8.8)">
+    <path d="M4 3H9V25H4V3Z" fill="url(#goldGrad)" />
+    <path d="M9 13.5L18 3H24.5L14 14.5L24.5 25H18L9 15.5" fill="url(#goldGrad)" />
+    <path d="M21 3H29C32.866 3 36 6.134 36 10C36 13.866 32.866 17 29 17H21V12.5H28C29.38 12.5 30.5 11.38 30.5 10C30.5 8.62 29.38 7.5 28 7.5H21V3Z" fill="url(#goldGrad)" />
+  </g>
+
+  <!-- 8-ball / cuesport accent -->
+  <circle cx="256" cy="400" r="32" fill="#000000" stroke="#ffc800" stroke-width="4"/>
+  <circle cx="256" cy="400" r="14" fill="#ffffff"/>
+  <text x="256" y="405" font-family="Arial, sans-serif" font-weight="900" font-size="14" fill="#000000" text-anchor="middle">8</text>
+
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#05132d"/>
+      <stop offset="0.5" stop-color="#0053d1"/>
+      <stop offset="1" stop-color="#020817"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="36" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE885"/>
+      <stop offset="0.5" stop-color="#FFC800"/>
+      <stop offset="1" stop-color="#C59615"/>
+    </linearGradient>
+  </defs>
+</svg>

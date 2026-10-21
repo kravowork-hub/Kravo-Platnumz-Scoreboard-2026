@@ -134,6 +134,54 @@ async function startServer() {
     }
   });
 
+  // Linux Mint Installation Script with dynamic origin injection
+  app.get('/install-linux-mint.sh', async (req, res) => {
+    try {
+      const fs = await import('fs/promises');
+      const scriptPath = path.join(__dirname, 'public', 'install-linux-mint.sh');
+      let scriptContent = await fs.readFile(scriptPath, 'utf-8');
+      
+      const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+      const host = req.headers.host || 'localhost:3000';
+      const currentOrigin = `${proto}://${host}`;
+
+      scriptContent = scriptContent.replace(
+        /DEFAULT_URL="[^"]*"/,
+        `DEFAULT_URL="${currentOrigin}"`
+      );
+
+      res.setHeader('Content-Type', 'text/x-shellscript; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="install-linux-mint.sh"');
+      res.send(scriptContent);
+    } catch (e: any) {
+      res.status(500).send(`echo "Error generating Linux Mint installer: ${e.message}"`);
+    }
+  });
+
+  // Linux Mint Desktop Entry Launcher with dynamic origin injection
+  app.get('/platnumz-scoreboard.desktop', async (req, res) => {
+    try {
+      const fs = await import('fs/promises');
+      const desktopPath = path.join(__dirname, 'public', 'platnumz-scoreboard.desktop');
+      let desktopContent = await fs.readFile(desktopPath, 'utf-8');
+
+      const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+      const host = req.headers.host || 'localhost:3000';
+      const currentOrigin = `${proto}://${host}`;
+
+      desktopContent = desktopContent.replace(
+        /https:\/\/ais-dev-yxnie2e36phjg3qeo7atdj-703565137561\.europe-west2\.run\.app/g,
+        currentOrigin
+      );
+
+      res.setHeader('Content-Type', 'application/x-desktop; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="platnumz-scoreboard.desktop"');
+      res.send(desktopContent);
+    } catch (e: any) {
+      res.status(500).send(`Error generating desktop entry: ${e.message}`);
+    }
+  });
+
   // Export files as text payload API
   app.get('/api/repo-files', async (_req, res) => {
     try {
@@ -142,12 +190,17 @@ async function startServer() {
       const indexContent = await fs.readFile(path.join(repoPath, 'index.html'), 'utf-8');
       const overlayContent = await fs.readFile(path.join(repoPath, 'overlay.html'), 'utf-8');
       const readmeContent = await fs.readFile(path.join(repoPath, 'README.md'), 'utf-8');
+      let installScriptContent = '';
+      try {
+        installScriptContent = await fs.readFile(path.join(__dirname, 'public', 'install-linux-mint.sh'), 'utf-8');
+      } catch (err) {}
       res.json({
         success: true,
         files: {
           'index.html': indexContent,
           'overlay.html': overlayContent,
-          'README.md': readmeContent
+          'README.md': readmeContent,
+          'install-linux-mint.sh': installScriptContent
         }
       });
     } catch (e: any) {
@@ -155,9 +208,12 @@ async function startServer() {
     }
   });
 
-  // Mount Vite dev server
+  // Mount Vite dev server with HMR disabled (disabled in AI Studio environment)
   const vite = await createViteServer({
-    server: { middlewareMode: true },
+    server: {
+      middlewareMode: true,
+      hmr: false,
+    },
     appType: 'spa',
   });
   app.use(vite.middlewares);
