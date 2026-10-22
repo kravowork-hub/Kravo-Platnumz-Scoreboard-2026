@@ -15,25 +15,66 @@ async function startServer() {
   // Serve static files from public
   app.use(express.static(path.join(__dirname, 'public')));
 
-  // Real-time synchronization memory hub
+  // Real-time synchronization memory hub with disk persistence
   const roomStates = new Map<string, any>();
   const roomListeners = new Map<string, Set<express.Response>>();
+  const STATE_FILE = path.join(__dirname, '.match-state.json');
 
-  // Default state matching reference image
-  roomStates.set('platnumz-live-match', {
-    name1: 'CHAIRMAN TINDO',
-    name2: 'BOSS OWIZA',
-    score1: 2,
-    score2: 1,
-    raceTo: 3,
-    flag1: '🇿🇼',
-    flag2: '🇿🇼',
-    tournament: 'PLATINUM SKILLS OPEN',
-    venue: 'HARARE, ZIMBABWE',
-    pot: '$500',
-    brand: 'KRAVO PLATNUMZ OFFICIAL',
-    updatedAt: Date.now()
-  });
+  // Load persisted rooms from disk if available
+  try {
+    const fs = await import('fs/promises');
+    const raw = await fs.readFile(STATE_FILE, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      Object.entries(parsed).forEach(([k, v]) => {
+        roomStates.set(k, v);
+      });
+      console.log('Loaded persisted match states from disk:', Object.keys(parsed));
+    }
+  } catch (e) {
+    // File not found or invalid on first start
+  }
+
+  // If default room has not been loaded from disk, set with initial baseline updatedAt: 1
+  // so any client-entered details with real timestamps take immediate priority
+  if (!roomStates.has('platnumz-live-match')) {
+    roomStates.set('platnumz-live-match', {
+      name1: 'CHAIRMAN TINDO',
+      name2: 'BOSS OWIZA',
+      score1: 2,
+      score2: 1,
+      br1: 0,
+      br2: 0,
+      raceTo: 3,
+      flag1: '🇿🇼',
+      flag2: '🇿🇼',
+      tournament: 'PLATINUM SKILLS OPEN',
+      venue: 'HARARE, ZIMBABWE',
+      pot: '$500',
+      brand: 'KRAVO PLATNUMZ OFFICIAL',
+      room: 'platnumz-live-match',
+      overlayPosition: 'bottom',
+      updatedAt: 1
+    });
+  }
+
+  // Debounced persistence helper to write state to disk
+  let saveTimeout: NodeJS.Timeout | null = null;
+  const persistStates = () => {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      try {
+        const fs = await import('fs/promises');
+        const obj: Record<string, any> = {};
+        roomStates.forEach((val, key) => {
+          obj[key] = val;
+        });
+        await fs.writeFile(STATE_FILE, JSON.stringify(obj, null, 2), 'utf-8');
+      } catch (err) {
+        console.error('Failed to write match-state.json:', err);
+      }
+    }, 200);
+  };
 
   // Get current state of a room
   app.get('/api/sync/:room', (req, res) => {
@@ -45,20 +86,34 @@ async function startServer() {
   // Publish state update to a room
   app.post('/api/sync/:room', (req, res) => {
     const room = req.params.room || 'platnumz-live-match';
-    const newState = req.body;
-    if (newState && typeof newState === 'object') {
-      roomStates.set(room, newState);
-      const listeners = roomListeners.get(room);
-      if (listeners) {
-        const payload = `data: ${JSON.stringify(newState)}\n\n`;
-        listeners.forEach((clientRes) => {
-          try {
-            clientRes.write(payload);
-          } catch (err) {}
-        });
+    const incoming = req.body;
+    if (incoming && typeof incoming === 'object') {
+      const existing = roomStates.get(room) || {};
+      const incomingTime = Number(incoming.updatedAt) || 0;
+      const existingTime = Number(existing.updatedAt) || 0;
+
+      // Only update if incoming is newer or equal, or if existing is baseline (<= 1)
+      if (incomingTime >= existingTime || existingTime <= 1) {
+        const merged = {
+          ...existing,
+          ...incoming,
+          updatedAt: incomingTime > 0 ? incomingTime : Date.now()
+        };
+        roomStates.set(room, merged);
+        persistStates();
+
+        const listeners = roomListeners.get(room);
+        if (listeners) {
+          const payload = `data: ${JSON.stringify(merged)}\n\n`;
+          listeners.forEach((clientRes) => {
+            try {
+              clientRes.write(payload);
+            } catch (err) {}
+          });
+        }
       }
     }
-    res.json({ success: true });
+    res.json({ success: true, state: roomStates.get(room) });
   });
 
   // Real-time Server-Sent Events stream for instant OBS overlay updates

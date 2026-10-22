@@ -17,16 +17,76 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <script>
-      window.addEventListener('error', function(e) {
-        if (e && e.message && (e.message.includes('WebSocket') || e.message.includes('vite') || e.message.includes('closed without opened'))) {
-          e.stopImmediatePropagation();
+      (function() {
+        // AI Studio Environment: HMR WebSocket is disabled. Intercept vite-hmr to prevent "WebSocket closed without opened" errors.
+        var RealWebSocket = window.WebSocket;
+        if (RealWebSocket) {
+          window.WebSocket = function(url, protocols) {
+            var isViteHmr = (protocols === 'vite-hmr' || protocols === 'vite-ping' || (Array.isArray(protocols) && (protocols.indexOf('vite-hmr') !== -1 || protocols.indexOf('vite-ping') !== -1)));
+            if (isViteHmr) {
+              var emitter = new EventTarget();
+              emitter.readyState = 1; // OPEN
+              emitter.url = url;
+              emitter.protocol = Array.isArray(protocols) ? protocols[0] : (protocols || '');
+              emitter.send = function() {};
+              emitter.close = function() {
+                emitter.readyState = 3;
+                var evt = new Event('close');
+                evt.wasClean = true;
+                evt.code = 1000;
+                emitter.dispatchEvent(evt);
+              };
+              setTimeout(function() {
+                if (emitter.readyState === 1) {
+                  var evt = new Event('open');
+                  if (typeof emitter.onopen === 'function') emitter.onopen(evt);
+                  emitter.dispatchEvent(evt);
+                }
+              }, 0);
+              return emitter;
+            }
+            return new RealWebSocket(url, protocols);
+          };
+          window.WebSocket.prototype = RealWebSocket.prototype;
+          window.WebSocket.CONNECTING = 0;
+          window.WebSocket.OPEN = 1;
+          window.WebSocket.CLOSING = 2;
+          window.WebSocket.CLOSED = 3;
         }
-      });
-      window.addEventListener('unhandledrejection', function(e) {
-        if (e && e.reason && typeof e.reason.message === 'string' && e.reason.message.includes('WebSocket')) {
-          e.preventDefault();
-        }
-      });
+
+        window.addEventListener('error', function(e) {
+          if (e && (
+            (e.message && (e.message.includes('WebSocket') || e.message.includes('vite') || e.message.includes('closed without opened'))) ||
+            (e.filename && e.filename.includes('@vite/client'))
+          )) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(e) {
+          if (e && e.reason && (
+            (typeof e.reason.message === 'string' && (e.reason.message.includes('WebSocket') || e.reason.message.includes('vite'))) ||
+            (typeof e.reason === 'string' && e.reason.includes('WebSocket'))
+          )) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+        }, true);
+
+        var origError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          if (args.some(function(a) {
+            return (typeof a === 'string' && (a.indexOf('WebSocket') !== -1 || a.indexOf('[vite]') !== -1)) ||
+                   (a instanceof Error && a.message && a.message.indexOf('WebSocket') !== -1);
+          })) {
+            return;
+          }
+          origError.apply(console, args);
+        };
+      })();
     </script>
   </head>
   <body>

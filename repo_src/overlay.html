@@ -11,9 +11,10 @@
       --gold: #ffc800;
       --gold-dark: #b8860b;
       --cyan-glow: #00e5ff;
-      --blue-start: #006ef6;
-      --blue-mid: #0053d1;
-      --blue-end: #003db3;
+      --blue-start: #0066f6;
+      --blue-mid: #004ecc;
+      --blue-end: #003699;
+      --bg-dark: rgba(9, 13, 22, 0.96);
       --font-family: Arial, Helvetica, "Segoe UI", Roboto, sans-serif;
     }
 
@@ -39,15 +40,21 @@
       background: transparent;
     }
 
+    /* COMPACT HORIZONTAL BROADCAST OVERLAY WRAPPER (Matching Reference Image) */
     #overlay-wrapper {
       position: absolute;
-      left: 0;
-      right: 0;
+      left: 50%;
+      transform: translateX(-50%);
       bottom: 24px;
-      width: 100%;
-      max-width: 1920px;
+      width: calc(100% - 96px);
+      max-width: 1360px;
       margin: 0 auto;
-      filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.8));
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.88), 0 0 0 1px rgba(255, 255, 255, 0.16);
+      background: var(--bg-dark);
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
     }
 
     body.pos-top #overlay-wrapper {
@@ -56,133 +63,87 @@
     }
 
     /* ==========================================================
-       MAIN TOP SCORE BAR
-       Names & Scores have 1st Priority
+       1. MAIN TOP SCOREBOARD (Compact, Thinner, High-Contrast)
        ========================================================== */
     .score-bar {
       position: relative;
       width: 100%;
-      min-height: 96px;
-      background: linear-gradient(180deg, var(--blue-start) 0%, var(--blue-mid) 50%, var(--blue-end) 100%);
+      min-height: 56px;
+      height: 58px;
+      background: linear-gradient(180deg, #141b2b 0%, #0a0f1a 100%);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
-      overflow: hidden;
-      border-top: 1.5px solid rgba(255, 255, 255, 0.3);
+      padding: 0 18px;
+      gap: 14px;
     }
 
-    /* Corner Wings */
-    .corner-wing-left {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 32px;
-      background: linear-gradient(135deg, #003685 0%, #001f52 100%);
-      clip-path: polygon(0 0, 100% 0, 0 100%);
-      pointer-events: none;
-    }
-    .corner-gold-left {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 22px;
-      height: 22px;
-      background: linear-gradient(135deg, #ffe072 0%, #c59615 100%);
-      clip-path: polygon(0 0, 100% 0, 0 100%);
-      z-index: 2;
-    }
-
-    .corner-wing-right {
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 32px;
-      background: linear-gradient(225deg, #003685 0%, #001f52 100%);
-      clip-path: polygon(0 0, 100% 0, 100% 100%);
-      pointer-events: none;
-    }
-    .corner-gold-right {
-      position: absolute;
-      right: 0;
-      top: 0;
-      width: 22px;
-      height: 22px;
-      background: linear-gradient(225deg, #ffe072 0%, #c59615 100%);
-      clip-path: polygon(0 0, 100% 0, 100% 100%);
-      z-index: 2;
-    }
-
-    /* Player 1 Section (Left-to-Right: Flag -> Name -> Score) */
+    /* PLAYER 1 SECTION (Left: Flag -> Name -> Score Box) */
     .player-zone-1 {
       flex: 1;
       min-width: 0;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-right: 20px;
+      justify-content: flex-start;
+      gap: 12px;
     }
 
-    .player-1-left {
+    .player-1-info {
       display: flex;
       align-items: center;
-      gap: 16px;
-      flex: 1;
+      gap: 8px;
       min-width: 0;
+      flex: 1;
     }
 
-    /* Player 2 Section (Left-to-Right: Score -> Name -> Flag) */
+    /* PLAYER 2 SECTION (Right: Score Box -> Name -> Flag) */
     .player-zone-2 {
       flex: 1;
       min-width: 0;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-left: 20px;
+      justify-content: flex-end;
+      gap: 12px;
     }
 
-    .player-2-right {
+    .player-2-info {
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 16px;
-      flex: 1;
+      gap: 8px;
       min-width: 0;
+      flex: 1;
     }
 
-    /* All Country Flags (Uniform High-Res Styling for Zimbabwe & All Nations) */
+    /* ALL COUNTRY FLAGS (Sharp & Correctly Proportioned) */
     .flag-box {
       flex-shrink: 0;
-      width: 58px;
-      height: 38px;
-      border-radius: 6px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1.5px solid rgba(255, 255, 255, 0.28);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+      width: 44px;
+      height: 29px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       position: relative;
     }
+
     .flag-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
     }
+
     .flag-display {
-      font-size: 30px;
+      font-size: 24px;
       line-height: 1;
-      font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
-      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
       display: none;
     }
+
     .avatar-photo {
       width: 100%;
       height: 100%;
@@ -190,226 +151,207 @@
       display: none;
     }
 
-    /* Player Names: 1st Priority High Prominence */
-    .player-info-col {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      flex: 1;
-    }
-    .player-2-right .player-info-col {
-      align-items: flex-end;
-    }
-
+    /* PLAYER NAMES: Large, Bold, Prominently Legible */
     .player-name {
-      font-size: clamp(22px, 2.5vw, 42px);
-      font-weight: 900;
+      font-size: clamp(17px, 1.55vw, 24px);
+      font-weight: 800;
       color: #ffffff;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+      letter-spacing: 0.6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      min-width: 0;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
     }
 
-    /* Break and Run Badge */
+    .player-2-info .player-name {
+      text-align: right;
+    }
+
+    /* BREAK & RUN BADGES */
     .br-badge {
       display: none;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       background: linear-gradient(135deg, #ffd700, #ff9900);
       color: #0b111c;
-      padding: 1px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 1000;
-      letter-spacing: 0.8px;
-      margin-top: 2px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-      width: fit-content;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    /* Scores: 1st Priority High Prominence */
-    .player-score {
-      font-size: clamp(52px, 5.2vw, 82px);
+    /* PLAYER SCORES (High-Contrast White Boxes matching Reference Image) */
+    .score-box {
+      background: #ffffff;
+      color: #090e18;
+      min-width: 64px;
+      height: 42px;
+      padding: 0 10px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(26px, 2.3vw, 34px);
       font-weight: 900;
-      color: #ffffff;
-      line-height: 1;
-      min-width: 65px;
-      text-align: center;
       font-variant-numeric: tabular-nums;
-      text-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.15), 0 3px 8px rgba(0, 0, 0, 0.45);
       flex-shrink: 0;
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .player-score.bump {
-      transform: scale(1.25);
-      color: #fff8cb;
+
+    .score-box.bump {
+      transform: scale(1.18);
+      background: #fff8cb;
     }
 
-    /* Center Pill ("RACE TO 3"): Compact */
+    /* ==========================================================
+       2. CENTRAL MATCH INFORMATION — PRESERVE "RACE TO"
+       (Cobalt Blue Broadcast Capsule matching Reference Image)
+       ========================================================== */
     .center-capsule-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      padding: 0 14px;
+      padding: 0 4px;
       position: relative;
       z-index: 10;
     }
 
     .race-capsule {
-      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 6px 28px;
-      border-radius: 9999px;
-      background: linear-gradient(180deg, #ffc800 0%, #ffa500 50%, #ee7d00 100%);
-      border: 3px solid #d48b00;
-      box-shadow: 0 0 0 3.5px #faebbe, 0 4px 14px rgba(0, 0, 0, 0.45);
+      padding: 0 20px;
+      height: 42px;
+      border-radius: 5px;
+      background: linear-gradient(180deg, var(--blue-start) 0%, var(--blue-mid) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      box-shadow: 0 2px 8px rgba(0, 78, 204, 0.45);
       white-space: nowrap;
     }
 
     .race-text {
-      font-size: clamp(14px, 1.35vw, 21px);
-      font-weight: 1000;
-      color: #11151c;
-      letter-spacing: 1px;
+      font-size: clamp(13px, 1.15vw, 16px);
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      line-height: 1.1;
     }
 
+    /* Hill-Hill Deciding Frame Alert */
     .hill-hill-badge {
       display: none;
       position: absolute;
-      top: -15px;
+      top: -13px;
       background: #e61937;
       color: #ffffff;
-      padding: 2px 10px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 1000;
-      letter-spacing: 1.5px;
+      padding: 1px 8px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
       animation: pulseHill 0.9s infinite alternate;
+      white-space: nowrap;
     }
     @keyframes pulseHill {
       from { transform: scale(0.96); filter: drop-shadow(0 0 4px #ff0055); }
-      to { transform: scale(1.04); filter: drop-shadow(0 0 10px #ff0055); }
+      to { transform: scale(1.04); filter: drop-shadow(0 0 8px #ff0055); }
     }
 
     /* ==========================================================
-       NEON CYAN DIVIDER LINE
-       ========================================================== */
-    .neon-cyan-divider {
-      width: 100%;
-      height: 3px;
-      background: linear-gradient(90deg, #00b0ff 0%, #00f0ff 25%, #00ffff 50%, #00f0ff 75%, #00b0ff 100%);
-      box-shadow: 0 0 8px #00e5ff, 0 0 16px rgba(0, 229, 255, 0.6);
-      position: relative;
-      z-index: 5;
-    }
-
-    /* ==========================================================
-       BOTTOM INFORMATION / TICKER BAR
+       3. NEW DEDICATED BOTTOM INFORMATION BAR
+       Single horizontal row: VENUE | TOURNAMENT | POT | BRAND
        ========================================================== */
     .bottom-ticker-bar {
       position: relative;
       width: 100%;
-      min-height: 36px;
-      background: linear-gradient(180deg, #031842 0%, #020f2b 100%);
+      min-height: 32px;
+      height: 34px;
+      background: rgba(5, 8, 15, 0.98);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 5px 36px;
-      overflow: hidden;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .ticker-wing-left {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 34px;
-      background: linear-gradient(135deg, #e5b839 0%, #b8860b 100%);
-      clip-path: polygon(0 0, 100% 0, 0 100%);
-      pointer-events: none;
-    }
-    .ticker-wing-right {
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 34px;
-      background: linear-gradient(225deg, #e5b839 0%, #b8860b 100%);
-      clip-path: polygon(0 0, 100% 0, 100% 100%);
-      pointer-events: none;
+      padding: 0 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .ticker-content {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 20px;
+      justify-content: space-between;
       width: 100%;
-      font-size: clamp(10.5px, 1.05vw, 15px);
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      font-size: clamp(10.5px, 0.95vw, 13px);
+      font-weight: 700;
+      letter-spacing: 0.5px;
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
+      gap: 12px;
     }
 
     .ticker-group {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .ticker-label {
       color: var(--gold);
       font-weight: 900;
       letter-spacing: 0.8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      flex-shrink: 0;
     }
 
     .ticker-val {
       color: #ffffff;
-      font-weight: 800;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .ticker-divider {
-      color: #ffffff;
-      opacity: 0.65;
+      color: rgba(255, 255, 255, 0.32);
       font-weight: 300;
-      margin: 0 2px;
+      flex-shrink: 0;
     }
 
     .brand-group {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       color: var(--gold);
-      font-weight: 1000;
+      font-weight: 900;
       letter-spacing: 0.8px;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      margin-left: auto;
+      flex-shrink: 0;
     }
 
     .kp-logo-icon {
-      width: 24px;
-      height: 18px;
+      width: 19px;
+      height: 15px;
       display: inline-block;
       vertical-align: middle;
       filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+      flex-shrink: 0;
     }
 
-    /* Winner celebration */
+    /* WINNER CELEBRATION MODAL */
     #winner-banner {
       display: none;
       position: absolute;
@@ -454,26 +396,23 @@
   <main id="canvas">
     <div id="overlay-wrapper">
 
-      <!-- MAIN TOP SCORE BAR -->
+      <!-- 1. MAIN TOP SCOREBOARD -->
       <section class="score-bar" aria-label="Platnumz Pool match scoreboard">
-        <div class="corner-wing-left"></div>
-        <div class="corner-gold-left"></div>
 
-        <!-- PLAYER 1 ZONE (Left) -->
+        <!-- PLAYER 1 ZONE (Left: Flag -> Name & B&R -> Score) -->
         <div class="player-zone-1">
-          <div class="player-1-left">
-            <div class="flag-box">
-              <img id="flagImg1" class="flag-img" alt="P1 Flag" />
-              <span id="flagDisplay1" class="flag-display">🇿🇼</span>
-              <img id="avatarImg1" class="avatar-photo" alt="P1 Avatar" />
-            </div>
-            <div class="player-info-col">
-              <div id="name1" class="player-name">CHAIRMAN TINDO</div>
-              <div id="brBadge1" class="br-badge">B&R: <span id="brVal1">0</span></div>
-            </div>
+          <div class="flag-box">
+            <img id="flagImg1" class="flag-img" alt="P1 Flag" />
+            <span id="flagDisplay1" class="flag-display">🇿🇼</span>
+            <img id="avatarImg1" class="avatar-photo" alt="P1 Avatar" />
           </div>
 
-          <div id="score1" class="player-score">2</div>
+          <div class="player-1-info">
+            <div id="name1" class="player-name">CHAIRMAN TINDO</div>
+            <div id="brBadge1" class="br-badge">🔥 B&R: <span id="brVal1">0</span></div>
+          </div>
+
+          <div id="score1" class="score-box">2</div>
         </div>
 
         <!-- CENTER RACE-TO CAPSULE -->
@@ -484,45 +423,37 @@
           </div>
         </div>
 
-        <!-- PLAYER 2 ZONE (Right) -->
+        <!-- PLAYER 2 ZONE (Right: Score -> Name & B&R -> Flag) -->
         <div class="player-zone-2">
-          <div id="score2" class="player-score">1</div>
+          <div id="score2" class="score-box">1</div>
 
-          <div class="player-2-right">
-            <div class="player-info-col">
-              <div id="name2" class="player-name">BOSS OWIZA</div>
-              <div id="brBadge2" class="br-badge">B&R: <span id="brVal2">0</span></div>
-            </div>
-            <div class="flag-box">
-              <img id="flagImg2" class="flag-img" alt="P2 Flag" />
-              <span id="flagDisplay2" class="flag-display">🇿🇼</span>
-              <img id="avatarImg2" class="avatar-photo" alt="P2 Avatar" />
-            </div>
+          <div class="player-2-info">
+            <div id="brBadge2" class="br-badge">🔥 B&R: <span id="brVal2">0</span></div>
+            <div id="name2" class="player-name">BOSS OWIZA</div>
+          </div>
+
+          <div class="flag-box">
+            <img id="flagImg2" class="flag-img" alt="P2 Flag" />
+            <span id="flagDisplay2" class="flag-display">🇿🇼</span>
+            <img id="avatarImg2" class="avatar-photo" alt="P2 Avatar" />
           </div>
         </div>
 
-        <div class="corner-wing-right"></div>
-        <div class="corner-gold-right"></div>
       </section>
 
-      <!-- NEON CYAN DIVIDER LINE -->
-      <div class="neon-cyan-divider"></div>
-
-      <!-- BOTTOM INFORMATION / TICKER BAR -->
+      <!-- 2. DEDICATED BOTTOM INFORMATION BAR -->
       <section class="bottom-ticker-bar" aria-label="Match information">
-        <div class="ticker-wing-left"></div>
-
         <div class="ticker-content">
           <div class="ticker-group">
-            <span class="ticker-label">TOURNAMENT:</span>
-            <span id="tournament" class="ticker-val">PLATINUM SKILLS OPEN</span>
+            <span class="ticker-label">VENUE:</span>
+            <span id="venue" class="ticker-val">HARARE, ZIMBABWE</span>
           </div>
 
           <span class="ticker-divider">|</span>
 
           <div class="ticker-group">
-            <span class="ticker-label">VENUE:</span>
-            <span id="venue" class="ticker-val">HARARE, ZIMBABWE</span>
+            <span class="ticker-label">TOURNAMENT:</span>
+            <span id="tournament" class="ticker-val">PLATINUM SKILLS OPEN</span>
           </div>
 
           <span class="ticker-divider">|</span>
@@ -550,8 +481,6 @@
             <span id="brand">KRAVO PLATNUMZ OFFICIAL</span>
           </div>
         </div>
-
-        <div class="ticker-wing-right"></div>
       </section>
 
     </div>
@@ -575,10 +504,21 @@
     const $ = id => document.getElementById(id);
     let lastScore1 = 2;
     let lastScore2 = 1;
+    let lastUpdatedAt = 0;
 
     function safeScore(value) {
       const n = Number(value);
       return Number.isFinite(n) ? Math.max(0, Math.min(999, Math.floor(n))) : 0;
+    }
+
+    function setText(id, value, fallback) {
+      const el = $(id);
+      if (!el) return;
+      if (value !== undefined && value !== null && String(value).trim() !== "") {
+        el.textContent = String(value);
+      } else {
+        el.textContent = fallback || "";
+      }
     }
 
     function getIsoCode(flag) {
@@ -643,8 +583,8 @@
       setText("score2", s2, "1");
       setText("raceText", "RACE TO " + race, "RACE TO 3");
 
-      setText("tournament", state.tournament, "PLATINUM SKILLS OPEN");
       setText("venue", state.venue, "HARARE, ZIMBABWE");
+      setText("tournament", state.tournament, "PLATINUM SKILLS OPEN");
       setText("pot", state.pot, "$500");
       setText("brand", state.brand, "KRAVO PLATNUMZ OFFICIAL");
 
@@ -687,6 +627,22 @@
       }
     }
 
+    function handleIncomingState(data) {
+      if (!data || typeof data !== "object") return;
+      const incomingTime = Number(data.updatedAt) || 0;
+      // Do not overwrite newer local user details with older baseline/default server state
+      if (lastUpdatedAt > incomingTime && incomingTime > 1) {
+        return;
+      }
+      if (incomingTime > 0) {
+        lastUpdatedAt = incomingTime;
+      }
+      try {
+        localStorage.setItem("platnumz-scoreboard-state", JSON.stringify(data));
+      } catch (e) {}
+      renderScoreboard(data);
+    }
+
     function triggerScoreBump(id) {
       const el = $(id);
       if (!el) return;
@@ -702,7 +658,7 @@
           if (event.data) {
             try {
               const data = JSON.parse(event.data);
-              renderScoreboard(data);
+              handleIncomingState(data);
             } catch (err) {}
           }
         };
@@ -718,7 +674,7 @@
     fetch('/api/sync/' + encodeURIComponent(room))
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.state) renderScoreboard(data.state);
+        if (data.success && data.state) handleIncomingState(data.state);
       })
       .catch(() => {});
 
@@ -727,7 +683,7 @@
       const channel = new BroadcastChannel("platnumz_scoreboard_bus");
       channel.onmessage = (event) => {
         if (event.data && typeof event.data === "object") {
-          renderScoreboard(event.data);
+          handleIncomingState(event.data);
         }
       };
     } catch (e) {}
@@ -736,7 +692,7 @@
     window.addEventListener("storage", (e) => {
       if (e.key === "platnumz-scoreboard-state" && e.newValue) {
         try {
-          renderScoreboard(JSON.parse(e.newValue));
+          handleIncomingState(JSON.parse(e.newValue));
         } catch (err) {}
       }
     });
@@ -745,7 +701,11 @@
     try {
       const saved = localStorage.getItem("platnumz-scoreboard-state");
       if (saved) {
-        renderScoreboard(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          lastUpdatedAt = Number(parsed.updatedAt) || 0;
+          renderScoreboard(parsed);
+        }
       } else {
         renderScoreboard({
           name1: "CHAIRMAN TINDO",
@@ -760,7 +720,8 @@
           tournament: "PLATINUM SKILLS OPEN",
           venue: "HARARE, ZIMBABWE",
           pot: "$500",
-          brand: "KRAVO PLATNUMZ OFFICIAL"
+          brand: "KRAVO PLATNUMZ OFFICIAL",
+          updatedAt: 1
         });
       }
     } catch (e) {}

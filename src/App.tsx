@@ -25,7 +25,10 @@ import {
   X,
   Share2,
   Search,
-  Sparkles
+  Sparkles,
+  Terminal,
+  Monitor,
+  FolderDown
 } from 'lucide-react';
 import { usePWAInstall } from './usePWAInstall';
 import { WORLD_COUNTRIES, Country, getCountryCode, getFlagEmoji } from './countries';
@@ -48,6 +51,7 @@ export interface ScoreState {
   pot: string;
   brand: string;
   room: string;
+  overlayPosition?: 'bottom' | 'top';
   updatedAt: number;
 }
 
@@ -59,32 +63,37 @@ export default function App() {
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
-  // Core state initialized to match reference image
+  // Core state initialized from permanent localStorage, retaining last entered details
   const [state, setState] = useState<ScoreState>(() => {
     try {
       const saved = localStorage.getItem('platnumz-scoreboard-state');
       if (saved) {
-        return {
-          name1: 'CHAIRMAN TINDO',
-          name2: 'BOSS OWIZA',
-          flag1: '🇿🇼',
-          flag2: '🇿🇼',
-          score1: 2,
-          score2: 1,
-          br1: 0,
-          br2: 0,
-          raceTo: 3,
-          tournament: 'PLATINUM SKILLS OPEN',
-          venue: 'HARARE, ZIMBABWE',
-          pot: '$500',
-          brand: 'KRAVO PLATNUMZ OFFICIAL',
-          room: 'platnumz-live-match',
-          updatedAt: Date.now(),
-          ...JSON.parse(saved)
-        };
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            name1: 'CHAIRMAN TINDO',
+            name2: 'BOSS OWIZA',
+            flag1: '🇿🇼',
+            flag2: '🇿🇼',
+            score1: 2,
+            score2: 1,
+            br1: 0,
+            br2: 0,
+            raceTo: 3,
+            tournament: 'PLATINUM SKILLS OPEN',
+            venue: 'HARARE, ZIMBABWE',
+            pot: '$500',
+            brand: 'KRAVO PLATNUMZ OFFICIAL',
+            room: 'platnumz-live-match',
+            overlayPosition: 'bottom',
+            updatedAt: 1,
+            ...parsed
+          };
+        }
       }
     } catch (e) {}
 
+    // Factory baseline if brand new installation
     return {
       name1: 'CHAIRMAN TINDO',
       name2: 'BOSS OWIZA',
@@ -100,7 +109,8 @@ export default function App() {
       pot: '$500',
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: 'platnumz-live-match',
-      updatedAt: Date.now()
+      overlayPosition: 'bottom',
+      updatedAt: 1
     };
   });
 
@@ -195,37 +205,67 @@ export default function App() {
 
   // REAL-TIME MULTI-CHANNEL SYNC
   const syncState = useCallback((newState: ScoreState) => {
-    setState(newState);
+    const withTimestamp = {
+      ...newState,
+      updatedAt: newState.updatedAt && newState.updatedAt > 1 ? newState.updatedAt : Date.now()
+    };
+    setState(withTimestamp);
     setSyncStatus('syncing');
 
-    // 1. BroadcastChannel (Local tab sync)
+    // 1. Permanent LocalStorage
     try {
-      localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(newState));
+      localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(withTimestamp));
       if (channelRef.current) {
-        channelRef.current.postMessage(newState);
+        channelRef.current.postMessage(withTimestamp);
       }
     } catch (e) {}
 
     // 2. Server API Sync (Cross-device real-time sync with SSE)
-    fetch(`/api/sync/${encodeURIComponent(newState.room || 'platnumz-live-match')}`, {
+    fetch(`/api/sync/${encodeURIComponent(withTimestamp.room || 'platnumz-live-match')}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newState)
+      body: JSON.stringify(withTimestamp)
     })
       .then(() => setSyncStatus('connected'))
       .catch(() => setSyncStatus('connected'));
   }, []);
 
+  // Guarantee that every state update persists permanently in local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(state));
+    } catch (e) {}
+  }, [state]);
+
   // Listen to incoming real-time updates from Server SSE, BroadcastChannel, and localStorage
   useEffect(() => {
     const currentRoom = state.room || 'platnumz-live-match';
 
-    // Initial server fetch
+    // Initial server fetch: compare timestamps so user-entered details are never replaced with older server defaults
     fetch(`/api/sync/${encodeURIComponent(currentRoom)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.state) {
-          setState((prev) => ({ ...prev, ...data.state }));
+          setState((prev) => {
+            const serverTime = Number(data.state.updatedAt) || 0;
+            const localTime = Number(prev.updatedAt) || 0;
+            // If local state has newer details than server (or server is baseline default <= 1):
+            if (localTime > serverTime && localTime > 1) {
+              // Local state has the latest entered details! Push to server so server & OBS overlay update!
+              fetch(`/api/sync/${encodeURIComponent(currentRoom)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(prev)
+              }).catch(() => {});
+              return prev;
+            }
+            // Server state is newer or equal: accept server state and sync to localStorage
+            const merged = { ...prev, ...data.state };
+            try {
+              localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
         }
       })
       .catch(() => {});
@@ -238,8 +278,21 @@ export default function App() {
         if (event.data) {
           try {
             const remoteState = JSON.parse(event.data);
-            setState((prev) => ({ ...prev, ...remoteState }));
-            setSyncStatus('connected');
+            if (remoteState && typeof remoteState === 'object') {
+              setState((prev) => {
+                const remoteTime = Number(remoteState.updatedAt) || 0;
+                const localTime = Number(prev.updatedAt) || 0;
+                if (localTime > remoteTime && localTime > 1) {
+                  return prev;
+                }
+                const merged = { ...prev, ...remoteState };
+                try {
+                  localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
+                } catch (e) {}
+                return merged;
+              });
+              setSyncStatus('connected');
+            }
           } catch (e) {}
         }
       };
@@ -254,7 +307,16 @@ export default function App() {
       channelRef.current = bc;
       bc.onmessage = (event) => {
         if (event.data && typeof event.data === 'object') {
-          setState((prev) => ({ ...prev, ...event.data }));
+          setState((prev) => {
+            const remoteTime = Number(event.data.updatedAt) || 0;
+            const localTime = Number(prev.updatedAt) || 0;
+            if (localTime > remoteTime && localTime > 1) return prev;
+            const merged = { ...prev, ...event.data };
+            try {
+              localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
         }
       };
     } catch (e) {}
@@ -263,7 +325,13 @@ export default function App() {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'platnumz-scoreboard-state' && e.newValue) {
         try {
-          setState((prev) => ({ ...prev, ...JSON.parse(e.newValue!) }));
+          const parsed = JSON.parse(e.newValue);
+          setState((prev) => {
+            const remoteTime = Number(parsed.updatedAt) || 0;
+            const localTime = Number(prev.updatedAt) || 0;
+            if (localTime > remoteTime && localTime > 1) return prev;
+            return { ...prev, ...parsed };
+          });
         } catch (err) {}
       }
     };
@@ -354,13 +422,37 @@ export default function App() {
   };
 
   const resetScores = () => {
-    if (!window.confirm("Reset both players' scores and Break & Run counters to zero?")) return;
+    if (!window.confirm("Reset both players' scores and Break & Run counters to zero? (Player names and match details will be kept)")) return;
     setState((prev) => {
       const updated = { ...prev, score1: 0, score2: 0, br1: 0, br2: 0, updatedAt: Date.now() };
       syncState(updated);
       showToast('Scores & Break/Run reset to 0');
       return updated;
     });
+  };
+
+  const resetToDefaults = () => {
+    if (!window.confirm("Restore default sample players ('CHAIRMAN TINDO' & 'BOSS OWIZA') and reference details? This will replace your current match entries.")) return;
+    const defaults: ScoreState = {
+      name1: 'CHAIRMAN TINDO',
+      name2: 'BOSS OWIZA',
+      flag1: '🇿🇼',
+      flag2: '🇿🇼',
+      score1: 2,
+      score2: 1,
+      br1: 0,
+      br2: 0,
+      raceTo: 3,
+      tournament: 'PLATINUM SKILLS OPEN',
+      venue: 'HARARE, ZIMBABWE',
+      pot: '$500',
+      brand: 'KRAVO PLATNUMZ OFFICIAL',
+      room: state.room || 'platnumz-live-match',
+      overlayPosition: 'bottom',
+      updatedAt: Date.now()
+    };
+    syncState(defaults);
+    showToast('Scoreboard reset to sample defaults');
   };
 
   const selectCountryForPlayer = (c: Country, player: 1 | 2) => {
@@ -418,7 +510,15 @@ export default function App() {
     }
   };
 
-  const downloadFile = (filename: 'index.html' | 'overlay.html' | 'README.md') => {
+  const downloadFile = (filename: 'index.html' | 'overlay.html' | 'README.md' | 'install-linux-mint.sh' | 'platnumz-scoreboard.desktop') => {
+    if (filename === 'install-linux-mint.sh' || filename === 'platnumz-scoreboard.desktop') {
+      const a = document.createElement('a');
+      a.href = `/${filename}`;
+      a.download = filename;
+      a.click();
+      showToast(`Downloaded ${filename}`);
+      return;
+    }
     fetch('/api/repo-files')
       .then((res) => res.json())
       .then((data) => {
@@ -634,7 +734,7 @@ export default function App() {
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Smartphone className="w-3.5 h-3.5" /> Standalone App
+            <Monitor className="w-3.5 h-3.5" /> Standalone & Linux Mint
           </button>
 
           <button
@@ -897,10 +997,60 @@ export default function App() {
             </div>
 
             {/* Match Information Form */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <h3 className="text-sm uppercase tracking-wider text-amber-400 font-black">Match Details</h3>
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-sm uppercase tracking-wider text-amber-400 font-black">Match Details & Broadcast Settings</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">All changes are continuously autosaved locally and synced to OBS broadcast overlay.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-700/50 text-[11px] font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Permanent Storage Active
+                  </span>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Venue / Host City</label>
+                  <input
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
+                    value={state.venue}
+                    onChange={(e) => {
+                      const updated = { ...state, venue: e.target.value, updatedAt: Date.now() };
+                      syncState(updated);
+                    }}
+                    placeholder="e.g. HARARE, ZIMBABWE"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Tournament Title</label>
+                  <input
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
+                    value={state.tournament}
+                    onChange={(e) => {
+                      const updated = { ...state, tournament: e.target.value, updatedAt: Date.now() };
+                      syncState(updated);
+                    }}
+                    placeholder="e.g. PLATINUM SKILLS OPEN"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Prize Pot</label>
+                  <input
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
+                    value={state.pot}
+                    onChange={(e) => {
+                      const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
+                      syncState(updated);
+                    }}
+                    placeholder="e.g. $500"
+                  />
+                </div>
+
                 <div>
                   <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Race To (Frames)</label>
                   <input
@@ -918,40 +1068,48 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Prize Pot</label>
+                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Brand / Sponsor Banner</label>
                   <input
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
-                    value={state.pot}
+                    value={state.brand}
                     onChange={(e) => {
-                      const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
+                      const updated = { ...state, brand: e.target.value, updatedAt: Date.now() };
                       syncState(updated);
                     }}
+                    placeholder="e.g. KRAVO PLATNUMZ OFFICIAL"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Tournament Title</label>
-                  <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
-                    value={state.tournament}
+                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Overlay Position</label>
+                  <select
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400 cursor-pointer"
+                    value={state.overlayPosition || 'bottom'}
                     onChange={(e) => {
-                      const updated = { ...state, tournament: e.target.value, updatedAt: Date.now() };
+                      const pos = (e.target.value === 'top' ? 'top' : 'bottom') as 'bottom' | 'top';
+                      const updated = { ...state, overlayPosition: pos, updatedAt: Date.now() };
                       syncState(updated);
                     }}
-                  />
+                  >
+                    <option value="bottom">Bottom (Standard Broadcast)</option>
+                    <option value="top">Top (Header Banner)</option>
+                  </select>
                 </div>
+              </div>
 
-                <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Venue</label>
-                  <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
-                    value={state.venue}
-                    onChange={(e) => {
-                      const updated = { ...state, venue: e.target.value, updatedAt: Date.now() };
-                      syncState(updated);
-                    }}
-                  />
-                </div>
+              {/* Reset to Factory Defaults Footer */}
+              <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-[11px] text-slate-400">
+                  Entered details stay saved even when refreshing the browser or restarting the computer.
+                </span>
+                <button
+                  type="button"
+                  onClick={resetToDefaults}
+                  className="px-3.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs font-semibold border border-slate-700/60 transition"
+                  title="Restore default Chairman Tindo vs Boss Owiza reference match"
+                >
+                  Restore Sample Defaults
+                </button>
               </div>
             </div>
           </div>
@@ -1092,17 +1250,151 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 4: STANDALONE APP INSTALL HUB */}
+        {/* TAB 4: STANDALONE APP & LINUX MINT INSTALL HUB */}
         {activeTab === 'install' && (
           <div className="max-w-3xl mx-auto space-y-6">
+
+            {/* LINUX MINT SPECIALTY CARD */}
+            <div className="bg-gradient-to-b from-slate-900 via-emerald-950/20 to-slate-900 border-2 border-emerald-500/40 rounded-2xl p-6 space-y-5 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-600 to-teal-800 flex items-center justify-center font-black text-slate-950 text-2xl shadow-lg shadow-emerald-500/20">
+                    🌿
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-black text-white">Linux Mint Desktop Installation</h3>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+                        CINNAMON · MATE · XFCE
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Native desktop launcher, Cinnamon start menu entry, and transparent OBS Studio integration.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => downloadFile('install-linux-mint.sh')}
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-md transition flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download install.sh
+                </button>
+              </div>
+
+              {/* METHOD 1: 1-Line Terminal Command */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                    <Terminal className="w-4 h-4 text-emerald-400" /> Method 1: Instant Terminal Command (Recommended)
+                  </span>
+                  <button
+                    onClick={() => {
+                      const cmd = `curl -sSL ${window.location.origin}/install-linux-mint.sh | bash`;
+                      navigator.clipboard.writeText(cmd);
+                      showToast('Copied Linux Mint Install Command!');
+                    }}
+                    className="text-[11px] font-bold text-amber-300 hover:text-white bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition active:scale-95"
+                  >
+                    <Copy className="w-3 h-3" /> Copy Command
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-300">
+                  Open your terminal on Linux Mint (<kbd className="bg-slate-900 px-1.5 py-0.5 rounded font-mono text-amber-300 text-[11px]">Ctrl+Alt+T</kbd>) and paste:
+                </p>
+
+                <div className="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-3 font-mono text-xs text-emerald-300 break-all select-all flex items-center justify-between gap-2 shadow-inner">
+                  <code>curl -sSL {typeof window !== 'undefined' ? window.location.origin : 'https://...'}/install-linux-mint.sh | bash</code>
+                </div>
+
+                <div className="text-[11px] text-slate-400 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Creates Desktop & Mint Menu icons</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Enables Cinnamon Desktop Trust permission</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Downloads 512×512 HD application logo</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Right-click menu: Controller & OBS Overlay</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* METHOD 2: Linux Mint Web App Manager */}
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    <Monitor className="w-4 h-4 text-amber-400" /> Method 2: Linux Mint Web App Manager (Built-in GUI)
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.origin);
+                      showToast('Copied App URL!');
+                    }}
+                    className="text-[11px] font-bold text-amber-300 hover:text-white bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition active:scale-95"
+                  >
+                    <Copy className="w-3 h-3" /> Copy URL
+                  </button>
+                </div>
+
+                <div className="space-y-2 text-xs text-slate-300">
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center font-bold text-[11px] shrink-0 border border-slate-700">1</span>
+                    <span>Click <strong>Linux Mint Menu</strong>, search for <strong>"Web App Manager"</strong> (pre-installed on Mint) and launch it.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center font-bold text-[11px] shrink-0 border border-slate-700">2</span>
+                    <span>Click the <strong>+</strong> button at the bottom left to create a new Web App.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center font-bold text-[11px] shrink-0 border border-slate-700">3</span>
+                    <span>Fill in <strong>Name:</strong> <code className="text-amber-300 font-mono">Platnumz Scoreboard</code> and <strong>Address:</strong> <code className="text-amber-300 font-mono">{typeof window !== 'undefined' ? window.location.origin : '...'}</code>.</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center font-bold text-[11px] shrink-0 border border-slate-700">4</span>
+                    <span>Category: <strong>Games</strong> or <strong>Audio & Video</strong> ➔ Click <strong>OK</strong>. Platnumz Scoreboard will now appear in your Mint application menu!</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* METHOD 3: Direct Desktop File Download */}
+              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-300 block">
+                    Method 3: Direct .desktop Launcher File
+                  </span>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Download <code className="text-amber-300 font-mono">platnumz-scoreboard.desktop</code> and place it into <code className="text-slate-300 font-mono">~/.local/share/applications/</code> or on your Desktop.
+                  </p>
+                </div>
+                <button
+                  onClick={() => downloadFile('platnumz-scoreboard.desktop')}
+                  className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download .desktop File
+                </button>
+              </div>
+            </div>
+
+            {/* PWA & OTHER PLATFORMS HUB */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-2xl shadow-lg shadow-amber-500/20">
                   P
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white">Standalone Progressive Web App (PWA)</h3>
-                  <p className="text-xs text-slate-400">Install Platnumz Scoreboard on your device to run without browser bars, full-screen like a native application.</p>
+                  <h3 className="text-lg font-black text-white">Browser & Mobile Standalone Installation (PWA)</h3>
+                  <p className="text-xs text-slate-400">Install Platnumz Scoreboard on your phone, tablet, or PC to run full-screen without browser URL bars.</p>
                 </div>
               </div>
 
@@ -1271,6 +1563,18 @@ export default function App() {
                     className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" /> README.md
+                  </button>
+                  <button
+                    onClick={() => downloadFile('install-linux-mint.sh')}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-600/50 hover:bg-emerald-900 text-emerald-200 text-xs font-bold flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" /> install-linux-mint.sh
+                  </button>
+                  <button
+                    onClick={() => downloadFile('platnumz-scoreboard.desktop')}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" /> platnumz-scoreboard.desktop
                   </button>
                 </div>
               </div>
