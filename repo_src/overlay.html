@@ -40,18 +40,18 @@
       background: transparent;
     }
 
-    /* COMPACT HORIZONTAL BROADCAST OVERLAY WRAPPER (Matching Reference Image) */
+    /* WIDE HORIZONTAL BROADCAST OVERLAY WRAPPER */
     #overlay-wrapper {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
       bottom: 24px;
-      width: min(880px, calc(100% - 40px));
-      max-width: 880px;
+      width: min(1480px, calc(100% - 48px));
+      max-width: 1480px;
       margin: 0 auto;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.88), 0 0 0 1px rgba(255, 255, 255, 0.16);
+      box-shadow: 0 14px 42px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.16);
       background: var(--bg-dark);
       backdrop-filter: blur(12px);
       transition: all 0.3s ease;
@@ -63,72 +63,83 @@
     }
 
     /* ==========================================================
-       1. MAIN TOP SCOREBOARD (Compact, Thinner, High-Contrast)
+       1. MAIN TOP SCOREBOARD (Compact Height, Generous Width)
        ========================================================== */
     .score-bar {
       position: relative;
       width: 100%;
       min-height: 56px;
-      height: 58px;
-      background: linear-gradient(180deg, #141b2b 0%, #0a0f1a 100%);
+      height: 60px;
+      background: linear-gradient(180deg, #131a2a 0%, #090e18 100%);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 18px;
-      gap: 14px;
+      padding: 0 20px;
+      gap: 16px;
     }
 
-    /* PLAYER 1 SECTION (Left: Flag -> Name -> Score Box) */
+    /* PLAYER 1 SECTION (Left: Flag -> Full Name -> Score Box) */
     .player-zone-1 {
       flex: 1;
       min-width: 0;
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 12px;
+      gap: 14px;
     }
 
     .player-1-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       min-width: 0;
       flex: 1;
     }
 
-    /* PLAYER 2 SECTION (Right: Score Box -> Name -> Flag) */
+    /* PLAYER 2 SECTION (Right: Score Box -> Full Name -> Flag) */
     .player-zone-2 {
       flex: 1;
       min-width: 0;
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 12px;
+      gap: 14px;
     }
 
     .player-2-info {
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 10px;
       min-width: 0;
       flex: 1;
     }
 
-    /* ALL COUNTRY FLAGS (Sharp & Correctly Proportioned) */
+    /* ANIMATED WAVING NATIONAL FLAGS (Fabric Ripple & Flutter) */
     .flag-box {
       flex-shrink: 0;
-      width: 44px;
-      height: 29px;
+      width: 48px;
+      height: 32px;
       border-radius: 4px;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      background: rgba(5, 10, 20, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.38);
+      box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4), inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       position: relative;
+      perspective: 350px;
+    }
+
+    .player-zone-1 .flag-box {
+      transform-origin: left center;
+      animation: flagFabricFlutterP1 3s ease-in-out infinite;
+    }
+
+    .player-zone-2 .flag-box {
+      transform-origin: right center;
+      animation: flagFabricFlutterP2 3s ease-in-out infinite;
     }
 
     .flag-img {
@@ -136,12 +147,98 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      pointer-events: none;
+    }
+
+    /* Continuous Fabric Ripple Traveling Light Wave */
+    .flag-box::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.22) 0%,
+        rgba(255, 255, 255, 0.28) 20%,
+        rgba(0, 0, 0, 0.18) 42%,
+        rgba(255, 255, 255, 0.32) 65%,
+        rgba(0, 0, 0, 0.2) 85%,
+        rgba(255, 255, 255, 0.25) 100%
+      );
+      background-size: 200% 100%;
+      animation: fabricWaveTravel 3s linear infinite;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Top Fabric Specular Highlight Sheen */
+    .flag-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 44%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.08) 70%, transparent 100%);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    @keyframes fabricWaveTravel {
+      0% {
+        background-position: -200% 0;
+      }
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+    @keyframes flagFabricFlutterP1 {
+      0%, 100% {
+        transform: perspective(350px) rotateY(0deg) skewY(0deg) translateY(0);
+      }
+      25% {
+        transform: perspective(350px) rotateY(4deg) skewY(1deg) translateY(-0.8px);
+      }
+      50% {
+        transform: perspective(350px) rotateY(-2.5deg) skewY(-0.8deg) translateY(0.6px);
+      }
+      75% {
+        transform: perspective(350px) rotateY(3deg) skewY(0.7deg) translateY(-0.5px);
+      }
+    }
+
+    @keyframes flagFabricFlutterP2 {
+      0%, 100% {
+        transform: perspective(350px) rotateY(0deg) skewY(0deg) translateY(0);
+      }
+      25% {
+        transform: perspective(350px) rotateY(-4deg) skewY(-1deg) translateY(-0.8px);
+      }
+      50% {
+        transform: perspective(350px) rotateY(2.5deg) skewY(0.8deg) translateY(0.6px);
+      }
+      75% {
+        transform: perspective(350px) rotateY(-3deg) skewY(-0.7deg) translateY(-0.5px);
+      }
+    }
+
+    /* Accessibility: Respect Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      .player-zone-1 .flag-box,
+      .player-zone-2 .flag-box,
+      .flag-box::after {
+        animation: none !important;
+        transform: none !important;
+      }
     }
 
     .flag-display {
       font-size: 24px;
       line-height: 1;
       display: none;
+      position: relative;
+      z-index: 1;
     }
 
     .avatar-photo {
@@ -149,19 +246,21 @@
       height: 100%;
       object-fit: cover;
       display: none;
+      position: relative;
+      z-index: 1;
     }
 
-    /* PLAYER NAMES: Large, Bold, Prominently Legible */
+    /* COMPLETE PLAYER NAMES: Full First Name & Surname with No Ellipses */
     .player-name {
-      font-size: clamp(17px, 1.55vw, 24px);
+      font-size: clamp(17px, 1.45vw, 22px);
       font-weight: 800;
       color: #ffffff;
       text-transform: uppercase;
       letter-spacing: 0.6px;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+      flex: 1;
+      min-width: 0;
     }
 
     .player-2-info .player-name {
@@ -280,7 +379,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 16px;
+      padding: 0 24px;
       border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
 
@@ -289,12 +388,11 @@
       align-items: center;
       justify-content: center;
       width: 100%;
-      font-size: clamp(12.5px, 1.15vw, 14.5px);
+      font-size: clamp(12.5px, 1.1vw, 14.5px);
       font-weight: 700;
       letter-spacing: 0.5px;
       white-space: nowrap;
-      overflow: hidden;
-      gap: 12px;
+      gap: 16px;
     }
 
     .ticker-group {
@@ -456,8 +554,9 @@
           <span class="ticker-divider">|</span>
 
           <div class="ticker-group">
-            <span class="ticker-label">TOURNAMENT:</span>
-            <span id="tournament" class="ticker-val">PLATINUM SKILLS OPEN</span>
+            <span class="ticker-label">MATCH TYPE:</span>
+            <span id="matchType" class="ticker-val">CHALLENGE MATCH</span>
+            <span id="tournament" style="display:none">CHALLENGE MATCH</span>
           </div>
 
           <span class="ticker-divider">|</span>
@@ -538,6 +637,19 @@
       return "zw";
     }
 
+    function getFlagVectorUrl(flagVal) {
+      const code = getIsoCode(flagVal);
+      if (code.length === 2 && /^[a-z]{2}$/.test(code)) {
+        const cp1 = (0x1f1e6 + (code.charCodeAt(0) - 97)).toString(16);
+        const cp2 = (0x1f1e6 + (code.charCodeAt(1) - 97)).toString(16);
+        return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/" + cp1 + "-" + cp2 + ".svg";
+      }
+      if (code === "gb-eng") return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0065-e006e-e0067-e007f.svg";
+      if (code === "gb-sct") return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0073-e0063-e0074-e007f.svg";
+      if (code === "gb-wls") return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0077-e006c-e0073-e007f.svg";
+      return "https://flagcdn.com/" + code + ".svg";
+    }
+
     function updateFlagUI(flagVal, avatarVal, imgId, fallbackId, avatarId) {
       const avatarEl = $(avatarId);
       const flagImg = $(imgId);
@@ -553,14 +665,20 @@
 
       if (avatarEl) avatarEl.style.display = "none";
       const code = getIsoCode(flagVal);
+      const vectorUrl = getFlagVectorUrl(flagVal);
       if (flagImg) {
-        flagImg.src = "https://flagcdn.com/w160/" + code + ".png";
+        flagImg.src = vectorUrl;
         flagImg.style.display = "block";
         flagImg.onerror = function() {
-          this.style.display = "none";
-          if (fallback) {
-            fallback.textContent = flagVal || "🇿🇼";
-            fallback.style.display = "block";
+          const fallbackPng = "https://flagcdn.com/w160/" + code + ".png";
+          if (this.src !== fallbackPng) {
+            this.src = fallbackPng;
+          } else {
+            this.style.display = "none";
+            if (fallback) {
+              fallback.textContent = flagVal || "🇿🇼";
+              fallback.style.display = "block";
+            }
           }
         };
       }
@@ -588,7 +706,9 @@
       setText("raceText", "RACE TO " + race, "RACE TO 3");
 
       setText("venue", state.venue, "HARARE, ZIMBABWE");
-      setText("tournament", state.tournament, "PLATINUM SKILLS OPEN");
+      const matchTypeVal = state.matchType || state.tournament || "CHALLENGE MATCH";
+      setText("matchType", matchTypeVal, "CHALLENGE MATCH");
+      if ($("tournament")) $("tournament").textContent = matchTypeVal;
       setText("pot", state.pot, "$500");
       setText("brand", state.brand, "KRAVO PLATNUMZ OFFICIAL");
 

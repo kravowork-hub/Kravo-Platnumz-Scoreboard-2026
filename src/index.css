@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+@keyframes fabricWaveTravel {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes flagFabricFlutter {
+  0%, 100% {
+    transform: perspective(300px) rotateY(0deg) skewY(0deg) translateY(0);
+  }
+  25% {
+    transform: perspective(300px) rotateY(3deg) skewY(0.8deg) translateY(-0.6px);
+  }
+  50% {
+    transform: perspective(300px) rotateY(-2deg) skewY(-0.6deg) translateY(0.5px);
+  }
+  75% {
+    transform: perspective(300px) rotateY(2.5deg) skewY(0.5deg) translateY(-0.4px);
+  }
+}
+
+.flag-wave-animated {
+  transform-origin: left center;
+  animation: flagFabricFlutter 3s ease-in-out infinite;
+}
+
+.flag-ripple-light {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.22) 0%,
+    rgba(255, 255, 255, 0.28) 20%,
+    rgba(0, 0, 0, 0.18) 42%,
+    rgba(255, 255, 255, 0.32) 65%,
+    rgba(0, 0, 0, 0.2) 85%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+  background-size: 200% 100%;
+  animation: fabricWaveTravel 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flag-wave-animated,
+  .flag-ripple-light {
+    animation: none !important;
+    transform: none !important;
+  }
+}

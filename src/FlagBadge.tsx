@@ -1,5 +1,5 @@
-import React from 'react';
-import { getCountryCode, getFlagImgUrl, getFlagEmoji } from './countries';
+import React, { useState } from 'react';
+import { getCountryCode, getFlagVectorUrl, getFlagImgUrl, getFlagEmoji } from './countries';
 
 interface FlagBadgeProps {
   codeOrFlag: string;
@@ -16,36 +16,61 @@ export const FlagBadge: React.FC<FlagBadgeProps> = ({
 }) => {
   const code = getCountryCode(codeOrFlag);
   const emoji = getFlagEmoji(codeOrFlag);
-  const imgUrl = getFlagImgUrl(code, 160);
+  const vectorUrl = getFlagVectorUrl(codeOrFlag);
+  const [imgSrc, setImgSrc] = useState(vectorUrl);
+  const [hasError, setHasError] = useState(false);
+
+  // Synchronize imgSrc when codeOrFlag changes
+  React.useEffect(() => {
+    setImgSrc(getFlagVectorUrl(codeOrFlag));
+    setHasError(false);
+  }, [codeOrFlag]);
 
   const sizeClasses = {
-    sm: 'w-7 h-5 text-sm',
-    md: 'w-10 h-7 text-xl',
-    lg: 'w-14 h-9 text-2xl',
-    xl: 'w-16 h-11 text-3xl'
+    sm: 'w-7 h-5 text-sm rounded',
+    md: 'w-10 h-7 text-xl rounded-md',
+    lg: 'w-14 h-9 text-2xl rounded-lg',
+    xl: 'w-16 h-11 text-3xl rounded-lg'
   }[size];
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center overflow-hidden rounded-md shadow-md border border-white/20 bg-slate-900 shrink-0 ${sizeClasses} ${className}`}
+      className={`relative inline-flex items-center justify-center overflow-hidden border border-white/35 bg-slate-900 shadow-[inset_2px_0_0_rgba(255,255,255,0.35),inset_0_1px_1px_rgba(255,255,255,0.4),0_2px_8px_rgba(0,0,0,0.55)] shrink-0 select-none group flag-wave-animated ${sizeClasses} ${className}`}
       title={alt}
     >
-      <img
-        src={imgUrl}
-        alt={alt}
-        className="w-full h-full object-cover select-none"
-        loading="lazy"
-        onError={(e) => {
-          // If image fails or device is completely offline with no cache, show emoji
-          const target = e.currentTarget as HTMLElement;
-          target.style.display = 'none';
-          const fallback = target.nextElementSibling as HTMLElement;
-          if (fallback) fallback.style.display = 'inline';
-        }}
+      {!hasError ? (
+        <img
+          src={imgSrc}
+          alt={alt}
+          className="w-full h-full object-cover select-none pointer-events-none"
+          loading="lazy"
+          onError={() => {
+            // Fallback to flagcdn PNG if vector SVG is unavailable, then to emoji
+            const fallbackPng = getFlagImgUrl(code, 160);
+            if (imgSrc !== fallbackPng) {
+              setImgSrc(fallbackPng);
+            } else {
+              setHasError(true);
+            }
+          }}
+        />
+      ) : (
+        <span className="select-none leading-none filter drop-shadow">
+          {emoji}
+        </span>
+      )}
+
+      {/* Top Fabric Specular Highlight Sheen */}
+      <span
+        className="absolute inset-x-0 top-0 h-[44%] bg-gradient-to-b from-white/35 via-white/10 to-transparent pointer-events-none rounded-t"
+        aria-hidden="true"
       />
-      <span className="hidden select-none leading-none filter drop-shadow">
-        {emoji}
-      </span>
+
+      {/* Continuous Fabric Ripple Traveling Light Wave */}
+      <span
+        className="absolute inset-0 flag-ripple-light mix-blend-overlay pointer-events-none"
+        aria-hidden="true"
+      />
     </div>
   );
 };
