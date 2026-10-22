@@ -647,20 +647,20 @@ export default function App() {
       )}
 
       {/* Top Header */}
-      <header className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-3 sticky top-0 z-40 backdrop-blur-md">
+      <header className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-2 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-base shadow-md shadow-amber-500/20">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-amber-500/20">
               P
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-black tracking-wide text-white">PLATNUMZ SCOREBOARD</h1>
-                <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-bold">
+                <h1 className="text-xs sm:text-sm font-black tracking-wide text-white">PLATNUMZ SCOREBOARD</h1>
+                <span className="text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-bold">
                   PRO CUESPORT
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">Master Controller & OBS Overlay Synchronizer</p>
+              <p className="text-[10px] text-slate-400">Master Controller & OBS Overlay Synchronizer</p>
             </div>
           </div>
 
@@ -683,7 +683,7 @@ export default function App() {
                 setSoundEnabled(!soundEnabled);
                 showToast(soundEnabled ? 'Muted' : 'Sound Enabled');
               }}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
               title="Toggle Audio Feedback"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -692,10 +692,10 @@ export default function App() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="max-w-7xl mx-auto mt-3 flex items-center gap-1 overflow-x-auto border-t border-slate-800/80 pt-2.5">
+        <div className="max-w-7xl mx-auto mt-2 flex items-center gap-1 overflow-x-auto border-t border-slate-800/80 pt-2">
           <button
             onClick={() => setActiveTab('controller')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'controller'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -706,7 +706,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab('preview')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'preview'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -717,7 +717,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab('flags')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'flags'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -728,7 +728,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab('install')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'install'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -739,7 +739,7 @@ export default function App() {
 
           <button
             onClick={() => setActiveTab('github')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'github'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -751,61 +751,62 @@ export default function App() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 space-y-3.5">
 
         {/* WINNER ALERT */}
         {winner && (
-          <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-500/20 border-2 border-amber-400 rounded-2xl p-4 text-center shadow-2xl animate-pulse">
-            <div className="flex items-center justify-center gap-3">
-              <Trophy className="w-8 h-8 text-amber-400 animate-bounce" />
-              <div>
-                <span className="text-xs uppercase tracking-widest text-amber-300 font-black">MATCH CHAMPION</span>
-                <h2 className="text-2xl md:text-3xl font-black text-white">{winner} WINS!</h2>
-              </div>
-              <Trophy className="w-8 h-8 text-amber-400 animate-bounce" />
+          <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-500/20 border border-amber-400 rounded-xl p-2.5 text-center shadow-lg animate-pulse">
+            <div className="flex items-center justify-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-400" />
+              <span className="text-[11px] uppercase tracking-wider text-amber-300 font-bold">MATCH CHAMPION:</span>
+              <span className="text-base sm:text-lg font-black text-white">{winner} WINS!</span>
+              <Trophy className="w-5 h-5 text-amber-400" />
             </div>
           </div>
         )}
 
         {/* HILL-HILL ALERT */}
         {isHillHill && (
-          <div className="bg-red-950/80 border-2 border-red-500 rounded-xl p-2.5 text-center shadow-lg">
-            <span className="inline-flex items-center gap-2 text-red-400 font-black text-sm tracking-widest uppercase animate-pulse">
-              <Flame className="w-4 h-4 fill-red-500" />
+          <div className="bg-red-950/80 border border-red-500 rounded-lg p-2 text-center shadow-md">
+            <span className="inline-flex items-center gap-1.5 text-red-400 font-black text-xs tracking-wider uppercase animate-pulse">
+              <Flame className="w-3.5 h-3.5 fill-red-500" />
               ⚡ HILL - HILL DECIDING FRAME ⚡
-              <Flame className="w-4 h-4 fill-red-500" />
+              <Flame className="w-3.5 h-3.5 fill-red-500" />
             </span>
           </div>
         )}
 
         {/* TAB 1: SCORE CONTROLLER */}
         {activeTab === 'controller' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
 
               {/* PLAYER 1 CARD */}
-              <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border-2 border-blue-500/40 rounded-3xl p-6 shadow-2xl relative">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] uppercase font-black tracking-widest text-blue-400">PLAYER 1</span>
+              <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border border-blue-500/40 rounded-2xl p-3.5 sm:p-4 shadow-xl relative">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                    <span className="text-[10px] uppercase font-black tracking-wider text-blue-400">PLAYER 1</span>
+                  </div>
                   <button
                     onClick={() => setTargetPlayerForFlag(1)}
-                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2.5 py-0.5 rounded-full border border-blue-400/30 font-bold transition flex items-center gap-1"
+                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
                   >
-                    Change Flag <Globe className="w-3 h-3" />
+                    Change Flag <Globe className="w-2.5 h-2.5" />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2 mb-3">
                   <button
                     type="button"
                     onClick={() => setTargetPlayerForFlag(1)}
-                    className="p-1 rounded-lg hover:ring-2 hover:ring-amber-400 transition"
+                    className="p-0.5 rounded-md hover:ring-2 hover:ring-amber-400 transition shrink-0"
                     title="Click to change flag"
                   >
-                    <FlagBadge codeOrFlag={state.flag1} size="lg" alt="P1 Flag" />
+                    <FlagBadge codeOrFlag={state.flag1} size="md" alt="P1 Flag" />
                   </button>
                   <input
-                    className="flex-1 bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-2xl font-black text-white outline-none focus:border-amber-400 transition"
+                    className="flex-1 min-w-0 bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-base sm:text-lg font-black text-white outline-none focus:border-amber-400 transition"
                     value={state.name1}
                     onChange={(e) => {
                       const updated = { ...state, name1: e.target.value, updatedAt: Date.now() };
@@ -815,95 +816,102 @@ export default function App() {
                   />
                 </div>
 
-                {/* GIANT SCORE NUMBER */}
-                <div className="text-center my-5 py-2 bg-slate-950/50 rounded-2xl border border-white/5">
-                  <div className="text-8xl md:text-9xl font-black tracking-tight text-white font-mono leading-none">
-                    {state.score1}
+                {/* Integrated Compact Horizontal Score Row */}
+                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2 mb-2.5">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                    {/* -1 Button */}
+                    <button
+                      onClick={() => updateScore(1, -1)}
+                      className="h-14 sm:h-16 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 transition active:scale-95 border border-slate-700"
+                      title="Decrease Score (Hotkey A)"
+                    >
+                      <div className="flex items-center gap-1">
+                        <Minus className="w-4 h-4" /> <span>−1 Frame</span>
+                      </div>
+                      <kbd className="text-[9px] text-slate-400 bg-slate-900/80 px-1 py-0.2 rounded font-mono">Key A</kbd>
+                    </button>
+
+                    {/* Score Number Display */}
+                    <div className="px-5 sm:px-7 py-1 text-center bg-slate-900/90 rounded-lg border border-slate-700/60 shadow-inner min-w-[90px]">
+                      <div className="text-4xl sm:text-5xl font-black tracking-tight text-white font-mono leading-none">
+                        {state.score1}
+                      </div>
+                      <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mt-1">Frames</div>
+                    </div>
+
+                    {/* +1 Button */}
+                    <button
+                      onClick={() => updateScore(1, 1)}
+                      className="h-14 sm:h-16 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 shadow-md shadow-amber-500/20 transition active:scale-95"
+                      title="Increase Score (Hotkey Q)"
+                    >
+                      <div className="flex items-center gap-1">
+                        <Plus className="w-4 h-4" /> <span>+1 Frame</span>
+                      </div>
+                      <kbd className="text-[9px] text-slate-900 bg-amber-300 px-1 py-0.2 rounded font-mono font-bold">Key Q</kbd>
+                    </button>
                   </div>
-                  <div className="text-xs uppercase tracking-widest text-amber-400 font-black mt-2">Frames Won</div>
                 </div>
 
-                {/* LARGE SCORE BUTTONS */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => updateScore(1, -1)}
-                    className="py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-base flex items-center justify-center gap-1.5 transition active:scale-95 border border-slate-700"
-                  >
-                    <Minus className="w-5 h-5" /> −1 Frame <kbd className="text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono">A</kbd>
-                  </button>
-                  <button
-                    onClick={() => updateScore(1, 1)}
-                    className="py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-base flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/25 transition active:scale-95"
-                  >
-                    <Plus className="w-5 h-5" /> +1 Frame <kbd className="text-[10px] text-slate-900 bg-amber-300 px-1.5 py-0.5 rounded font-mono">Q</kbd>
-                  </button>
-                </div>
+                {/* Inline Break & Run Section */}
+                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">🔥</span>
+                    <span className="text-[11px] font-bold text-amber-400">Break & Run:</span>
+                    <span className="text-[10px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
+                  </div>
 
-                {/* BREAK & RUN COUNTER SECTION */}
-                <div className="mt-4 pt-4 border-t border-slate-800/80 bg-slate-950/40 rounded-2xl p-3.5 border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm border border-amber-400/30 shadow-inner">
-                        🔥
-                      </div>
-                      <div>
-                        <span className="text-xs uppercase tracking-wider font-black text-amber-400 block">
-                          Break & Run
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">Table Run-Out Off Break</span>
-                      </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => updateBreakAndRun(1, -1)}
+                      className="w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
+                      title="Decrease Break & Run"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <div className="min-w-8 text-center font-mono font-black text-base text-amber-300 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">
+                      {state.br1 || 0}
                     </div>
-
-                    {/* Counter with + and - buttons */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => updateBreakAndRun(1, -1)}
-                        className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-black text-base flex items-center justify-center border border-slate-700 transition"
-                        title="Decrease Break & Run"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <div className="min-w-12 text-center font-mono font-black text-2xl text-amber-300 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 shadow-inner">
-                        {state.br1 || 0}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updateBreakAndRun(1, 1)}
-                        className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black text-base flex items-center justify-center shadow-md shadow-amber-500/20 transition"
-                        title="Increase Break & Run"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateBreakAndRun(1, 1)}
+                      className="w-7 h-7 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
+                      title="Increase Break & Run"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
 
               </div>
 
               {/* PLAYER 2 CARD */}
-              <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border-2 border-blue-500/40 rounded-3xl p-6 shadow-2xl relative">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] uppercase font-black tracking-widest text-blue-400">PLAYER 2</span>
+              <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border border-blue-500/40 rounded-2xl p-3.5 sm:p-4 shadow-xl relative">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-400" />
+                    <span className="text-[10px] uppercase font-black tracking-wider text-blue-400">PLAYER 2</span>
+                  </div>
                   <button
                     onClick={() => setTargetPlayerForFlag(2)}
-                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2.5 py-0.5 rounded-full border border-blue-400/30 font-bold transition flex items-center gap-1"
+                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
                   >
-                    Change Flag <Globe className="w-3 h-3" />
+                    Change Flag <Globe className="w-2.5 h-2.5" />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2 mb-3">
                   <button
                     type="button"
                     onClick={() => setTargetPlayerForFlag(2)}
-                    className="p-1 rounded-lg hover:ring-2 hover:ring-amber-400 transition"
+                    className="p-0.5 rounded-md hover:ring-2 hover:ring-amber-400 transition shrink-0"
                     title="Click to change flag"
                   >
-                    <FlagBadge codeOrFlag={state.flag2} size="lg" alt="P2 Flag" />
+                    <FlagBadge codeOrFlag={state.flag2} size="md" alt="P2 Flag" />
                   </button>
                   <input
-                    className="flex-1 bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-2xl font-black text-white outline-none focus:border-amber-400 transition"
+                    className="flex-1 min-w-0 bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-base sm:text-lg font-black text-white outline-none focus:border-amber-400 transition"
                     value={state.name2}
                     onChange={(e) => {
                       const updated = { ...state, name2: e.target.value, updatedAt: Date.now() };
@@ -913,67 +921,71 @@ export default function App() {
                   />
                 </div>
 
-                {/* GIANT SCORE NUMBER */}
-                <div className="text-center my-5 py-2 bg-slate-950/50 rounded-2xl border border-white/5">
-                  <div className="text-8xl md:text-9xl font-black tracking-tight text-white font-mono leading-none">
-                    {state.score2}
+                {/* Integrated Compact Horizontal Score Row */}
+                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2 mb-2.5">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                    {/* -1 Button */}
+                    <button
+                      onClick={() => updateScore(2, -1)}
+                      className="h-14 sm:h-16 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 transition active:scale-95 border border-slate-700"
+                      title="Decrease Score (Hotkey L)"
+                    >
+                      <div className="flex items-center gap-1">
+                        <Minus className="w-4 h-4" /> <span>−1 Frame</span>
+                      </div>
+                      <kbd className="text-[9px] text-slate-400 bg-slate-900/80 px-1 py-0.2 rounded font-mono">Key L</kbd>
+                    </button>
+
+                    {/* Score Number Display */}
+                    <div className="px-5 sm:px-7 py-1 text-center bg-slate-900/90 rounded-lg border border-slate-700/60 shadow-inner min-w-[90px]">
+                      <div className="text-4xl sm:text-5xl font-black tracking-tight text-white font-mono leading-none">
+                        {state.score2}
+                      </div>
+                      <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mt-1">Frames</div>
+                    </div>
+
+                    {/* +1 Button */}
+                    <button
+                      onClick={() => updateScore(2, 1)}
+                      className="h-14 sm:h-16 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 shadow-md shadow-amber-500/20 transition active:scale-95"
+                      title="Increase Score (Hotkey P)"
+                    >
+                      <div className="flex items-center gap-1">
+                        <Plus className="w-4 h-4" /> <span>+1 Frame</span>
+                      </div>
+                      <kbd className="text-[9px] text-slate-900 bg-amber-300 px-1 py-0.2 rounded font-mono font-bold">Key P</kbd>
+                    </button>
                   </div>
-                  <div className="text-xs uppercase tracking-widest text-amber-400 font-black mt-2">Frames Won</div>
                 </div>
 
-                {/* LARGE SCORE BUTTONS */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => updateScore(2, -1)}
-                    className="py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-base flex items-center justify-center gap-1.5 transition active:scale-95 border border-slate-700"
-                  >
-                    <Minus className="w-5 h-5" /> −1 Frame <kbd className="text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded font-mono">L</kbd>
-                  </button>
-                  <button
-                    onClick={() => updateScore(2, 1)}
-                    className="py-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-base flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/25 transition active:scale-95"
-                  >
-                    <Plus className="w-5 h-5" /> +1 Frame <kbd className="text-[10px] text-slate-900 bg-amber-300 px-1.5 py-0.5 rounded font-mono">P</kbd>
-                  </button>
-                </div>
+                {/* Inline Break & Run Section */}
+                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">🔥</span>
+                    <span className="text-[11px] font-bold text-amber-400">Break & Run:</span>
+                    <span className="text-[10px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
+                  </div>
 
-                {/* BREAK & RUN COUNTER SECTION */}
-                <div className="mt-4 pt-4 border-t border-slate-800/80 bg-slate-950/40 rounded-2xl p-3.5 border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm border border-amber-400/30 shadow-inner">
-                        🔥
-                      </div>
-                      <div>
-                        <span className="text-xs uppercase tracking-wider font-black text-amber-400 block">
-                          Break & Run
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-medium">Table Run-Out Off Break</span>
-                      </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => updateBreakAndRun(2, -1)}
+                      className="w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
+                      title="Decrease Break & Run"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <div className="min-w-8 text-center font-mono font-black text-base text-amber-300 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">
+                      {state.br2 || 0}
                     </div>
-
-                    {/* Counter with + and - buttons */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => updateBreakAndRun(2, -1)}
-                        className="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-black text-base flex items-center justify-center border border-slate-700 transition"
-                        title="Decrease Break & Run"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <div className="min-w-12 text-center font-mono font-black text-2xl text-amber-300 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 shadow-inner">
-                        {state.br2 || 0}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updateBreakAndRun(2, 1)}
-                        className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black text-base flex items-center justify-center shadow-md shadow-amber-500/20 transition"
-                        title="Increase Break & Run"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateBreakAndRun(2, 1)}
+                      className="w-7 h-7 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
+                      title="Increase Break & Run"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
 
@@ -981,41 +993,41 @@ export default function App() {
             </div>
 
             {/* Quick Actions Row */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-2 py-0.5">
               <button
                 onClick={swapPlayers}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs flex items-center gap-2 border border-slate-700 transition active:scale-95"
+                className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition active:scale-95"
               >
-                <ArrowLeftRight className="w-4 h-4 text-amber-400" /> Swap Players & Flags (Hotkey S)
+                <ArrowLeftRight className="w-3.5 h-3.5 text-amber-400" /> Swap Players & Flags <kbd className="text-[9px] text-slate-400 bg-slate-900 px-1 py-0.2 rounded font-mono">S</kbd>
               </button>
               <button
                 onClick={resetScores}
-                className="px-5 py-2.5 rounded-xl bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 font-black text-xs flex items-center gap-2 transition active:scale-95"
+                className="px-3.5 py-1.5 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-800/80 text-red-300 font-bold text-xs flex items-center gap-1.5 transition active:scale-95"
               >
-                <RefreshCw className="w-4 h-4" /> Reset Scores & Break/Run (Hotkey R)
+                <RefreshCw className="w-3.5 h-3.5" /> Reset Scores & Break/Run <kbd className="text-[9px] text-red-300 bg-red-950 px-1 py-0.2 rounded font-mono">R</kbd>
               </button>
             </div>
 
             {/* Match Information Form */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-5">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                <div>
-                  <h3 className="text-sm uppercase tracking-wider text-amber-400 font-black">Match Details & Broadcast Settings</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">All changes are continuously autosaved locally and synced to OBS broadcast overlay.</p>
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 sm:p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs uppercase tracking-wider text-amber-400 font-black">Match Details & Broadcast Settings</h3>
+                  <span className="text-[10px] text-slate-400 hidden md:inline">• Synced live to OBS overlay</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-700/50 text-[11px] font-bold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Permanent Storage Active
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-700/50 text-[10px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Autosaved
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Venue / Host City</label>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Venue / City</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
                     value={state.venue}
                     onChange={(e) => {
                       const updated = { ...state, venue: e.target.value, updatedAt: Date.now() };
@@ -1026,9 +1038,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Tournament Title</label>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Tournament</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
                     value={state.tournament}
                     onChange={(e) => {
                       const updated = { ...state, tournament: e.target.value, updatedAt: Date.now() };
@@ -1039,9 +1051,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Prize Pot</label>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Prize Pot</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
                     value={state.pot}
                     onChange={(e) => {
                       const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
@@ -1052,12 +1064,12 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Race To (Frames)</label>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Race To (Frames)</label>
                   <input
                     type="number"
                     min="1"
                     max="99"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono font-bold text-base outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-xs outline-none focus:border-amber-400 transition"
                     value={state.raceTo}
                     onChange={(e) => {
                       const val = Math.max(1, parseInt(e.target.value, 10) || 3);
@@ -1068,9 +1080,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Brand / Sponsor Banner</label>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Brand / Media</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
                     value={state.brand}
                     onChange={(e) => {
                       const updated = { ...state, brand: e.target.value, updatedAt: Date.now() };
@@ -1081,9 +1093,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] uppercase font-bold text-slate-400 block mb-1">Overlay Position</label>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Overlay Position</label>
                   <select
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-amber-400 cursor-pointer"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 cursor-pointer transition"
                     value={state.overlayPosition || 'bottom'}
                     onChange={(e) => {
                       const pos = (e.target.value === 'top' ? 'top' : 'bottom') as 'bottom' | 'top';
@@ -1091,21 +1103,21 @@ export default function App() {
                       syncState(updated);
                     }}
                   >
-                    <option value="bottom">Bottom (Standard Broadcast)</option>
-                    <option value="top">Top (Header Banner)</option>
+                    <option value="bottom">Bottom (Standard)</option>
+                    <option value="top">Top (Banner)</option>
                   </select>
                 </div>
               </div>
 
               {/* Reset to Factory Defaults Footer */}
-              <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
-                <span className="text-[11px] text-slate-400">
+              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[10px] text-slate-400">
                   Entered details stay saved even when refreshing the browser or restarting the computer.
                 </span>
                 <button
                   type="button"
                   onClick={resetToDefaults}
-                  className="px-3.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs font-semibold border border-slate-700/60 transition"
+                  className="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] font-medium border border-slate-700/60 transition"
                   title="Restore default Chairman Tindo vs Boss Owiza reference match"
                 >
                   Restore Sample Defaults
