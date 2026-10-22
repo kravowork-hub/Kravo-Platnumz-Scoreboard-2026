@@ -648,7 +648,7 @@ export default function App() {
 
       {/* Top Header */}
       <header className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-2 sticky top-0 z-40 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-amber-500/20">
               P
@@ -692,7 +692,7 @@ export default function App() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="max-w-7xl mx-auto mt-2 flex items-center gap-1 overflow-x-auto border-t border-slate-800/80 pt-2">
+        <div className="max-w-4xl mx-auto mt-2 flex items-center gap-1 overflow-x-auto border-t border-slate-800/80 pt-2">
           <button
             onClick={() => setActiveTab('controller')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
@@ -751,7 +751,7 @@ export default function App() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 space-y-3.5">
+      <main className="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-4 space-y-3.5">
 
         {/* WINNER ALERT */}
         {winner && (
@@ -854,32 +854,32 @@ export default function App() {
                 </div>
 
                 {/* Inline Break & Run Section */}
-                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5 text-xs">
+                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm">🔥</span>
-                    <span className="text-[11px] font-bold text-amber-400">Break & Run:</span>
-                    <span className="text-[10px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
+                    <span className="text-base">🔥</span>
+                    <span className="text-xs font-bold text-amber-400">Break & Run:</span>
+                    <span className="text-[11px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => updateBreakAndRun(1, -1)}
-                      className="w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
+                      className="w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
                       title="Decrease Break & Run"
                     >
-                      <Minus className="w-3 h-3" />
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <div className="min-w-8 text-center font-mono font-black text-base text-amber-300 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">
+                    <div className="min-w-9 text-center font-mono font-black text-lg text-amber-300 px-2 py-0.5 rounded bg-slate-900 border border-slate-800 shadow-inner">
                       {state.br1 || 0}
                     </div>
                     <button
                       type="button"
                       onClick={() => updateBreakAndRun(1, 1)}
-                      className="w-7 h-7 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
+                      className="w-8 h-8 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
                       title="Increase Break & Run"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -959,32 +959,32 @@ export default function App() {
                 </div>
 
                 {/* Inline Break & Run Section */}
-                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5 text-xs">
+                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm">🔥</span>
-                    <span className="text-[11px] font-bold text-amber-400">Break & Run:</span>
-                    <span className="text-[10px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
+                    <span className="text-base">🔥</span>
+                    <span className="text-xs font-bold text-amber-400">Break & Run:</span>
+                    <span className="text-[11px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => updateBreakAndRun(2, -1)}
-                      className="w-7 h-7 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
+                      className="w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
                       title="Decrease Break & Run"
                     >
-                      <Minus className="w-3 h-3" />
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <div className="min-w-8 text-center font-mono font-black text-base text-amber-300 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">
+                    <div className="min-w-9 text-center font-mono font-black text-lg text-amber-300 px-2 py-0.5 rounded bg-slate-900 border border-slate-800 shadow-inner">
                       {state.br2 || 0}
                     </div>
                     <button
                       type="button"
                       onClick={() => updateBreakAndRun(2, 1)}
-                      className="w-7 h-7 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
+                      className="w-8 h-8 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
                       title="Increase Break & Run"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -1008,26 +1008,27 @@ export default function App() {
               </button>
             </div>
 
-            {/* Match Information Form */}
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 sm:p-4 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs uppercase tracking-wider text-amber-400 font-black">Match Details & Broadcast Settings</h3>
-                  <span className="text-[10px] text-slate-400 hidden md:inline">• Synced live to OBS overlay</span>
+            {/* Match Information Form (Centralized Bottom Panel with Larger Font) */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3.5">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-slate-800 pb-2.5 text-center sm:text-left">
+                <div>
+                  <h3 className="text-sm uppercase tracking-wider text-amber-400 font-black">Match Details & Broadcast Settings</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Real-time persistent sync to OBS broadcast overlay</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-700/50 text-[10px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-700/50 text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     Autosaved
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              {/* Centralized Form Fields with Enhanced Font Size */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Venue / City</label>
+                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Venue / City</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
                     value={state.venue}
                     onChange={(e) => {
                       const updated = { ...state, venue: e.target.value, updatedAt: Date.now() };
@@ -1038,9 +1039,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Tournament</label>
+                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Tournament</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
                     value={state.tournament}
                     onChange={(e) => {
                       const updated = { ...state, tournament: e.target.value, updatedAt: Date.now() };
@@ -1051,9 +1052,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Prize Pot</label>
+                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Prize Pot</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
                     value={state.pot}
                     onChange={(e) => {
                       const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
@@ -1064,12 +1065,12 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Race To (Frames)</label>
+                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Race To (Frames)</label>
                   <input
                     type="number"
                     min="1"
                     max="99"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-xs outline-none focus:border-amber-400 transition"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white font-mono font-bold text-sm outline-none focus:border-amber-400 transition"
                     value={state.raceTo}
                     onChange={(e) => {
                       const val = Math.max(1, parseInt(e.target.value, 10) || 3);
@@ -1080,9 +1081,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Brand / Media</label>
+                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Brand / Media</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 transition"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
                     value={state.brand}
                     onChange={(e) => {
                       const updated = { ...state, brand: e.target.value, updatedAt: Date.now() };
@@ -1093,9 +1094,9 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Overlay Position</label>
+                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Overlay Position</label>
                   <select
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none focus:border-amber-400 cursor-pointer transition"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 cursor-pointer transition"
                     value={state.overlayPosition || 'bottom'}
                     onChange={(e) => {
                       const pos = (e.target.value === 'top' ? 'top' : 'bottom') as 'bottom' | 'top';
@@ -1103,21 +1104,21 @@ export default function App() {
                       syncState(updated);
                     }}
                   >
-                    <option value="bottom">Bottom (Standard)</option>
-                    <option value="top">Top (Banner)</option>
+                    <option value="bottom">Bottom (Standard Broadcast)</option>
+                    <option value="top">Top (Header Banner)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Reset to Factory Defaults Footer */}
-              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[10px] text-slate-400">
+              {/* Reset to Factory Defaults Footer (Centralized) */}
+              <div className="pt-2.5 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-center gap-2">
+                <span className="text-xs text-slate-400">
                   Entered details stay saved even when refreshing the browser or restarting the computer.
                 </span>
                 <button
                   type="button"
                   onClick={resetToDefaults}
-                  className="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] font-medium border border-slate-700/60 transition"
+                  className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition"
                   title="Restore default Chairman Tindo vs Boss Owiza reference match"
                 >
                   Restore Sample Defaults

@@ -46,8 +46,8 @@
       left: 50%;
       transform: translateX(-50%);
       bottom: 24px;
-      width: calc(100% - 96px);
-      max-width: 1360px;
+      width: min(880px, calc(100% - 40px));
+      max-width: 880px;
       margin: 0 auto;
       border-radius: 8px;
       overflow: hidden;
@@ -274,22 +274,22 @@
     .bottom-ticker-bar {
       position: relative;
       width: 100%;
-      min-height: 32px;
-      height: 34px;
+      min-height: 36px;
+      height: 38px;
       background: rgba(5, 8, 15, 0.98);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .ticker-content {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       width: 100%;
-      font-size: clamp(10.5px, 0.95vw, 13px);
+      font-size: clamp(12.5px, 1.15vw, 14.5px);
       font-weight: 700;
       letter-spacing: 0.5px;
       white-space: nowrap;
@@ -303,13 +303,14 @@
       gap: 6px;
       min-width: 0;
       overflow: hidden;
+      flex-shrink: 1;
     }
 
     .ticker-label {
       color: var(--gold);
       font-weight: 900;
       letter-spacing: 0.8px;
-      font-size: 11px;
+      font-size: 13px;
       text-transform: uppercase;
       flex-shrink: 0;
     }
@@ -317,6 +318,7 @@
     .ticker-val {
       color: #ffffff;
       font-weight: 700;
+      font-size: 13.5px;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -324,9 +326,12 @@
     }
 
     .ticker-divider {
-      color: rgba(255, 255, 255, 0.32);
-      font-weight: 300;
+      color: rgba(255, 255, 255, 0.35);
+      font-weight: 400;
+      font-size: 13.5px;
       flex-shrink: 0;
+      user-select: none;
+      margin: 0 2px;
     }
 
     .brand-group {
@@ -336,15 +341,14 @@
       color: var(--gold);
       font-weight: 900;
       letter-spacing: 0.8px;
-      font-size: 11.5px;
+      font-size: 13px;
       text-transform: uppercase;
-      margin-left: auto;
       flex-shrink: 0;
     }
 
     .kp-logo-icon {
-      width: 19px;
-      height: 15px;
+      width: 21px;
+      height: 17px;
       display: inline-block;
       vertical-align: middle;
       filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
