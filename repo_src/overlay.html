@@ -117,13 +117,14 @@
     }
 
     /* ANIMATED WAVING NATIONAL FLAGS (S-Curve Fabric Wave & Flutter) */
+    /* ANIMATED WAVING NATIONAL FLAGS (S-Curve Fabric Wave & Flutter, Zero White Background) */
     .flag-box {
       flex-shrink: 0;
       width: 52px;
       height: 38px;
-      background: transparent;
-      border: none;
-      box-shadow: none;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -141,13 +142,77 @@
       animation: flagFabricFlutterP2 3.2s ease-in-out infinite;
     }
 
+    .flag-inner-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent !important;
+    }
+
+    /* Waving cloth silhouette matching the Zimbabwe reference flag */
+    .flag-inner-wrapper.cloth-shape {
+      clip-path: polygon(
+        0% 5%,
+        12% 1.8%,
+        26% 0.3%,
+        40% 1.2%,
+        55% 3.6%,
+        70% 6.2%,
+        85% 7.8%,
+        100% 6.5%,
+        98.2% 28%,
+        100% 50%,
+        97.8% 72%,
+        100% 94%,
+        85% 97.8%,
+        70% 96.2%,
+        55% 93.6%,
+        40% 91.2%,
+        26% 90.3%,
+        12% 91.8%,
+        0% 95%,
+        1.8% 72%,
+        0% 50%,
+        1.8% 28%
+      );
+    }
+
     .flag-img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       display: block;
       pointer-events: none;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      background: transparent !important;
+    }
+
+    .flag-img.is-wavy-png {
+      object-fit: contain;
+    }
+
+    /* 3D Fabric Wave Shading: Crests & Troughs matching waving cloth */
+    .flag-cloth-shade {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.32) 0%,
+        rgba(0, 0, 0, 0.22) 24%,
+        rgba(255, 255, 255, 0.28) 48%,
+        rgba(0, 0, 0, 0.24) 72%,
+        rgba(255, 255, 255, 0.22) 90%,
+        rgba(0, 0, 0, 0.16) 100%
+      );
+      mix-blend-mode: overlay;
+      display: none;
+    }
+
+    .cloth-shape .flag-cloth-shade {
+      display: block;
     }
 
     @keyframes fabricWaveTravel {
@@ -519,7 +584,10 @@
         <!-- PLAYER 1 ZONE (Left: Flag -> Name & B&R -> Score) -->
         <div class="player-zone-1">
           <div class="flag-box">
-            <img id="flagImg1" class="flag-img" alt="P1 Flag" />
+            <div id="flagWrapper1" class="flag-inner-wrapper">
+              <img id="flagImg1" class="flag-img" alt="P1 Flag" />
+              <div id="flagClothShade1" class="flag-cloth-shade" aria-hidden="true"></div>
+            </div>
             <span id="flagDisplay1" class="flag-display">🇿🇼</span>
             <img id="avatarImg1" class="avatar-photo" alt="P1 Avatar" />
           </div>
@@ -570,7 +638,10 @@
           </div>
 
           <div class="flag-box">
-            <img id="flagImg2" class="flag-img" alt="P2 Flag" />
+            <div id="flagWrapper2" class="flag-inner-wrapper">
+              <img id="flagImg2" class="flag-img" alt="P2 Flag" />
+              <div id="flagClothShade2" class="flag-cloth-shade" aria-hidden="true"></div>
+            </div>
             <span id="flagDisplay2" class="flag-display">🇿🇼</span>
             <img id="avatarImg2" class="avatar-photo" alt="P2 Avatar" />
           </div>
@@ -673,15 +744,11 @@
 
     function getFlagVectorUrl(flagVal) {
       const code = getIsoCode(flagVal);
-      if (code === 'zw') return '/assets/aistudio/ZIM_FLAG_71fcb92e.png';
-      if (code.length === 2 && /^[a-z]{2}$/.test(code)) {
-        const cp1 = (0x1f1e6 + (code.charCodeAt(0) - 97)).toString(16);
-        const cp2 = (0x1f1e6 + (code.charCodeAt(1) - 97)).toString(16);
-        return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/" + cp1 + "-" + cp2 + ".svg";
-      }
-      if (code === "gb-eng") return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0065-e006e-e0067-e007f.svg";
-      if (code === "gb-sct") return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0073-e0063-e0074-e007f.svg";
-      if (code === "gb-wls") return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0077-e006c-e0073-e007f.svg";
+      if (code === 'zw') return '/assets/aistudio/zim_flag_transparent.png';
+      if (code === "gb-eng") return "https://flagcdn.com/gb-eng.svg";
+      if (code === "gb-sct") return "https://flagcdn.com/gb-sct.svg";
+      if (code === "gb-wls") return "https://flagcdn.com/gb-wls.svg";
+      if (code === "gb-nir") return "https://flagcdn.com/gb-nir.svg";
       return "https://flagcdn.com/" + code + ".svg";
     }
 
@@ -689,21 +756,35 @@
       const avatarEl = $(avatarId);
       const flagImg = $(imgId);
       const fallback = $(fallbackId);
+      const wrapperId = imgId === "flagImg1" ? "flagWrapper1" : "flagWrapper2";
+      const wrapper = $(wrapperId);
 
       if (avatarVal) {
         avatarEl.src = avatarVal;
         avatarEl.style.display = "block";
+        if (wrapper) wrapper.style.display = "none";
         if (flagImg) flagImg.style.display = "none";
         if (fallback) fallback.style.display = "none";
         return;
       }
 
       if (avatarEl) avatarEl.style.display = "none";
+      if (wrapper) wrapper.style.display = "flex";
       const code = getIsoCode(flagVal);
       const vectorUrl = getFlagVectorUrl(flagVal);
+      const isZim = code === "zw";
+
       if (flagImg) {
         flagImg.src = vectorUrl;
         flagImg.style.display = "block";
+        if (isZim) {
+          flagImg.classList.add("is-wavy-png");
+          if (wrapper) wrapper.classList.remove("cloth-shape");
+        } else {
+          flagImg.classList.remove("is-wavy-png");
+          if (wrapper) wrapper.classList.add("cloth-shape");
+        }
+
         flagImg.onerror = function() {
           const fallbackPng = "https://flagcdn.com/w160/" + code + ".png";
           if (this.src !== fallbackPng) {

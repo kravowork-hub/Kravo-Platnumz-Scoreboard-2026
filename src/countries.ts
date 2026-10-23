@@ -45,15 +45,11 @@ export function getFlagImgUrl(codeOrFlag: string, width: 80 | 160 = 80): string 
  */
 export function getFlagVectorUrl(codeOrFlag: string): string {
   const code = getCountryCode(codeOrFlag).toLowerCase();
-  if (code === 'zw') return '/assets/aistudio/ZIM_FLAG_71fcb92e.png';
-  if (code.length === 2 && /^[a-z]{2}$/.test(code)) {
-    const cp1 = (0x1f1e6 + (code.charCodeAt(0) - 97)).toString(16);
-    const cp2 = (0x1f1e6 + (code.charCodeAt(1) - 97)).toString(16);
-    return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${cp1}-${cp2}.svg`;
-  }
-  if (code === 'gb-eng') return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0065-e006e-e0067-e007f.svg`;
-  if (code === 'gb-sct') return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0073-e0063-e0074-e007f.svg`;
-  if (code === 'gb-wls') return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3f4-e0067-e0062-e0077-e006c-e0073-e007f.svg`;
+  if (code === 'zw') return '/assets/aistudio/zim_flag_transparent.png';
+  if (code === 'gb-eng') return 'https://flagcdn.com/gb-eng.svg';
+  if (code === 'gb-sct') return 'https://flagcdn.com/gb-sct.svg';
+  if (code === 'gb-wls') return 'https://flagcdn.com/gb-wls.svg';
+  if (code === 'gb-nir') return 'https://flagcdn.com/gb-nir.svg';
   return `https://flagcdn.com/${code}.svg`;
 }
 
