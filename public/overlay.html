@@ -120,8 +120,8 @@
     /* ANIMATED WAVING NATIONAL FLAGS (S-Curve Fabric Wave & Flutter, Zero White Background) */
     .flag-box {
       flex-shrink: 0;
-      width: 52px;
-      height: 38px;
+      width: 56px;
+      height: 40px;
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
@@ -129,7 +129,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.75));
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.75));
     }
 
     .player-zone-1 .flag-box {
@@ -152,31 +152,61 @@
       background: transparent !important;
     }
 
-    /* Waving cloth silhouette matching the Zimbabwe reference flag */
+    /* Waving cloth silhouette matching the exact curve of the Zimbabwe reference flag */
     .flag-inner-wrapper.cloth-shape {
       clip-path: polygon(
-        0% 5%,
-        12% 1.8%,
-        26% 0.3%,
-        40% 1.2%,
-        55% 3.6%,
-        70% 6.2%,
-        85% 7.8%,
-        100% 6.5%,
-        98.2% 28%,
-        100% 50%,
-        97.8% 72%,
-        100% 94%,
-        85% 97.8%,
-        70% 96.2%,
-        55% 93.6%,
-        40% 91.2%,
-        26% 90.3%,
-        12% 91.8%,
-        0% 95%,
-        1.8% 72%,
-        0% 50%,
-        1.8% 28%
+        0% 9%,
+        4% 6.6%,
+        8% 4.8%,
+        12% 3.3%,
+        16% 2.4%,
+        20% 1.8%,
+        24% 1.5%,
+        28% 1.5%,
+        32% 1.8%,
+        36% 2.1%,
+        40% 2.7%,
+        44% 3.6%,
+        48% 4.2%,
+        52% 5.1%,
+        56% 6%,
+        60% 6.6%,
+        64% 7.2%,
+        68% 7.8%,
+        72% 8.1%,
+        76% 8.1%,
+        80% 7.8%,
+        84% 7.2%,
+        88% 6%,
+        92% 4.8%,
+        96% 3%,
+        100% 0.6%,
+        100% 90.7%,
+        96% 93.1%,
+        92% 94.9%,
+        88% 96.4%,
+        84% 97.3%,
+        80% 97.9%,
+        76% 98.2%,
+        72% 98.2%,
+        68% 97.9%,
+        64% 97.6%,
+        60% 97%,
+        56% 96.1%,
+        52% 95.5%,
+        48% 94.6%,
+        44% 93.7%,
+        40% 93.1%,
+        36% 92.5%,
+        32% 91.9%,
+        28% 91.6%,
+        24% 91.6%,
+        20% 91.9%,
+        16% 92.5%,
+        12% 93.7%,
+        8% 94.9%,
+        4% 96.7%,
+        0% 99.1%
       );
     }
 
@@ -193,19 +223,22 @@
       object-fit: contain;
     }
 
-    /* 3D Fabric Wave Shading: Crests & Troughs matching waving cloth */
+    /* 3D Fabric Wave Shading: Specular crests & trough shadows matching waving cloth */
     .flag-cloth-shade {
       position: absolute;
       inset: 0;
       pointer-events: none;
       background: linear-gradient(
         90deg,
-        rgba(255, 255, 255, 0.32) 0%,
-        rgba(0, 0, 0, 0.22) 24%,
-        rgba(255, 255, 255, 0.28) 48%,
-        rgba(0, 0, 0, 0.24) 72%,
-        rgba(255, 255, 255, 0.22) 90%,
-        rgba(0, 0, 0, 0.16) 100%
+        rgba(0, 0, 0, 0.22) 0%,
+        rgba(255, 255, 255, 0.12) 10%,
+        rgba(255, 255, 255, 0.42) 25%,
+        rgba(0, 0, 0, 0.12) 38%,
+        rgba(0, 0, 0, 0.32) 52%,
+        rgba(255, 255, 255, 0.18) 64%,
+        rgba(255, 255, 255, 0.46) 74%,
+        rgba(0, 0, 0, 0.26) 88%,
+        rgba(255, 255, 255, 0.20) 100%
       );
       mix-blend-mode: overlay;
       display: none;
@@ -298,53 +331,61 @@
       text-align: right;
     }
 
-    /* APPLE BREAK & RUN BADGES (Red Apple 🍎 & Green Apple 🍏) */
+    /* APPLE BREAK & RUN BADGES (Red Apple 🍎 & Green Apple 🍏) — Prominent Broadcast Scale */
     .apple-badges-row {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 7px;
       flex-shrink: 0;
     }
 
     .apple-badge {
       display: inline-flex;
       align-items: center;
-      gap: 3.5px;
-      padding: 1.5px 6.5px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      gap: 6px;
+      padding: 3px 10px;
+      height: 34px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.35);
       white-space: nowrap;
       flex-shrink: 0;
-      line-height: 1.2;
+      line-height: 1;
+      transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .apple-badge.bump {
+      transform: scale(1.22);
     }
 
     .apple-badge-red {
-      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
       color: #ffffff;
-      border: 1px solid rgba(254, 202, 202, 0.45);
-      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+      border: 1.5px solid rgba(254, 202, 202, 0.8);
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.45);
     }
 
     .apple-badge-green {
-      background: linear-gradient(135deg, #16a34a 0%, #166534 100%);
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
       color: #ffffff;
-      border: 1px solid rgba(187, 247, 208, 0.45);
-      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+      border: 1.5px solid rgba(187, 247, 208, 0.8);
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.45);
     }
 
     .apple-emoji {
-      font-size: 13px;
+      font-size: 24px;
       line-height: 1;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+      display: inline-block;
+      user-select: none;
     }
 
     .apple-count {
-      font-size: 11.5px;
-      font-weight: 900;
+      font-size: 18px;
+      font-weight: 1000;
       font-variant-numeric: tabular-nums;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+      letter-spacing: 0.5px;
     }
 
     /* LEGACY BREAK & RUN BADGES */
