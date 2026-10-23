@@ -45,6 +45,7 @@ export function getFlagImgUrl(codeOrFlag: string, width: 80 | 160 = 80): string 
  */
 export function getFlagVectorUrl(codeOrFlag: string): string {
   const code = getCountryCode(codeOrFlag).toLowerCase();
+  if (code === 'zw') return '/assets/aistudio/ZIM_FLAG_71fcb92e.png';
   if (code.length === 2 && /^[a-z]{2}$/.test(code)) {
     const cp1 = (0x1f1e6 + (code.charCodeAt(0) - 97)).toString(16);
     const cp2 = (0x1f1e6 + (code.charCodeAt(1) - 97)).toString(16);

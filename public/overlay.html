@@ -10,11 +10,12 @@
       --gold-light: #ffe885;
       --gold: #ffc800;
       --gold-dark: #b8860b;
-      --cyan-glow: #00e5ff;
+      --cyan-glow: #38bdf8;
       --blue-start: #0066f6;
       --blue-mid: #004ecc;
       --blue-end: #003699;
-      --bg-dark: rgba(9, 13, 22, 0.96);
+      --scoreboard-blue: linear-gradient(180deg, #0e3882 0%, #082459 50%, #041639 100%);
+      --ticker-blue: linear-gradient(180deg, #07204e 0%, #03112c 100%);
       --font-family: Arial, Helvetica, "Segoe UI", Roboto, sans-serif;
     }
 
@@ -40,7 +41,7 @@
       background: transparent;
     }
 
-    /* WIDE HORIZONTAL BROADCAST OVERLAY WRAPPER */
+    /* WIDE HORIZONTAL BROADCAST OVERLAY WRAPPER (ROYAL BLUE THEME) */
     #overlay-wrapper {
       position: absolute;
       left: 50%;
@@ -51,9 +52,9 @@
       margin: 0 auto;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 14px 42px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.16);
-      background: var(--bg-dark);
-      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.9), 0 0 0 1.5px rgba(56, 189, 248, 0.4), 0 0 28px rgba(0, 102, 246, 0.35);
+      background: var(--scoreboard-blue);
+      backdrop-filter: blur(14px);
       transition: all 0.3s ease;
     }
 
@@ -63,14 +64,14 @@
     }
 
     /* ==========================================================
-       1. MAIN TOP SCOREBOARD (Compact Height, Generous Width)
+       1. MAIN TOP SCOREBOARD (Compact Height, Generous Width, Blue Broadcast Theme)
        ========================================================== */
     .score-bar {
       position: relative;
       width: 100%;
       min-height: 56px;
       height: 60px;
-      background: linear-gradient(180deg, #131a2a 0%, #090e18 100%);
+      background: linear-gradient(180deg, #10449e 0%, #0b2f70 50%, #061e4b 100%);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -115,73 +116,38 @@
       flex: 1;
     }
 
-    /* ANIMATED WAVING NATIONAL FLAGS (Fabric Ripple & Flutter) */
+    /* ANIMATED WAVING NATIONAL FLAGS (S-Curve Fabric Wave & Flutter) */
     .flag-box {
       flex-shrink: 0;
-      width: 48px;
-      height: 32px;
-      border-radius: 4px;
-      background: rgba(5, 10, 20, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.38);
-      box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4), inset 0 -1px 1px rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.6);
+      width: 52px;
+      height: 38px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
       position: relative;
-      perspective: 350px;
+      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.75));
     }
 
     .player-zone-1 .flag-box {
       transform-origin: left center;
-      animation: flagFabricFlutterP1 3s ease-in-out infinite;
+      animation: flagFabricFlutterP1 3.2s ease-in-out infinite;
     }
 
     .player-zone-2 .flag-box {
       transform-origin: right center;
-      animation: flagFabricFlutterP2 3s ease-in-out infinite;
+      animation: flagFabricFlutterP2 3.2s ease-in-out infinite;
     }
 
     .flag-img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
       pointer-events: none;
-    }
-
-    /* Continuous Fabric Ripple Traveling Light Wave */
-    .flag-box::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        90deg,
-        rgba(0, 0, 0, 0.22) 0%,
-        rgba(255, 255, 255, 0.28) 20%,
-        rgba(0, 0, 0, 0.18) 42%,
-        rgba(255, 255, 255, 0.32) 65%,
-        rgba(0, 0, 0, 0.2) 85%,
-        rgba(255, 255, 255, 0.25) 100%
-      );
-      background-size: 200% 100%;
-      animation: fabricWaveTravel 3s linear infinite;
-      mix-blend-mode: overlay;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    /* Top Fabric Specular Highlight Sheen */
-    .flag-box::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 44%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.08) 70%, transparent 100%);
-      pointer-events: none;
-      z-index: 3;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
     @keyframes fabricWaveTravel {
@@ -267,7 +233,56 @@
       text-align: right;
     }
 
-    /* BREAK & RUN BADGES */
+    /* APPLE BREAK & RUN BADGES (Red Apple 🍎 & Green Apple 🍏) */
+    .apple-badges-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .apple-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3.5px;
+      padding: 1.5px 6.5px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1.2;
+    }
+
+    .apple-badge-red {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: #ffffff;
+      border: 1px solid rgba(254, 202, 202, 0.45);
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+    }
+
+    .apple-badge-green {
+      background: linear-gradient(135deg, #16a34a 0%, #166534 100%);
+      color: #ffffff;
+      border: 1px solid rgba(187, 247, 208, 0.45);
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+    }
+
+    .apple-emoji {
+      font-size: 13px;
+      line-height: 1;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+    }
+
+    .apple-count {
+      font-size: 11.5px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* LEGACY BREAK & RUN BADGES */
     .br-badge {
       display: none;
       align-items: center;
@@ -367,20 +382,20 @@
     }
 
     /* ==========================================================
-       3. NEW DEDICATED BOTTOM INFORMATION BAR
-       Single horizontal row: VENUE | TOURNAMENT | POT | BRAND
+       3. NEW DEDICATED BOTTOM INFORMATION BAR (BLUE THEMED)
+       Single horizontal row: VENUE | MATCH TYPE | POT | BRAND
        ========================================================== */
     .bottom-ticker-bar {
       position: relative;
       width: 100%;
       min-height: 36px;
       height: 38px;
-      background: rgba(5, 8, 15, 0.98);
+      background: linear-gradient(180deg, #07204e 0%, #03112c 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0 24px;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 1px solid rgba(56, 189, 248, 0.28);
     }
 
     .ticker-content {
@@ -511,7 +526,17 @@
 
           <div class="player-1-info">
             <div id="name1" class="player-name">CHAIRMAN TINDO</div>
-            <div id="brBadge1" class="br-badge">🔥 B&R: <span id="brVal1">0</span></div>
+            <div id="appleBadges1" class="apple-badges-row">
+              <div id="appleRedBadge1" class="apple-badge apple-badge-red" style="display:none">
+                <span class="apple-emoji">🍎</span>
+                <span id="appleRedVal1" class="apple-count">0</span>
+              </div>
+              <div id="appleGreenBadge1" class="apple-badge apple-badge-green" style="display:none">
+                <span class="apple-emoji">🍏</span>
+                <span id="appleGreenVal1" class="apple-count">0</span>
+              </div>
+              <div id="brBadge1" class="br-badge">🔥 B&R: <span id="brVal1">0</span></div>
+            </div>
           </div>
 
           <div id="score1" class="score-box">2</div>
@@ -525,12 +550,22 @@
           </div>
         </div>
 
-        <!-- PLAYER 2 ZONE (Right: Score -> Name & B&R -> Flag) -->
+        <!-- PLAYER 2 ZONE (Right: Score -> Name & Apple Badges -> Flag) -->
         <div class="player-zone-2">
           <div id="score2" class="score-box">1</div>
 
           <div class="player-2-info">
-            <div id="brBadge2" class="br-badge">🔥 B&R: <span id="brVal2">0</span></div>
+            <div id="appleBadges2" class="apple-badges-row">
+              <div id="appleRedBadge2" class="apple-badge apple-badge-red" style="display:none">
+                <span class="apple-emoji">🍎</span>
+                <span id="appleRedVal2" class="apple-count">0</span>
+              </div>
+              <div id="appleGreenBadge2" class="apple-badge apple-badge-green" style="display:none">
+                <span class="apple-emoji">🍏</span>
+                <span id="appleGreenVal2" class="apple-count">0</span>
+              </div>
+              <div id="brBadge2" class="br-badge">🔥 B&R: <span id="brVal2">0</span></div>
+            </div>
             <div id="name2" class="player-name">BOSS OWIZA</div>
           </div>
 
@@ -554,8 +589,7 @@
           <span class="ticker-divider">|</span>
 
           <div class="ticker-group">
-            <span class="ticker-label">MATCH TYPE:</span>
-            <span id="matchType" class="ticker-val">CHALLENGE MATCH</span>
+            <span id="matchType" class="ticker-val ticker-match-val">CHALLENGE MATCH</span>
             <span id="tournament" style="display:none">CHALLENGE MATCH</span>
           </div>
 
@@ -639,6 +673,7 @@
 
     function getFlagVectorUrl(flagVal) {
       const code = getIsoCode(flagVal);
+      if (code === 'zw') return '/assets/aistudio/ZIM_FLAG_71fcb92e.png';
       if (code.length === 2 && /^[a-z]{2}$/.test(code)) {
         const cp1 = (0x1f1e6 + (code.charCodeAt(0) - 97)).toString(16);
         const cp2 = (0x1f1e6 + (code.charCodeAt(1) - 97)).toString(16);
@@ -706,7 +741,9 @@
       setText("raceText", "RACE TO " + race, "RACE TO 3");
 
       setText("venue", state.venue, "HARARE, ZIMBABWE");
-      const matchTypeVal = state.matchType || state.tournament || "CHALLENGE MATCH";
+      const matchTypeVal = (state.matchType !== undefined && state.matchType !== null && state.matchType !== "")
+        ? state.matchType
+        : (state.tournament || "CHALLENGE MATCH");
       setText("matchType", matchTypeVal, "CHALLENGE MATCH");
       if ($("tournament")) $("tournament").textContent = matchTypeVal;
       setText("pot", state.pot, "$500");
@@ -716,7 +753,30 @@
       updateFlagUI(state.flag1 || "🇿🇼", state.avatar1, "flagImg1", "flagDisplay1", "avatarImg1");
       updateFlagUI(state.flag2 || "🇿🇼", state.avatar2, "flagImg2", "flagDisplay2", "avatarImg2");
 
-      // Break and Run badges
+      // Apple Break & Run badges (Red Apple 🍎 & Green Apple 🍏)
+      const r1 = parseInt(state.appleRed1, 10) || 0;
+      const g1 = parseInt(state.appleGreen1, 10) || 0;
+      if ($("appleRedBadge1")) {
+        $("appleRedVal1").textContent = r1;
+        $("appleRedBadge1").style.display = r1 > 0 ? "inline-flex" : "none";
+      }
+      if ($("appleGreenBadge1")) {
+        $("appleGreenVal1").textContent = g1;
+        $("appleGreenBadge1").style.display = g1 > 0 ? "inline-flex" : "none";
+      }
+
+      const r2 = parseInt(state.appleRed2, 10) || 0;
+      const g2 = parseInt(state.appleGreen2, 10) || 0;
+      if ($("appleRedBadge2")) {
+        $("appleRedVal2").textContent = r2;
+        $("appleRedBadge2").style.display = r2 > 0 ? "inline-flex" : "none";
+      }
+      if ($("appleGreenBadge2")) {
+        $("appleGreenVal2").textContent = g2;
+        $("appleGreenBadge2").style.display = g2 > 0 ? "inline-flex" : "none";
+      }
+
+      // Legacy Break and Run badges
       const br1 = parseInt(state.br1, 10) || 0;
       const br2 = parseInt(state.br2, 10) || 0;
       if (br1 > 0) {
@@ -841,7 +901,12 @@
           flag2: "🇿🇼",
           br1: 0,
           br2: 0,
-          tournament: "PLATINUM SKILLS OPEN",
+          appleRed1: 0,
+          appleGreen1: 0,
+          appleRed2: 0,
+          appleGreen2: 0,
+          matchType: "CHALLENGE MATCH",
+          tournament: "CHALLENGE MATCH",
           venue: "HARARE, ZIMBABWE",
           pot: "$500",
           brand: "KRAVO PLATNUMZ OFFICIAL",

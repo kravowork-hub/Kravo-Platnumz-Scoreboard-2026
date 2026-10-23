@@ -45,7 +45,12 @@ export interface ScoreState {
   score2: number;
   br1: number;
   br2: number;
+  appleRed1?: number;
+  appleGreen1?: number;
+  appleRed2?: number;
+  appleGreen2?: number;
   raceTo: number;
+  matchType?: string;
   tournament: string;
   venue: string;
   pot: string;
@@ -79,8 +84,13 @@ export default function App() {
             score2: 1,
             br1: 0,
             br2: 0,
+            appleRed1: 0,
+            appleGreen1: 0,
+            appleRed2: 0,
+            appleGreen2: 0,
             raceTo: 3,
-            tournament: 'PLATINUM SKILLS OPEN',
+            matchType: parsed.matchType || parsed.tournament || 'CHALLENGE MATCH',
+            tournament: parsed.tournament || parsed.matchType || 'CHALLENGE MATCH',
             venue: 'HARARE, ZIMBABWE',
             pot: '$500',
             brand: 'KRAVO PLATNUMZ OFFICIAL',
@@ -103,8 +113,13 @@ export default function App() {
       score2: 1,
       br1: 0,
       br2: 0,
+      appleRed1: 0,
+      appleGreen1: 0,
+      appleRed2: 0,
+      appleGreen2: 0,
       raceTo: 3,
-      tournament: 'PLATINUM SKILLS OPEN',
+      matchType: 'CHALLENGE MATCH',
+      tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
       pot: '$500',
       brand: 'KRAVO PLATNUMZ OFFICIAL',
@@ -399,6 +414,21 @@ export default function App() {
     });
   };
 
+  const updateApple = (player: 1 | 2, color: 'red' | 'green', delta: number) => {
+    setState((prev) => {
+      const key = (player === 1
+        ? (color === 'red' ? 'appleRed1' : 'appleGreen1')
+        : (color === 'red' ? 'appleRed2' : 'appleGreen2')) as 'appleRed1' | 'appleGreen1' | 'appleRed2' | 'appleGreen2';
+      const current = prev[key] || 0;
+      const nextVal = Math.max(0, Math.min(99, current + delta));
+      if (delta > 0) playBreakAndRunChime();
+      const updated = { ...prev, [key]: nextVal, updatedAt: Date.now() };
+      syncState(updated);
+      showToast(`P${player} ${color === 'red' ? '🍎 Red Apple' : '🍏 Green Apple'}: ${nextVal}`);
+      return updated;
+    });
+  };
+
   const swapPlayers = () => {
     setState((prev) => {
       const updated = {
@@ -413,6 +443,10 @@ export default function App() {
         score2: prev.score1,
         br1: prev.br2 || 0,
         br2: prev.br1 || 0,
+        appleRed1: prev.appleRed2 || 0,
+        appleRed2: prev.appleRed1 || 0,
+        appleGreen1: prev.appleGreen2 || 0,
+        appleGreen2: prev.appleGreen1 || 0,
         updatedAt: Date.now()
       };
       syncState(updated);
@@ -422,11 +456,22 @@ export default function App() {
   };
 
   const resetScores = () => {
-    if (!window.confirm("Reset both players' scores and Break & Run counters to zero? (Player names and match details will be kept)")) return;
+    if (!window.confirm("Reset both players' scores, Red & Green Apples, and Break & Run counters to zero? (Player names and match details will be kept)")) return;
     setState((prev) => {
-      const updated = { ...prev, score1: 0, score2: 0, br1: 0, br2: 0, updatedAt: Date.now() };
+      const updated = {
+        ...prev,
+        score1: 0,
+        score2: 0,
+        br1: 0,
+        br2: 0,
+        appleRed1: 0,
+        appleGreen1: 0,
+        appleRed2: 0,
+        appleGreen2: 0,
+        updatedAt: Date.now()
+      };
       syncState(updated);
-      showToast('Scores & Break/Run reset to 0');
+      showToast('Scores & Apples reset to 0');
       return updated;
     });
   };
@@ -442,10 +487,15 @@ export default function App() {
       score2: 1,
       br1: 0,
       br2: 0,
+      appleRed1: 0,
+      appleGreen1: 0,
+      appleRed2: 0,
+      appleGreen2: 0,
       raceTo: 3,
-      tournament: 'PLATINUM SKILLS OPEN',
+      matchType: 'CHALLENGE MATCH',
+      tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
-      pot: '$500',
+      pot: '$1,000',
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: state.room || 'platnumz-live-match',
       overlayPosition: 'bottom',
@@ -853,34 +903,73 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Inline Break & Run Section */}
-                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base">🔥</span>
-                    <span className="text-xs font-bold text-amber-400">Break & Run:</span>
-                    <span className="text-[11px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
+                {/* Break & Run (Red Apple & Green Apple) Options */}
+                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                      <span>🍏</span> Break & Run Options (Apples)
+                    </span>
+                    <span className="text-[10px] text-slate-400">Clearances off the break</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => updateBreakAndRun(1, -1)}
-                      className="w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
-                      title="Decrease Break & Run"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <div className="min-w-9 text-center font-mono font-black text-lg text-amber-300 px-2 py-0.5 rounded bg-slate-900 border border-slate-800 shadow-inner">
-                      {state.br1 || 0}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* RED APPLE */}
+                    <div className="flex items-center justify-between bg-red-950/40 border border-red-500/30 rounded-lg px-2.5 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base select-none">🍎</span>
+                        <span className="text-xs font-bold text-red-200">Red Apple</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateApple(1, 'red', -1)}
+                          className="w-7 h-7 rounded bg-red-900/60 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/50 transition"
+                          title="Decrease Red Apple"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-red-500/40 shadow-inner">
+                          {state.appleRed1 || 0}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateApple(1, 'red', 1)}
+                          className="w-7 h-7 rounded bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          title="Increase Red Apple"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => updateBreakAndRun(1, 1)}
-                      className="w-8 h-8 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
-                      title="Increase Break & Run"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+
+                    {/* GREEN APPLE */}
+                    <div className="flex items-center justify-between bg-emerald-950/40 border border-emerald-500/30 rounded-lg px-2.5 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base select-none">🍏</span>
+                        <span className="text-xs font-bold text-emerald-200">Green Apple</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateApple(1, 'green', -1)}
+                          className="w-7 h-7 rounded bg-emerald-900/60 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/50 transition"
+                          title="Decrease Green Apple"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-emerald-500/40 shadow-inner">
+                          {state.appleGreen1 || 0}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateApple(1, 'green', 1)}
+                          className="w-7 h-7 rounded bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          title="Increase Green Apple"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -958,34 +1047,73 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Inline Break & Run Section */}
-                <div className="flex items-center justify-between bg-slate-950/40 rounded-lg px-2.5 py-1.5 border border-white/5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base">🔥</span>
-                    <span className="text-xs font-bold text-amber-400">Break & Run:</span>
-                    <span className="text-[11px] text-slate-400 hidden sm:inline">(Run-out off break)</span>
+                {/* Break & Run (Red Apple & Green Apple) Options */}
+                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                      <span>🍏</span> Break & Run Options (Apples)
+                    </span>
+                    <span className="text-[10px] text-slate-400">Clearances off the break</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => updateBreakAndRun(2, -1)}
-                      className="w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold flex items-center justify-center border border-slate-700 transition"
-                      title="Decrease Break & Run"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <div className="min-w-9 text-center font-mono font-black text-lg text-amber-300 px-2 py-0.5 rounded bg-slate-900 border border-slate-800 shadow-inner">
-                      {state.br2 || 0}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* RED APPLE */}
+                    <div className="flex items-center justify-between bg-red-950/40 border border-red-500/30 rounded-lg px-2.5 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base select-none">🍎</span>
+                        <span className="text-xs font-bold text-red-200">Red Apple</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateApple(2, 'red', -1)}
+                          className="w-7 h-7 rounded bg-red-900/60 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/50 transition"
+                          title="Decrease Red Apple"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-red-500/40 shadow-inner">
+                          {state.appleRed2 || 0}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateApple(2, 'red', 1)}
+                          className="w-7 h-7 rounded bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          title="Increase Red Apple"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => updateBreakAndRun(2, 1)}
-                      className="w-8 h-8 rounded-md bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-bold flex items-center justify-center shadow transition"
-                      title="Increase Break & Run"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+
+                    {/* GREEN APPLE */}
+                    <div className="flex items-center justify-between bg-emerald-950/40 border border-emerald-500/30 rounded-lg px-2.5 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base select-none">🍏</span>
+                        <span className="text-xs font-bold text-emerald-200">Green Apple</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateApple(2, 'green', -1)}
+                          className="w-7 h-7 rounded bg-emerald-900/60 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/50 transition"
+                          title="Decrease Green Apple"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-emerald-500/40 shadow-inner">
+                          {state.appleGreen2 || 0}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateApple(2, 'green', 1)}
+                          className="w-7 h-7 rounded bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          title="Increase Green Apple"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1039,15 +1167,20 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Tournament</label>
+                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Match Type</label>
                   <input
                     className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
-                    value={state.tournament}
+                    value={state.matchType || state.tournament || ''}
                     onChange={(e) => {
-                      const updated = { ...state, tournament: e.target.value, updatedAt: Date.now() };
+                      const updated = {
+                        ...state,
+                        matchType: e.target.value,
+                        tournament: e.target.value,
+                        updatedAt: Date.now()
+                      };
                       syncState(updated);
                     }}
-                    placeholder="e.g. PLATINUM SKILLS OPEN"
+                    placeholder="e.g. Challenge Match, Money Match, Tournament"
                   />
                 </div>
 
