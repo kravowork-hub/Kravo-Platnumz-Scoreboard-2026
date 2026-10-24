@@ -92,13 +92,14 @@ async function startServer() {
       const incomingTime = Number(incoming.updatedAt) || 0;
       const existingTime = Number(existing.updatedAt) || 0;
 
-      // Reject stale and tied writes. Equal timestamps can arrive out of order
-      // when two controller updates are posted in the same millisecond.
-      if (incomingTime > existingTime || existingTime <= 1) {
+      // Reject only older writes. Equal timestamps are valid concurrent updates
+      // from separate controllers, so the server resolves them with its own
+      // monotonic timestamp instead of silently dropping one update.
+      if (incomingTime >= existingTime || existingTime <= 1) {
         const merged = {
           ...existing,
           ...incoming,
-          updatedAt: incomingTime > 0 ? incomingTime : Date.now()
+          updatedAt: Math.max(Date.now(), existingTime + 1, incomingTime || 0)
         };
         roomStates.set(room, merged);
         persistStates();

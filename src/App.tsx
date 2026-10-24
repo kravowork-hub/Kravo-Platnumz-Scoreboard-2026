@@ -145,7 +145,7 @@ export default function App() {
   const [gitOutput, setGitOutput] = useState<{ success: boolean; message: string } | null>(null);
 
   const channelRef = useRef<BroadcastChannel | null>(null);
-  const stateRef = useRef<ScoreState>(initialState);
+  const stateRef = useRef<ScoreState | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const showToast = (msg: string) => {
@@ -223,7 +223,7 @@ export default function App() {
   const syncState = useCallback((newState: ScoreState) => {
     // Every local publish must be newer than the last rendered state. Reusing a
     // timestamp lets delayed requests or SSE messages overwrite newer changes.
-    const previousTimestamp = Number(stateRef.current.updatedAt) || 1;
+    const previousTimestamp = Number(stateRef.current?.updatedAt) || 1;
     const requestedTimestamp = Number(newState.updatedAt) || 0;
     const withTimestamp = {
       ...newState,
