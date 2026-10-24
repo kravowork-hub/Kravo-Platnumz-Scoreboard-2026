@@ -116,16 +116,25 @@ Linux Mint includes a native **Web App Manager** built by the Linux Mint develop
 
 ---
 
-## 🚀 Deploy on Vercel or GitHub Pages
+## 🚀 Deploy on Vercel, Netlify, or GitHub Pages
 
-1. Push your changes to GitHub:
-   ```bash
-   git add .
-   git commit -m "Add shot clock, themes, avatars, hill-hill alert, expanded countries, and Linux Mint installer"
-   git push origin main
-   ```
-2. Link the repository in **Vercel** or enable **GitHub Pages** (Deploy from branch `main`, root `/`).
-3. Your controller is at `/index.html` (or root `/`) and OBS overlay is at `/overlay.html`.
+The repository includes native zero-configuration real-time synchronization designed specifically for serverless hosting platforms:
+
+### Vercel Deployment
+1. Import this repository into [Vercel](https://vercel.com).
+2. Framework Preset: **Vite** (or **Other**).
+3. The included `vercel.json` and `/api/sync.ts` serverless route automatically handle dynamic routing, preflight CORS headers, and `/overlay.html` asset serving.
+4. Click **Deploy**.
+
+### Netlify Deployment
+1. Import this repository into [Netlify](https://netlify.com).
+2. The included `netlify.toml` automatically configures static redirects, CORS headers, and serverless sync fallbacks.
+3. Click **Deploy**.
+
+### Universal Cross-Device Real-Time Sync
+- **No API keys or databases required**: When deployed on Vercel, Netlify, or GitHub Pages, cross-device sync between your phone (mobile controller) and PC (OBS Studio Browser Source) works instantly worldwide using high-speed encrypted WebSockets with automatic multi-broker failover.
+- **Retained State Memory**: When OBS opens or restarts, the latest score and match state are delivered immediately.
+- **Zero-Latency Same-PC Mode**: When OBS and the controller run on the same computer, the `BroadcastChannel` API and local storage events deliver sub-1ms instant updates with zero network usage.
 
 ---
 © Kravo Platnumz Official. Built for cuesport streaming excellence.

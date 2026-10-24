@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Platnumz Cuesport | OBS Scoreboard Broadcast Overlay</title>
+  <script src="paho-mqtt-min.js"></script>
+  <script>if (typeof Paho === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"><\/script>');</script>
 
   <style>
     :root {
@@ -753,6 +754,10 @@
     const $ = id => document.getElementById(id);
     let lastScore1 = 2;
     let lastScore2 = 1;
+    let lastAppleRed1 = 0;
+    let lastAppleGreen1 = 0;
+    let lastAppleRed2 = 0;
+    let lastAppleGreen2 = 0;
     let lastUpdatedAt = 0;
 
     function safeScore(value) {
@@ -881,22 +886,30 @@
       if ($("appleRedBadge1")) {
         $("appleRedVal1").textContent = r1;
         $("appleRedBadge1").style.display = r1 > 0 ? "inline-flex" : "none";
+        if (r1 !== lastAppleRed1 && r1 > 0) triggerScoreBump("appleRedBadge1");
       }
       if ($("appleGreenBadge1")) {
         $("appleGreenVal1").textContent = g1;
         $("appleGreenBadge1").style.display = g1 > 0 ? "inline-flex" : "none";
+        if (g1 !== lastAppleGreen1 && g1 > 0) triggerScoreBump("appleGreenBadge1");
       }
+      lastAppleRed1 = r1;
+      lastAppleGreen1 = g1;
 
       const r2 = parseInt(state.appleRed2, 10) || 0;
       const g2 = parseInt(state.appleGreen2, 10) || 0;
       if ($("appleRedBadge2")) {
         $("appleRedVal2").textContent = r2;
         $("appleRedBadge2").style.display = r2 > 0 ? "inline-flex" : "none";
+        if (r2 !== lastAppleRed2 && r2 > 0) triggerScoreBump("appleRedBadge2");
       }
       if ($("appleGreenBadge2")) {
         $("appleGreenVal2").textContent = g2;
         $("appleGreenBadge2").style.display = g2 > 0 ? "inline-flex" : "none";
+        if (g2 !== lastAppleGreen2 && g2 > 0) triggerScoreBump("appleGreenBadge2");
       }
+      lastAppleRed2 = r2;
+      lastAppleGreen2 = g2;
 
       // Legacy Break and Run badges
       const br1 = parseInt(state.br1, 10) || 0;
@@ -956,7 +969,64 @@
       setTimeout(() => el.classList.remove("bump"), 250);
     }
 
-    // 1. REAL-TIME SERVER-SENT EVENTS (SSE) STREAM
+    // 1. UNIVERSAL CLOUD REAL-TIME SYNC VIA MQTT WEBSOCKETS (Cross-device, Vercel, Netlify, Standalone)
+    const MQTT_BROKERS = [
+      { host: "broker.emqx.io", port: 8084, path: "/mqtt" },
+      { host: "broker.hivemq.com", port: 8884, path: "/mqtt" }
+    ];
+    let mqttBrokerIdx = 0;
+    let mqttClient = null;
+    let mqttConnected = false;
+
+    function connectMqtt() {
+      if (typeof Paho === "undefined" || !Paho.MQTT || !Paho.MQTT.Client) {
+        setTimeout(connectMqtt, 600);
+        return;
+      }
+      const broker = MQTT_BROKERS[mqttBrokerIdx % MQTT_BROKERS.length];
+      const clientId = "platnumz_ov_" + Math.random().toString(36).substring(2, 9);
+      try {
+        mqttClient = new Paho.MQTT.Client(broker.host, broker.port, broker.path, clientId);
+        mqttClient.onConnectionLost = function(resp) {
+          mqttConnected = false;
+          console.log("[Overlay Sync] MQTT connection lost, switching/reconnecting...");
+          mqttBrokerIdx++;
+          setTimeout(connectMqtt, 3000);
+        };
+        mqttClient.onMessageArrived = function(message) {
+          try {
+            const data = JSON.parse(message.payloadString);
+            if (data && typeof data === "object") {
+              handleIncomingState(data);
+            }
+          } catch (e) {}
+        };
+        mqttClient.connect({
+          useSSL: true,
+          timeout: 4,
+          keepAliveInterval: 30,
+          cleanSession: true,
+          onSuccess: function() {
+            mqttConnected = true;
+            const topic = "platnumz/scoreboard/v2/" + encodeURIComponent(room || "platnumz-live-match");
+            mqttClient.subscribe(topic, { qos: 1 });
+            console.log("[Overlay Sync] Connected to " + broker.host + " · Subscribed to " + topic);
+          },
+          onFailure: function(err) {
+            mqttConnected = false;
+            console.warn("[Overlay Sync] MQTT error with " + broker.host + ":", err.errorMessage);
+            mqttBrokerIdx++;
+            setTimeout(connectMqtt, 3000);
+          }
+        });
+      } catch (err) {
+        mqttBrokerIdx++;
+        setTimeout(connectMqtt, 4000);
+      }
+    }
+    connectMqtt();
+
+    // 2. SERVER-SENT EVENTS (SSE) STREAM (Active when running on Node.js/Express)
     function connectSse() {
       try {
         const sse = new EventSource('/api/sync/' + encodeURIComponent(room) + '/events');
@@ -970,21 +1040,28 @@
         };
         sse.onerror = () => {
           sse.close();
-          setTimeout(connectSse, 2000);
+          // Backoff longer if on serverless hosts where SSE is unsupported
+          setTimeout(connectSse, 15000);
         };
       } catch (e) {}
     }
     connectSse();
 
-    // 2. IMMEDIATE HTTP FETCH FOR ZERO DELAY INITIAL LOAD
-    fetch('/api/sync/' + encodeURIComponent(room))
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.state) handleIncomingState(data.state);
-      })
-      .catch(() => {});
+    // 3. IMMEDIATE HTTP FETCH FOR ZERO DELAY INITIAL LOAD
+    function fetchApiState() {
+      fetch('/api/sync/' + encodeURIComponent(room))
+        .then(res => {
+          if (!res.ok) return null;
+          return res.json();
+        })
+        .then(data => {
+          if (data && data.success && data.state) handleIncomingState(data.state);
+        })
+        .catch(() => {});
+    }
+    fetchApiState();
 
-    // 3. BROADCASTCHANNEL API FOR LOCAL ZERO-LATENCY CROSS-TAB SYNC
+    // 4. BROADCASTCHANNEL API FOR LOCAL ZERO-LATENCY CROSS-TAB SYNC (Same device OBS & Controller)
     try {
       const channel = new BroadcastChannel("platnumz_scoreboard_bus");
       channel.onmessage = (event) => {
@@ -994,7 +1071,7 @@
       };
     } catch (e) {}
 
-    // 4. STORAGE EVENT LISTENER
+    // 5. LOCALSTORAGE EVENT LISTENER (Same device OBS & Controller)
     window.addEventListener("storage", (e) => {
       if (e.key === "platnumz-scoreboard-state" && e.newValue) {
         try {
@@ -1002,6 +1079,13 @@
         } catch (err) {}
       }
     });
+
+    // 6. PERIODIC SAFETY POLLING (Fallback if MQTT is disconnected)
+    setInterval(() => {
+      if (!mqttConnected) {
+        fetchApiState();
+      }
+    }, 4000);
 
     // Initial render from local cache or default
     try {

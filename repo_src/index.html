@@ -460,6 +460,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="paho-mqtt-min.js"></script>
+<script>if (typeof Paho === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"><\/script>');</script>
 
 <script>
 "use strict";
@@ -760,6 +762,71 @@ function getRoomName() {
   return $("roomInput").value.trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80) || "platnumz-live-match";
 }
 
+let mqttClient = null;
+let mqttConnected = false;
+const MQTT_BROKERS = [
+  { host: "broker.emqx.io", port: 8084, path: "/mqtt" },
+  { host: "broker.hivemq.com", port: 8884, path: "/mqtt" }
+];
+let mqttBrokerIdx = 0;
+
+function initMqtt() {
+  if (typeof Paho === "undefined" || !Paho.MQTT || !Paho.MQTT.Client) {
+    setTimeout(initMqtt, 600);
+    return;
+  }
+  const broker = MQTT_BROKERS[mqttBrokerIdx % MQTT_BROKERS.length];
+  const clientId = "platnumz_ctrl_" + Math.random().toString(36).substring(2, 9);
+  try {
+    mqttClient = new Paho.MQTT.Client(broker.host, broker.port, broker.path, clientId);
+    mqttClient.onConnectionLost = function() {
+      mqttConnected = false;
+      mqttBrokerIdx++;
+      setTimeout(initMqtt, 3000);
+    };
+    mqttClient.onMessageArrived = function(message) {
+      try {
+        const data = JSON.parse(message.payloadString);
+        if (data && typeof data === "object") {
+          renderState(data);
+        }
+      } catch (e) {}
+    };
+    mqttClient.connect({
+      useSSL: true,
+      timeout: 4,
+      keepAliveInterval: 30,
+      cleanSession: true,
+      onSuccess: function() {
+        mqttConnected = true;
+        const topic = "platnumz/scoreboard/v2/" + encodeURIComponent(getRoomName());
+        mqttClient.subscribe(topic, { qos: 1 });
+        setConnection("Cloud & Local sync active · Room: " + getRoomName(), "online");
+      },
+      onFailure: function() {
+        mqttConnected = false;
+        mqttBrokerIdx++;
+        setTimeout(initMqtt, 3000);
+      }
+    });
+  } catch (err) {
+    mqttBrokerIdx++;
+    setTimeout(initMqtt, 4000);
+  }
+}
+
+function publishMqtt(state) {
+  if (!mqttClient || !mqttConnected) return;
+  try {
+    const topic = "platnumz/scoreboard/v2/" + encodeURIComponent(getRoomName());
+    const msg = new Paho.MQTT.Message(JSON.stringify(state));
+    msg.destinationName = topic;
+    msg.qos = 1;
+    msg.retained = true;
+    mqttClient.send(msg);
+  } catch (e) {}
+}
+
 function saveLocally(state) {
   try {
     localStorage.setItem("platnumz-scoreboard-state", JSON.stringify(state));
@@ -769,6 +836,9 @@ function saveLocally(state) {
   } catch (e) {
     console.warn("Local storage write failed", e);
   }
+  // Universal MQTT Realtime Publish (Cross-device, Vercel, Netlify, Github Pages)
+  publishMqtt(state);
+
   // Real-time server sync
   try {
     fetch('/api/sync/' + encodeURIComponent(getRoomName()), {
@@ -1120,6 +1190,7 @@ function initialise() {
   }
 
   connectFirebase();
+  initMqtt();
 }
 
 window.addEventListener("online", () => {

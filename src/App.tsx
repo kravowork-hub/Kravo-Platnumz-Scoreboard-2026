@@ -33,6 +33,7 @@ import {
 import { usePWAInstall } from './usePWAInstall';
 import { WORLD_COUNTRIES, Country, getCountryCode, getFlagEmoji } from './countries';
 import { FlagBadge } from './FlagBadge';
+import { RealtimeSyncEngine } from './realtimeSync';
 
 export interface ScoreState {
   name1: string;
@@ -218,6 +219,45 @@ export default function App() {
     } catch (e) {}
   }, [soundEnabled, getAudioContext]);
 
+  const syncEngineRef = useRef<RealtimeSyncEngine | null>(null);
+
+  // Initialize Universal Real-Time Sync Engine (MQTT WebSockets + BroadcastChannel + LocalStorage)
+  useEffect(() => {
+    const engine = new RealtimeSyncEngine({
+      onStateReceived: (remoteState) => {
+        setState((prev) => {
+          const remoteTime = Number(remoteState.updatedAt) || 0;
+          const localTime = Number(prev.updatedAt) || 0;
+          if (localTime > remoteTime && localTime > 1) {
+            return prev;
+          }
+          const merged = { ...prev, ...remoteState };
+          try {
+            localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
+      },
+      onStatusChange: (status) => {
+        setSyncStatus(status);
+      }
+    });
+
+    syncEngineRef.current = engine;
+    engine.setRoom(state.room || 'platnumz-live-match');
+
+    return () => {
+      engine.destroy();
+    };
+  }, []);
+
+  // Update room in sync engine when changed
+  useEffect(() => {
+    if (syncEngineRef.current && state.room) {
+      syncEngineRef.current.setRoom(state.room);
+    }
+  }, [state.room]);
+
   // REAL-TIME MULTI-CHANNEL SYNC
   const syncState = useCallback((newState: ScoreState) => {
     const withTimestamp = {
@@ -230,19 +270,12 @@ export default function App() {
     // 1. Permanent LocalStorage
     try {
       localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(withTimestamp));
-      if (channelRef.current) {
-        channelRef.current.postMessage(withTimestamp);
-      }
     } catch (e) {}
 
-    // 2. Server API Sync (Cross-device real-time sync with SSE)
-    fetch(`/api/sync/${encodeURIComponent(withTimestamp.room || 'platnumz-live-match')}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(withTimestamp)
-    })
-      .then(() => setSyncStatus('connected'))
-      .catch(() => setSyncStatus('connected'));
+    // 2. Publish via Realtime Engine (MQTT WebSockets + BroadcastChannel + LocalStorage + API)
+    if (syncEngineRef.current) {
+      syncEngineRef.current.publish(withTimestamp);
+    }
   }, []);
 
   // Guarantee that every state update persists permanently in local storage
@@ -252,21 +285,23 @@ export default function App() {
     } catch (e) {}
   }, [state]);
 
-  // Listen to incoming real-time updates from Server SSE, BroadcastChannel, and localStorage
+  // Listen to incoming real-time updates from Server SSE & API (when deployed with Node.js/Express)
   useEffect(() => {
     const currentRoom = state.room || 'platnumz-live-match';
 
     // Initial server fetch: compare timestamps so user-entered details are never replaced with older server defaults
     fetch(`/api/sync/${encodeURIComponent(currentRoom)}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
       .then((data) => {
-        if (data.success && data.state) {
+        if (data && data.success && data.state) {
           setState((prev) => {
             const serverTime = Number(data.state.updatedAt) || 0;
             const localTime = Number(prev.updatedAt) || 0;
-            // If local state has newer details than server (or server is baseline default <= 1):
+            // If local state has newer details than server:
             if (localTime > serverTime && localTime > 1) {
-              // Local state has the latest entered details! Push to server so server & OBS overlay update!
               fetch(`/api/sync/${encodeURIComponent(currentRoom)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -274,7 +309,6 @@ export default function App() {
               }).catch(() => {});
               return prev;
             }
-            // Server state is newer or equal: accept server state and sync to localStorage
             const merged = { ...prev, ...data.state };
             try {
               localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
@@ -285,7 +319,7 @@ export default function App() {
       })
       .catch(() => {});
 
-    // SSE connection for live updates from phone or other devices
+    // SSE connection for live updates from custom Node/VPS server
     let sse: EventSource | null = null;
     try {
       sse = new EventSource(`/api/sync/${encodeURIComponent(currentRoom)}/events`);
@@ -312,49 +346,12 @@ export default function App() {
         }
       };
       sse.onerror = () => {
-        setSyncStatus('connected');
+        // Tolerates serverless hosts where SSE is not persistent
+        if (sse) sse.close();
       };
     } catch (e) {}
-
-    // BroadcastChannel for local instant tab communication
-    try {
-      const bc = new BroadcastChannel('platnumz_scoreboard_bus');
-      channelRef.current = bc;
-      bc.onmessage = (event) => {
-        if (event.data && typeof event.data === 'object') {
-          setState((prev) => {
-            const remoteTime = Number(event.data.updatedAt) || 0;
-            const localTime = Number(prev.updatedAt) || 0;
-            if (localTime > remoteTime && localTime > 1) return prev;
-            const merged = { ...prev, ...event.data };
-            try {
-              localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
-            } catch (e) {}
-            return merged;
-          });
-        }
-      };
-    } catch (e) {}
-
-    // LocalStorage storage event
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'platnumz-scoreboard-state' && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          setState((prev) => {
-            const remoteTime = Number(parsed.updatedAt) || 0;
-            const localTime = Number(prev.updatedAt) || 0;
-            if (localTime > remoteTime && localTime > 1) return prev;
-            return { ...prev, ...parsed };
-          });
-        } catch (err) {}
-      }
-    };
-    window.addEventListener('storage', handleStorage);
 
     return () => {
-      window.removeEventListener('storage', handleStorage);
-      if (channelRef.current) channelRef.current.close();
       if (sse) sse.close();
     };
   }, [state.room]);
@@ -904,69 +901,75 @@ export default function App() {
                 </div>
 
                 {/* Break & Run (Red Apple & Green Apple) Options */}
-                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 space-y-2">
+                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 sm:p-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-amber-400 flex items-center gap-1.5">
-                      <span>🍏</span> Break & Run Options (Apples)
+                    <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs sm:text-sm">
+                      <span className="text-base">🍏</span> Break & Run Options (Apples)
                     </span>
                     <span className="text-[10px] text-slate-400">Clearances off the break</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {/* RED APPLE */}
-                    <div className="flex items-center justify-between bg-red-950/40 border border-red-500/30 rounded-lg px-2.5 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-base select-none">🍎</span>
-                        <span className="text-xs font-bold text-red-200">Red Apple</span>
+                    <div className="flex items-center justify-between bg-red-950/50 border border-red-500/40 rounded-xl px-2.5 py-2 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl select-none leading-none filter drop-shadow">🍎</span>
+                        <div>
+                          <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
+                          <span className="text-[9px] text-red-400/80 font-semibold hidden sm:block">Break & Run</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'red', -1)}
-                          className="w-7 h-7 rounded bg-red-900/60 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/50 transition"
+                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
                           title="Decrease Red Apple"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-red-500/40 shadow-inner">
+                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
                           {state.appleRed1 || 0}
                         </div>
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'red', 1)}
-                          className="w-7 h-7 rounded bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase Red Apple"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* GREEN APPLE */}
-                    <div className="flex items-center justify-between bg-emerald-950/40 border border-emerald-500/30 rounded-lg px-2.5 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-base select-none">🍏</span>
-                        <span className="text-xs font-bold text-emerald-200">Green Apple</span>
+                    <div className="flex items-center justify-between bg-emerald-950/50 border border-emerald-500/40 rounded-xl px-2.5 py-2 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl select-none leading-none filter drop-shadow">🍏</span>
+                        <div>
+                          <span className="text-xs font-black text-emerald-200 block leading-tight">Green Apple</span>
+                          <span className="text-[9px] text-emerald-400/80 font-semibold hidden sm:block">Break & Run</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'green', -1)}
-                          className="w-7 h-7 rounded bg-emerald-900/60 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/50 transition"
+                          className="w-8 h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
                           title="Decrease Green Apple"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-emerald-500/40 shadow-inner">
+                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-emerald-500/50 shadow-inner">
                           {state.appleGreen1 || 0}
                         </div>
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'green', 1)}
-                          className="w-7 h-7 rounded bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase Green Apple"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -1048,69 +1051,75 @@ export default function App() {
                 </div>
 
                 {/* Break & Run (Red Apple & Green Apple) Options */}
-                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 space-y-2">
+                <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 sm:p-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-amber-400 flex items-center gap-1.5">
-                      <span>🍏</span> Break & Run Options (Apples)
+                    <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs sm:text-sm">
+                      <span className="text-base">🍏</span> Break & Run Options (Apples)
                     </span>
                     <span className="text-[10px] text-slate-400">Clearances off the break</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {/* RED APPLE */}
-                    <div className="flex items-center justify-between bg-red-950/40 border border-red-500/30 rounded-lg px-2.5 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-base select-none">🍎</span>
-                        <span className="text-xs font-bold text-red-200">Red Apple</span>
+                    <div className="flex items-center justify-between bg-red-950/50 border border-red-500/40 rounded-xl px-2.5 py-2 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl select-none leading-none filter drop-shadow">🍎</span>
+                        <div>
+                          <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
+                          <span className="text-[9px] text-red-400/80 font-semibold hidden sm:block">Break & Run</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'red', -1)}
-                          className="w-7 h-7 rounded bg-red-900/60 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/50 transition"
+                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
                           title="Decrease Red Apple"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-red-500/40 shadow-inner">
+                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
                           {state.appleRed2 || 0}
                         </div>
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'red', 1)}
-                          className="w-7 h-7 rounded bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase Red Apple"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* GREEN APPLE */}
-                    <div className="flex items-center justify-between bg-emerald-950/40 border border-emerald-500/30 rounded-lg px-2.5 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-base select-none">🍏</span>
-                        <span className="text-xs font-bold text-emerald-200">Green Apple</span>
+                    <div className="flex items-center justify-between bg-emerald-950/50 border border-emerald-500/40 rounded-xl px-2.5 py-2 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl select-none leading-none filter drop-shadow">🍏</span>
+                        <div>
+                          <span className="text-xs font-black text-emerald-200 block leading-tight">Green Apple</span>
+                          <span className="text-[9px] text-emerald-400/80 font-semibold hidden sm:block">Break & Run</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'green', -1)}
-                          className="w-7 h-7 rounded bg-emerald-900/60 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/50 transition"
+                          className="w-8 h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
                           title="Decrease Green Apple"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <div className="min-w-7 text-center font-mono font-black text-base text-white px-1.5 py-0.5 rounded bg-slate-950 border border-emerald-500/40 shadow-inner">
+                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-emerald-500/50 shadow-inner">
                           {state.appleGreen2 || 0}
                         </div>
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'green', 1)}
-                          className="w-7 h-7 rounded bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase Green Apple"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>

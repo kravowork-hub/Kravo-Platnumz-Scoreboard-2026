@@ -27,17 +27,17 @@ export const FlagBadge: React.FC<FlagBadgeProps> = ({
   }, [codeOrFlag]);
 
   const sizeClasses = {
-    sm: 'w-7 h-5 text-sm',
-    md: 'w-10 h-7 text-xl',
-    lg: 'w-14 h-9 text-2xl',
-    xl: 'w-16 h-11 text-3xl'
+    sm: 'w-8 h-6 text-sm',
+    md: 'w-11 h-8 text-xl',
+    lg: 'w-15 h-11 text-2xl',
+    xl: 'w-18 h-13 text-3xl'
   }[size];
 
   const isWavyPng = code === 'zw';
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center shrink-0 select-none group flag-wave-animated bg-transparent overflow-visible drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)] ${sizeClasses} ${className}`}
+      className={`relative inline-flex items-center justify-center shrink-0 select-none group flag-wave-animated bg-transparent overflow-visible drop-shadow-[0_3px_6px_rgba(0,0,0,0.75)] ${sizeClasses} ${className}`}
       title={alt}
     >
       <div
@@ -69,11 +69,11 @@ export const FlagBadge: React.FC<FlagBadgeProps> = ({
           </span>
         )}
 
-        {/* 3D Fabric fold highlights & shadow ripples for cloth flags */}
+        {/* 3D Fabric wave fold highlights & specular sheen for all cloth flags matching Zimbabwe */}
         {!isWavyPng && !hasError && (
           <>
             <span
-              className="absolute inset-0 pointer-events-none bg-gradient-to-r from-white/30 via-black/20 via-40% to-white/25 mix-blend-overlay"
+              className="absolute inset-0 pointer-events-none bg-gradient-to-r from-black/20 via-white/40 via-[25%] via-black/30 via-[52%] via-white/45 via-[74%] to-black/25 mix-blend-overlay"
               aria-hidden="true"
             />
             <span

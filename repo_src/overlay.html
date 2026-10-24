@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Platnumz Cuesport | OBS Scoreboard Broadcast Overlay</title>
+  <script src="paho-mqtt-min.js"></script>
+  <script>if (typeof Paho === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"><\/script>');</script>
 
   <style>
     :root {
@@ -120,8 +121,8 @@
     /* ANIMATED WAVING NATIONAL FLAGS (S-Curve Fabric Wave & Flutter, Zero White Background) */
     .flag-box {
       flex-shrink: 0;
-      width: 52px;
-      height: 38px;
+      width: 56px;
+      height: 40px;
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
@@ -129,7 +130,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.75));
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.75));
     }
 
     .player-zone-1 .flag-box {
@@ -152,31 +153,61 @@
       background: transparent !important;
     }
 
-    /* Waving cloth silhouette matching the Zimbabwe reference flag */
+    /* Waving cloth silhouette matching the exact curve of the Zimbabwe reference flag */
     .flag-inner-wrapper.cloth-shape {
       clip-path: polygon(
-        0% 5%,
-        12% 1.8%,
-        26% 0.3%,
-        40% 1.2%,
-        55% 3.6%,
-        70% 6.2%,
-        85% 7.8%,
-        100% 6.5%,
-        98.2% 28%,
-        100% 50%,
-        97.8% 72%,
-        100% 94%,
-        85% 97.8%,
-        70% 96.2%,
-        55% 93.6%,
-        40% 91.2%,
-        26% 90.3%,
-        12% 91.8%,
-        0% 95%,
-        1.8% 72%,
-        0% 50%,
-        1.8% 28%
+        0% 9%,
+        4% 6.6%,
+        8% 4.8%,
+        12% 3.3%,
+        16% 2.4%,
+        20% 1.8%,
+        24% 1.5%,
+        28% 1.5%,
+        32% 1.8%,
+        36% 2.1%,
+        40% 2.7%,
+        44% 3.6%,
+        48% 4.2%,
+        52% 5.1%,
+        56% 6%,
+        60% 6.6%,
+        64% 7.2%,
+        68% 7.8%,
+        72% 8.1%,
+        76% 8.1%,
+        80% 7.8%,
+        84% 7.2%,
+        88% 6%,
+        92% 4.8%,
+        96% 3%,
+        100% 0.6%,
+        100% 90.7%,
+        96% 93.1%,
+        92% 94.9%,
+        88% 96.4%,
+        84% 97.3%,
+        80% 97.9%,
+        76% 98.2%,
+        72% 98.2%,
+        68% 97.9%,
+        64% 97.6%,
+        60% 97%,
+        56% 96.1%,
+        52% 95.5%,
+        48% 94.6%,
+        44% 93.7%,
+        40% 93.1%,
+        36% 92.5%,
+        32% 91.9%,
+        28% 91.6%,
+        24% 91.6%,
+        20% 91.9%,
+        16% 92.5%,
+        12% 93.7%,
+        8% 94.9%,
+        4% 96.7%,
+        0% 99.1%
       );
     }
 
@@ -193,19 +224,22 @@
       object-fit: contain;
     }
 
-    /* 3D Fabric Wave Shading: Crests & Troughs matching waving cloth */
+    /* 3D Fabric Wave Shading: Specular crests & trough shadows matching waving cloth */
     .flag-cloth-shade {
       position: absolute;
       inset: 0;
       pointer-events: none;
       background: linear-gradient(
         90deg,
-        rgba(255, 255, 255, 0.32) 0%,
-        rgba(0, 0, 0, 0.22) 24%,
-        rgba(255, 255, 255, 0.28) 48%,
-        rgba(0, 0, 0, 0.24) 72%,
-        rgba(255, 255, 255, 0.22) 90%,
-        rgba(0, 0, 0, 0.16) 100%
+        rgba(0, 0, 0, 0.22) 0%,
+        rgba(255, 255, 255, 0.12) 10%,
+        rgba(255, 255, 255, 0.42) 25%,
+        rgba(0, 0, 0, 0.12) 38%,
+        rgba(0, 0, 0, 0.32) 52%,
+        rgba(255, 255, 255, 0.18) 64%,
+        rgba(255, 255, 255, 0.46) 74%,
+        rgba(0, 0, 0, 0.26) 88%,
+        rgba(255, 255, 255, 0.20) 100%
       );
       mix-blend-mode: overlay;
       display: none;
@@ -298,53 +332,61 @@
       text-align: right;
     }
 
-    /* APPLE BREAK & RUN BADGES (Red Apple 🍎 & Green Apple 🍏) */
+    /* APPLE BREAK & RUN BADGES (Red Apple 🍎 & Green Apple 🍏) — Prominent Broadcast Scale */
     .apple-badges-row {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 7px;
       flex-shrink: 0;
     }
 
     .apple-badge {
       display: inline-flex;
       align-items: center;
-      gap: 3.5px;
-      padding: 1.5px 6.5px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      gap: 6px;
+      padding: 3px 10px;
+      height: 34px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.35);
       white-space: nowrap;
       flex-shrink: 0;
-      line-height: 1.2;
+      line-height: 1;
+      transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .apple-badge.bump {
+      transform: scale(1.22);
     }
 
     .apple-badge-red {
-      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
       color: #ffffff;
-      border: 1px solid rgba(254, 202, 202, 0.45);
-      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+      border: 1.5px solid rgba(254, 202, 202, 0.8);
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.45);
     }
 
     .apple-badge-green {
-      background: linear-gradient(135deg, #16a34a 0%, #166534 100%);
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
       color: #ffffff;
-      border: 1px solid rgba(187, 247, 208, 0.45);
-      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+      border: 1.5px solid rgba(187, 247, 208, 0.8);
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.45);
     }
 
     .apple-emoji {
-      font-size: 13px;
+      font-size: 24px;
       line-height: 1;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+      display: inline-block;
+      user-select: none;
     }
 
     .apple-count {
-      font-size: 11.5px;
-      font-weight: 900;
+      font-size: 18px;
+      font-weight: 1000;
       font-variant-numeric: tabular-nums;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+      letter-spacing: 0.5px;
     }
 
     /* LEGACY BREAK & RUN BADGES */
@@ -712,6 +754,10 @@
     const $ = id => document.getElementById(id);
     let lastScore1 = 2;
     let lastScore2 = 1;
+    let lastAppleRed1 = 0;
+    let lastAppleGreen1 = 0;
+    let lastAppleRed2 = 0;
+    let lastAppleGreen2 = 0;
     let lastUpdatedAt = 0;
 
     function safeScore(value) {
@@ -840,22 +886,30 @@
       if ($("appleRedBadge1")) {
         $("appleRedVal1").textContent = r1;
         $("appleRedBadge1").style.display = r1 > 0 ? "inline-flex" : "none";
+        if (r1 !== lastAppleRed1 && r1 > 0) triggerScoreBump("appleRedBadge1");
       }
       if ($("appleGreenBadge1")) {
         $("appleGreenVal1").textContent = g1;
         $("appleGreenBadge1").style.display = g1 > 0 ? "inline-flex" : "none";
+        if (g1 !== lastAppleGreen1 && g1 > 0) triggerScoreBump("appleGreenBadge1");
       }
+      lastAppleRed1 = r1;
+      lastAppleGreen1 = g1;
 
       const r2 = parseInt(state.appleRed2, 10) || 0;
       const g2 = parseInt(state.appleGreen2, 10) || 0;
       if ($("appleRedBadge2")) {
         $("appleRedVal2").textContent = r2;
         $("appleRedBadge2").style.display = r2 > 0 ? "inline-flex" : "none";
+        if (r2 !== lastAppleRed2 && r2 > 0) triggerScoreBump("appleRedBadge2");
       }
       if ($("appleGreenBadge2")) {
         $("appleGreenVal2").textContent = g2;
         $("appleGreenBadge2").style.display = g2 > 0 ? "inline-flex" : "none";
+        if (g2 !== lastAppleGreen2 && g2 > 0) triggerScoreBump("appleGreenBadge2");
       }
+      lastAppleRed2 = r2;
+      lastAppleGreen2 = g2;
 
       // Legacy Break and Run badges
       const br1 = parseInt(state.br1, 10) || 0;
@@ -915,7 +969,64 @@
       setTimeout(() => el.classList.remove("bump"), 250);
     }
 
-    // 1. REAL-TIME SERVER-SENT EVENTS (SSE) STREAM
+    // 1. UNIVERSAL CLOUD REAL-TIME SYNC VIA MQTT WEBSOCKETS (Cross-device, Vercel, Netlify, Standalone)
+    const MQTT_BROKERS = [
+      { host: "broker.emqx.io", port: 8084, path: "/mqtt" },
+      { host: "broker.hivemq.com", port: 8884, path: "/mqtt" }
+    ];
+    let mqttBrokerIdx = 0;
+    let mqttClient = null;
+    let mqttConnected = false;
+
+    function connectMqtt() {
+      if (typeof Paho === "undefined" || !Paho.MQTT || !Paho.MQTT.Client) {
+        setTimeout(connectMqtt, 600);
+        return;
+      }
+      const broker = MQTT_BROKERS[mqttBrokerIdx % MQTT_BROKERS.length];
+      const clientId = "platnumz_ov_" + Math.random().toString(36).substring(2, 9);
+      try {
+        mqttClient = new Paho.MQTT.Client(broker.host, broker.port, broker.path, clientId);
+        mqttClient.onConnectionLost = function(resp) {
+          mqttConnected = false;
+          console.log("[Overlay Sync] MQTT connection lost, switching/reconnecting...");
+          mqttBrokerIdx++;
+          setTimeout(connectMqtt, 3000);
+        };
+        mqttClient.onMessageArrived = function(message) {
+          try {
+            const data = JSON.parse(message.payloadString);
+            if (data && typeof data === "object") {
+              handleIncomingState(data);
+            }
+          } catch (e) {}
+        };
+        mqttClient.connect({
+          useSSL: true,
+          timeout: 4,
+          keepAliveInterval: 30,
+          cleanSession: true,
+          onSuccess: function() {
+            mqttConnected = true;
+            const topic = "platnumz/scoreboard/v2/" + encodeURIComponent(room || "platnumz-live-match");
+            mqttClient.subscribe(topic, { qos: 1 });
+            console.log("[Overlay Sync] Connected to " + broker.host + " · Subscribed to " + topic);
+          },
+          onFailure: function(err) {
+            mqttConnected = false;
+            console.warn("[Overlay Sync] MQTT error with " + broker.host + ":", err.errorMessage);
+            mqttBrokerIdx++;
+            setTimeout(connectMqtt, 3000);
+          }
+        });
+      } catch (err) {
+        mqttBrokerIdx++;
+        setTimeout(connectMqtt, 4000);
+      }
+    }
+    connectMqtt();
+
+    // 2. SERVER-SENT EVENTS (SSE) STREAM (Active when running on Node.js/Express)
     function connectSse() {
       try {
         const sse = new EventSource('/api/sync/' + encodeURIComponent(room) + '/events');
@@ -929,21 +1040,28 @@
         };
         sse.onerror = () => {
           sse.close();
-          setTimeout(connectSse, 2000);
+          // Backoff longer if on serverless hosts where SSE is unsupported
+          setTimeout(connectSse, 15000);
         };
       } catch (e) {}
     }
     connectSse();
 
-    // 2. IMMEDIATE HTTP FETCH FOR ZERO DELAY INITIAL LOAD
-    fetch('/api/sync/' + encodeURIComponent(room))
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.state) handleIncomingState(data.state);
-      })
-      .catch(() => {});
+    // 3. IMMEDIATE HTTP FETCH FOR ZERO DELAY INITIAL LOAD
+    function fetchApiState() {
+      fetch('/api/sync/' + encodeURIComponent(room))
+        .then(res => {
+          if (!res.ok) return null;
+          return res.json();
+        })
+        .then(data => {
+          if (data && data.success && data.state) handleIncomingState(data.state);
+        })
+        .catch(() => {});
+    }
+    fetchApiState();
 
-    // 3. BROADCASTCHANNEL API FOR LOCAL ZERO-LATENCY CROSS-TAB SYNC
+    // 4. BROADCASTCHANNEL API FOR LOCAL ZERO-LATENCY CROSS-TAB SYNC (Same device OBS & Controller)
     try {
       const channel = new BroadcastChannel("platnumz_scoreboard_bus");
       channel.onmessage = (event) => {
@@ -953,7 +1071,7 @@
       };
     } catch (e) {}
 
-    // 4. STORAGE EVENT LISTENER
+    // 5. LOCALSTORAGE EVENT LISTENER (Same device OBS & Controller)
     window.addEventListener("storage", (e) => {
       if (e.key === "platnumz-scoreboard-state" && e.newValue) {
         try {
@@ -961,6 +1079,13 @@
         } catch (err) {}
       }
     });
+
+    // 6. PERIODIC SAFETY POLLING (Fallback if MQTT is disconnected)
+    setInterval(() => {
+      if (!mqttConnected) {
+        fetchApiState();
+      }
+    }, 4000);
 
     // Initial render from local cache or default
     try {
