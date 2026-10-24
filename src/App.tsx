@@ -145,6 +145,7 @@ export default function App() {
   const [gitOutput, setGitOutput] = useState<{ success: boolean; message: string } | null>(null);
 
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const stateRef = useRef<ScoreState>(initialState);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const showToast = (msg: string) => {
@@ -220,10 +221,15 @@ export default function App() {
 
   // REAL-TIME MULTI-CHANNEL SYNC
   const syncState = useCallback((newState: ScoreState) => {
+    // Every local publish must be newer than the last rendered state. Reusing a
+    // timestamp lets delayed requests or SSE messages overwrite newer changes.
+    const previousTimestamp = Number(stateRef.current.updatedAt) || 1;
+    const requestedTimestamp = Number(newState.updatedAt) || 0;
     const withTimestamp = {
       ...newState,
-      updatedAt: newState.updatedAt && newState.updatedAt > 1 ? newState.updatedAt : Date.now()
+      updatedAt: Math.max(Date.now(), previousTimestamp + 1, requestedTimestamp)
     };
+    stateRef.current = withTimestamp;
     setState(withTimestamp);
     setSyncStatus('syncing');
 
@@ -247,6 +253,7 @@ export default function App() {
 
   // Guarantee that every state update persists permanently in local storage
   useEffect(() => {
+    stateRef.current = state;
     try {
       localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(state));
     } catch (e) {}

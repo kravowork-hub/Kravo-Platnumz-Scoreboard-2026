@@ -92,8 +92,9 @@ async function startServer() {
       const incomingTime = Number(incoming.updatedAt) || 0;
       const existingTime = Number(existing.updatedAt) || 0;
 
-      // Only update if incoming is newer or equal, or if existing is baseline (<= 1)
-      if (incomingTime >= existingTime || existingTime <= 1) {
+      // Reject stale and tied writes. Equal timestamps can arrive out of order
+      // when two controller updates are posted in the same millisecond.
+      if (incomingTime > existingTime || existingTime <= 1) {
         const merged = {
           ...existing,
           ...incoming,
