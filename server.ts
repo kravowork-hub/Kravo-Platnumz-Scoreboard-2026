@@ -26,6 +26,78 @@ async function startServer() {
   // Serve static files from public
   app.use(express.static(path.join(__dirname, 'public')));
 
+  // Explicit PWA Manifest Endpoint (supports both .webmanifest and .json for PWABuilder)
+  app.get(['/manifest.webmanifest', '/manifest.json'], async (_req, res) => {
+    try {
+      const fs = await import('fs/promises');
+      let manifestPath = path.join(__dirname, 'public', 'manifest.webmanifest');
+      try {
+        await fs.access(manifestPath);
+      } catch {
+        manifestPath = path.join(__dirname, 'dist', 'manifest.webmanifest');
+      }
+      const content = await fs.readFile(manifestPath, 'utf-8');
+      res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(content);
+    } catch (e: any) {
+      res.status(404).send('Manifest not found');
+    }
+  });
+
+  // Explicit PWA Service Worker Endpoint
+  app.get('/sw.js', async (_req, res, next) => {
+    try {
+      const fs = await import('fs/promises');
+      let swPath = path.join(__dirname, 'dist', 'sw.js');
+      try {
+        await fs.access(swPath);
+      } catch {
+        swPath = path.join(__dirname, 'public', 'sw.js');
+      }
+      const content = await fs.readFile(swPath, 'utf-8');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Service-Worker-Allowed', '/');
+      res.setHeader('Cache-Control', 'no-cache');
+      return res.send(content);
+    } catch {
+      next();
+    }
+  });
+
+  // Explicit PWA Workbox runtime bundle endpoint
+  app.get(/^\/workbox-[a-f0-9]+\.js$/, async (req, res, next) => {
+    try {
+      const fs = await import('fs/promises');
+      const file = req.path.replace(/^\//, '');
+      const filePath = path.join(__dirname, 'dist', file);
+      const content = await fs.readFile(filePath, 'utf-8');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.send(content);
+    } catch {
+      next();
+    }
+  });
+
+  // Explicit registerSW.js endpoint
+  app.get('/registerSW.js', async (_req, res, next) => {
+    try {
+      const fs = await import('fs/promises');
+      let filePath = path.join(__dirname, 'dist', 'registerSW.js');
+      try {
+        await fs.access(filePath);
+      } catch {
+        filePath = path.join(__dirname, 'public', 'registerSW.js');
+      }
+      const content = await fs.readFile(filePath, 'utf-8');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      return res.send(content);
+    } catch {
+      next();
+    }
+  });
+
   // Real-time synchronization memory hub with disk persistence
   const roomStates = new Map<string, any>();
   const roomListeners = new Map<string, Set<express.Response>>();

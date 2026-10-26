@@ -1,0 +1,74 @@
+{
+  "id": "/",
+  "name": "Kravo Platnumz Official Scoreboard",
+  "short_name": "Kravo Scoreboard",
+  "description": "Professional cuesport scoreboard controller and broadcast overlay system branded for Kravo Platnumz Official. Real-time frame scoring, shot clock, break and run tracker, and OBS Studio integration.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#0053d1",
+  "background_color": "#050811",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["sports", "utilities", "entertainment"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Score Controller",
+      "short_name": "Controller",
+      "description": "Open match score master controller",
+      "url": "/",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "OBS Broadcast Overlay",
+      "short_name": "OBS Overlay",
+      "description": "Open transparent broadcast overlay for streaming",
+      "url": "/overlay.html",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Kravo Platnumz Scoreboard Controller Desktop View"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Kravo Platnumz Mobile Match Controller View"
+    }
+  ]
+}
