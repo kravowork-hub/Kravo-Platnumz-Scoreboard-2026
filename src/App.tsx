@@ -76,6 +76,7 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') {
+          const parsedTime = Number(parsed.updatedAt) || 0;
           return {
             name1: 'CHAIRMAN TINDO',
             name2: 'BOSS OWIZA',
@@ -97,8 +98,8 @@ export default function App() {
             brand: 'KRAVO PLATNUMZ OFFICIAL',
             room: 'platnumz-live-match',
             overlayPosition: 'bottom',
-            updatedAt: 1,
-            ...parsed
+            ...parsed,
+            updatedAt: parsedTime > 1 ? parsedTime : (parsed.name1 && parsed.name1 !== 'CHAIRMAN TINDO' ? Date.now() : 1)
           };
         }
       }
@@ -228,12 +229,24 @@ export default function App() {
         setState((prev) => {
           const remoteTime = Number(remoteState.updatedAt) || 0;
           const localTime = Number(prev.updatedAt) || 0;
+          // Never overwrite an active match with default baseline placeholder (<= 1)
+          if (localTime > 1 && remoteTime <= 1) {
+            return prev;
+          }
           if (localTime > remoteTime && localTime > 1) {
             return prev;
           }
           const merged = { ...prev, ...remoteState };
           try {
-            localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
+            const serialized = JSON.stringify(merged);
+            localStorage.setItem('platnumz-scoreboard-state', serialized);
+            if (merged.room) {
+              localStorage.setItem(`platnumz_state_${merged.room}`, serialized);
+            }
+            sessionStorage.setItem('platnumz-scoreboard-state', serialized);
+            if (merged.room) {
+              sessionStorage.setItem(`platnumz_state_${merged.room}`, serialized);
+            }
           } catch (e) {}
           return merged;
         });
@@ -267,9 +280,17 @@ export default function App() {
     setState(withTimestamp);
     setSyncStatus('syncing');
 
-    // 1. Permanent LocalStorage
+    // 1. Permanent LocalStorage with multi-key backup
     try {
-      localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(withTimestamp));
+      const serialized = JSON.stringify(withTimestamp);
+      localStorage.setItem('platnumz-scoreboard-state', serialized);
+      if (withTimestamp.room) {
+        localStorage.setItem(`platnumz_state_${withTimestamp.room}`, serialized);
+      }
+      sessionStorage.setItem('platnumz-scoreboard-state', serialized);
+      if (withTimestamp.room) {
+        sessionStorage.setItem(`platnumz_state_${withTimestamp.room}`, serialized);
+      }
     } catch (e) {}
 
     // 2. Publish via Realtime Engine (MQTT WebSockets + BroadcastChannel + LocalStorage + API)
@@ -281,7 +302,15 @@ export default function App() {
   // Guarantee that every state update persists permanently in local storage
   useEffect(() => {
     try {
-      localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(state));
+      const serialized = JSON.stringify(state);
+      localStorage.setItem('platnumz-scoreboard-state', serialized);
+      if (state.room) {
+        localStorage.setItem(`platnumz_state_${state.room}`, serialized);
+      }
+      sessionStorage.setItem('platnumz-scoreboard-state', serialized);
+      if (state.room) {
+        sessionStorage.setItem(`platnumz_state_${state.room}`, serialized);
+      }
     } catch (e) {}
   }, [state]);
 
@@ -300,7 +329,15 @@ export default function App() {
           setState((prev) => {
             const serverTime = Number(data.state.updatedAt) || 0;
             const localTime = Number(prev.updatedAt) || 0;
-            // If local state has newer details than server:
+            // Never overwrite real local match with default baseline server state (<= 1)
+            if (localTime > 1 && serverTime <= 1) {
+              fetch(`/api/sync/${encodeURIComponent(currentRoom)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(prev)
+              }).catch(() => {});
+              return prev;
+            }
             if (localTime > serverTime && localTime > 1) {
               fetch(`/api/sync/${encodeURIComponent(currentRoom)}`, {
                 method: 'POST',
@@ -311,7 +348,11 @@ export default function App() {
             }
             const merged = { ...prev, ...data.state };
             try {
-              localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(merged));
+              const serialized = JSON.stringify(merged);
+              localStorage.setItem('platnumz-scoreboard-state', serialized);
+              if (merged.room) {
+                localStorage.setItem(`platnumz_state_${merged.room}`, serialized);
+              }
             } catch (e) {}
             return merged;
           });

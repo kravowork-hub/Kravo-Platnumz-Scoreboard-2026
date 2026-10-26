@@ -52,7 +52,7 @@ export class RealtimeSyncEngine {
   }
 
   private handleStorageEvent = (e: StorageEvent) => {
-    if (e.key === 'platnumz-scoreboard-state' && e.newValue) {
+    if ((e.key === 'platnumz-scoreboard-state' || e.key === `platnumz_state_${this.currentRoom}`) && e.newValue) {
       try {
         const parsed = JSON.parse(e.newValue);
         if (parsed && typeof parsed === 'object') {
@@ -180,9 +180,17 @@ export class RealtimeSyncEngine {
     if (!state) return;
     const room = state.room || this.currentRoom || 'platnumz-live-match';
 
-    // 1. Permanent LocalStorage
+    // 1. Permanent LocalStorage & SessionStorage multi-key backup
     try {
-      localStorage.setItem('platnumz-scoreboard-state', JSON.stringify(state));
+      const serialized = JSON.stringify(state);
+      localStorage.setItem('platnumz-scoreboard-state', serialized);
+      if (room) {
+        localStorage.setItem(`platnumz_state_${room}`, serialized);
+      }
+      sessionStorage.setItem('platnumz-scoreboard-state', serialized);
+      if (room) {
+        sessionStorage.setItem(`platnumz_state_${room}`, serialized);
+      }
     } catch (e) {}
 
     // 2. Local BroadcastChannel

@@ -829,7 +829,12 @@ function publishMqtt(state) {
 
 function saveLocally(state) {
   try {
-    localStorage.setItem("platnumz-scoreboard-state", JSON.stringify(state));
+    const serialized = JSON.stringify(state);
+    localStorage.setItem("platnumz-scoreboard-state", serialized);
+    const roomKey = "platnumz_state_" + getRoomName();
+    localStorage.setItem(roomKey, serialized);
+    sessionStorage.setItem("platnumz-scoreboard-state", serialized);
+    sessionStorage.setItem(roomKey, serialized);
     if (broadcastChannel) {
       broadcastChannel.postMessage(state);
     }
@@ -1131,7 +1136,8 @@ function openOverlayTab() {
 
 function loadLocalState() {
   try {
-    const saved = localStorage.getItem("platnumz-scoreboard-state");
+    const roomKey = "platnumz_state_" + getRoomName();
+    const saved = localStorage.getItem(roomKey) || localStorage.getItem("platnumz-scoreboard-state") || sessionStorage.getItem(roomKey);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed && typeof parsed === "object") {

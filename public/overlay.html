@@ -946,20 +946,117 @@
       }
     }
 
+    // OFFLINE & PERSISTENCE ENGINE
+    function getDefaultState() {
+      return {
+        name1: "CHAIRMAN TINDO",
+        name2: "BOSS OWIZA",
+        score1: 2,
+        score2: 1,
+        br1: 0,
+        br2: 0,
+        appleRed1: 0,
+        appleGreen1: 0,
+        appleRed2: 0,
+        appleGreen2: 0,
+        raceTo: 3,
+        flag1: "🇿🇼",
+        flag2: "🇿🇼",
+        matchType: "CHALLENGE MATCH",
+        tournament: "CHALLENGE MATCH",
+        venue: "HARARE, ZIMBABWE",
+        pot: "$500",
+        brand: "KRAVO PLATNUMZ OFFICIAL",
+        room: room,
+        overlayPosition: "bottom",
+        updatedAt: 1
+      };
+    }
+
+    function getStorageKeys() {
+      return [
+        "platnumz_state_" + room,
+        "platnumz-scoreboard-state",
+        "platnumz_backup_state"
+      ];
+    }
+
+    function loadPersistedState() {
+      const keys = getStorageKeys();
+      for (let i = 0; i < keys.length; i++) {
+        try {
+          const raw = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && (parsed.name1 || parsed.name2 || parsed.score1 !== undefined)) {
+              return parsed;
+            }
+          }
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    function persistStateLocally(state) {
+      if (!state || typeof state !== "object") return;
+      const serialized = JSON.stringify(state);
+      getStorageKeys().forEach(key => {
+        try { localStorage.setItem(key, serialized); } catch (e) {}
+        try { sessionStorage.setItem(key, serialized); } catch (e) {}
+      });
+    }
+
+    let currentMatchState = null;
+
+    // IMMEDIATE SYNCHRONOUS RESTORATION ON OVERLAY LOAD / REFRESH
+    (function initializeImmediateState() {
+      const initialSaved = loadPersistedState();
+      if (initialSaved) {
+        currentMatchState = initialSaved;
+        lastUpdatedAt = Number(initialSaved.updatedAt) || 10;
+        renderScoreboard(initialSaved);
+        console.log("[Overlay] Synchronously restored scoreboard from offline cache for room:", room);
+      } else {
+        currentMatchState = getDefaultState();
+        lastUpdatedAt = 1;
+        renderScoreboard(currentMatchState);
+      }
+    })();
+
+    // BULLETPROOF OFFLINE & FRESHNESS GUARD
+    function shouldAcceptState(incoming) {
+      if (!incoming || typeof incoming !== "object") return false;
+      const incomingTime = Number(incoming.updatedAt) || 0;
+      const currentTime = lastUpdatedAt || (currentMatchState ? Number(currentMatchState.updatedAt) || 0 : 0);
+
+      // RULE 1: OFFLINE & SERVERLESS DEFAULT GUARD
+      // If we already have a real match (currentTime > 1), NEVER accept default baseline placeholder state (incomingTime <= 1)
+      if (currentTime > 1 && incomingTime <= 1) {
+        console.warn("[Overlay Guard] Rejected default placeholder state (updatedAt <= 1) from overwriting live match.");
+        return false;
+      }
+
+      // RULE 2: NEVER accept older state than what is currently rendered
+      if (currentTime > 0 && incomingTime > 0 && incomingTime < currentTime) {
+        console.warn("[Overlay Guard] Rejected stale incoming state:", incomingTime, "< current:", currentTime);
+        return false;
+      }
+
+      // RULE 3: Guard against empty or corrupt payload
+      if (!incoming.name1 && !incoming.name2 && (currentMatchState?.name1 || currentMatchState?.name2)) {
+        return false;
+      }
+
+      return true;
+    }
+
     function handleIncomingState(data) {
-      if (!data || typeof data !== "object") return;
-      const incomingTime = Number(data.updatedAt) || 0;
-      // Do not overwrite newer local user details with older baseline/default server state
-      if (lastUpdatedAt > incomingTime && incomingTime > 1) {
-        return;
-      }
-      if (incomingTime > 0) {
-        lastUpdatedAt = incomingTime;
-      }
-      try {
-        localStorage.setItem("platnumz-scoreboard-state", JSON.stringify(data));
-      } catch (e) {}
-      renderScoreboard(data);
+      if (!shouldAcceptState(data)) return;
+      const incomingTime = Number(data.updatedAt) || Date.now();
+      lastUpdatedAt = incomingTime;
+      currentMatchState = { ...data, updatedAt: incomingTime };
+      persistStateLocally(currentMatchState);
+      renderScoreboard(currentMatchState);
     }
 
     function triggerScoreBump(id) {
@@ -968,6 +1065,19 @@
       el.classList.add("bump");
       setTimeout(() => el.classList.remove("bump"), 250);
     }
+
+    // NETWORK OFFLINE / ONLINE LISTENERS
+    window.addEventListener("offline", () => {
+      console.warn("[Overlay] Internet disconnected. Retaining current scoreboard info locked in offline mode.");
+      // Do not clear or reset anything; scoreboard stays locked on screen
+    });
+
+    window.addEventListener("online", () => {
+      console.log("[Overlay] Internet connection restored. Reconnecting sync channels...");
+      connectMqtt();
+      connectSse();
+      fetchApiState();
+    });
 
     // 1. UNIVERSAL CLOUD REAL-TIME SYNC VIA MQTT WEBSOCKETS (Cross-device, Vercel, Netlify, Standalone)
     const MQTT_BROKERS = [
@@ -979,6 +1089,9 @@
     let mqttConnected = false;
 
     function connectMqtt() {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        return;
+      }
       if (typeof Paho === "undefined" || !Paho.MQTT || !Paho.MQTT.Client) {
         setTimeout(connectMqtt, 600);
         return;
@@ -989,9 +1102,12 @@
         mqttClient = new Paho.MQTT.Client(broker.host, broker.port, broker.path, clientId);
         mqttClient.onConnectionLost = function(resp) {
           mqttConnected = false;
-          console.log("[Overlay Sync] MQTT connection lost, switching/reconnecting...");
+          console.log("[Overlay Sync] MQTT connection lost, maintaining current scoreboard on screen...");
           mqttBrokerIdx++;
-          setTimeout(connectMqtt, 3000);
+          // Only attempt reconnect if online
+          if (typeof navigator === "undefined" || navigator.onLine) {
+            setTimeout(connectMqtt, 3000);
+          }
         };
         mqttClient.onMessageArrived = function(message) {
           try {
@@ -1014,20 +1130,24 @@
           },
           onFailure: function(err) {
             mqttConnected = false;
-            console.warn("[Overlay Sync] MQTT error with " + broker.host + ":", err.errorMessage);
             mqttBrokerIdx++;
-            setTimeout(connectMqtt, 3000);
+            if (typeof navigator === "undefined" || navigator.onLine) {
+              setTimeout(connectMqtt, 3000);
+            }
           }
         });
       } catch (err) {
         mqttBrokerIdx++;
-        setTimeout(connectMqtt, 4000);
+        if (typeof navigator === "undefined" || navigator.onLine) {
+          setTimeout(connectMqtt, 4000);
+        }
       }
     }
     connectMqtt();
 
     // 2. SERVER-SENT EVENTS (SSE) STREAM (Active when running on Node.js/Express)
     function connectSse() {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
       try {
         const sse = new EventSource('/api/sync/' + encodeURIComponent(room) + '/events');
         sse.onmessage = (event) => {
@@ -1040,28 +1160,34 @@
         };
         sse.onerror = () => {
           sse.close();
-          // Backoff longer if on serverless hosts where SSE is unsupported
-          setTimeout(connectSse, 15000);
+          if (typeof navigator === "undefined" || navigator.onLine) {
+            setTimeout(connectSse, 15000);
+          }
         };
       } catch (e) {}
     }
     connectSse();
 
-    // 3. IMMEDIATE HTTP FETCH FOR ZERO DELAY INITIAL LOAD
+    // 3. IMMEDIATE HTTP FETCH (Only executed when online)
     function fetchApiState() {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
       fetch('/api/sync/' + encodeURIComponent(room))
         .then(res => {
           if (!res.ok) return null;
           return res.json();
         })
         .then(data => {
-          if (data && data.success && data.state) handleIncomingState(data.state);
+          if (data && data.success && data.state) {
+            handleIncomingState(data.state);
+          }
         })
-        .catch(() => {});
+        .catch(() => {
+          // On network error or offline drop: silently ignore; current scoreboard stays locked on screen
+        });
     }
     fetchApiState();
 
-    // 4. BROADCASTCHANNEL API FOR LOCAL ZERO-LATENCY CROSS-TAB SYNC (Same device OBS & Controller)
+    // 4. BROADCASTCHANNEL API FOR LOCAL ZERO-LATENCY CROSS-TAB SYNC (Works 100% offline on same PC!)
     try {
       const channel = new BroadcastChannel("platnumz_scoreboard_bus");
       channel.onmessage = (event) => {
@@ -1071,55 +1197,21 @@
       };
     } catch (e) {}
 
-    // 5. LOCALSTORAGE EVENT LISTENER (Same device OBS & Controller)
+    // 5. LOCALSTORAGE EVENT LISTENER (Works 100% offline on same PC!)
     window.addEventListener("storage", (e) => {
-      if (e.key === "platnumz-scoreboard-state" && e.newValue) {
+      if ((e.key === "platnumz-scoreboard-state" || e.key === "platnumz_state_" + room) && e.newValue) {
         try {
           handleIncomingState(JSON.parse(e.newValue));
         } catch (err) {}
       }
     });
 
-    // 6. PERIODIC SAFETY POLLING (Fallback if MQTT is disconnected)
+    // 6. PERIODIC SAFETY POLLING (Only runs when online and MQTT is disconnected)
     setInterval(() => {
-      if (!mqttConnected) {
+      if (!mqttConnected && (typeof navigator === "undefined" || navigator.onLine)) {
         fetchApiState();
       }
-    }, 4000);
-
-    // Initial render from local cache or default
-    try {
-      const saved = localStorage.getItem("platnumz-scoreboard-state");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object") {
-          lastUpdatedAt = Number(parsed.updatedAt) || 0;
-          renderScoreboard(parsed);
-        }
-      } else {
-        renderScoreboard({
-          name1: "CHAIRMAN TINDO",
-          name2: "BOSS OWIZA",
-          score1: 2,
-          score2: 1,
-          raceTo: 3,
-          flag1: "🇿🇼",
-          flag2: "🇿🇼",
-          br1: 0,
-          br2: 0,
-          appleRed1: 0,
-          appleGreen1: 0,
-          appleRed2: 0,
-          appleGreen2: 0,
-          matchType: "CHALLENGE MATCH",
-          tournament: "CHALLENGE MATCH",
-          venue: "HARARE, ZIMBABWE",
-          pot: "$500",
-          brand: "KRAVO PLATNUMZ OFFICIAL",
-          updatedAt: 1
-        });
-      }
-    } catch (e) {}
+    }, 5000);
   </script>
 </body>
 </html>
