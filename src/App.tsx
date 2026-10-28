@@ -28,7 +28,11 @@ import {
   Sparkles,
   Terminal,
   Monitor,
-  FolderDown
+  FolderDown,
+  BarChart2,
+  Award,
+  FileText,
+  Percent
 } from 'lucide-react';
 import { usePWAInstall } from './usePWAInstall';
 import { WORLD_COUNTRIES, Country, getCountryCode, getFlagEmoji } from './countries';
@@ -78,19 +82,19 @@ export default function App() {
         if (parsed && typeof parsed === 'object') {
           const parsedTime = Number(parsed.updatedAt) || 0;
           return {
-            name1: 'CHAIRMAN TINDO',
-            name2: 'BOSS OWIZA',
+            name1: 'PLAYER 1',
+            name2: 'PLAYER 2',
             flag1: '🇿🇼',
             flag2: '🇿🇼',
-            score1: 2,
-            score2: 1,
+            score1: 0,
+            score2: 0,
             br1: 0,
             br2: 0,
             appleRed1: 0,
             appleGreen1: 0,
             appleRed2: 0,
             appleGreen2: 0,
-            raceTo: 3,
+            raceTo: 5,
             matchType: parsed.matchType || parsed.tournament || 'CHALLENGE MATCH',
             tournament: parsed.tournament || parsed.matchType || 'CHALLENGE MATCH',
             venue: 'HARARE, ZIMBABWE',
@@ -99,7 +103,7 @@ export default function App() {
             room: 'platnumz-live-match',
             overlayPosition: 'bottom',
             ...parsed,
-            updatedAt: parsedTime > 1 ? parsedTime : (parsed.name1 && parsed.name1 !== 'CHAIRMAN TINDO' ? Date.now() : 1)
+            updatedAt: parsedTime > 1 ? parsedTime : (parsed.name1 && parsed.name1 !== 'PLAYER 1' ? Date.now() : 1)
           };
         }
       }
@@ -107,19 +111,19 @@ export default function App() {
 
     // Factory baseline if brand new installation
     return {
-      name1: 'CHAIRMAN TINDO',
-      name2: 'BOSS OWIZA',
+      name1: 'PLAYER 1',
+      name2: 'PLAYER 2',
       flag1: '🇿🇼',
       flag2: '🇿🇼',
-      score1: 2,
-      score2: 1,
+      score1: 0,
+      score2: 0,
       br1: 0,
       br2: 0,
       appleRed1: 0,
       appleGreen1: 0,
       appleRed2: 0,
       appleGreen2: 0,
-      raceTo: 3,
+      raceTo: 5,
       matchType: 'CHALLENGE MATCH',
       tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
@@ -139,6 +143,21 @@ export default function App() {
 
   // Quick flag picker modal for cards
   const [targetPlayerForFlag, setTargetPlayerForFlag] = useState<1 | 2 | null>(null);
+
+  // In-app confirmation modal (works reliably inside iframes and standalone PWAs)
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+
+  // Post-match summary report modal state
+  const [showMatchReportModal, setShowMatchReportModal] = useState(false);
+  const hasAutoOpenedReportRef = useRef(false);
 
   // Git state
   const [githubToken, setGithubToken] = useState('');
@@ -493,8 +512,7 @@ export default function App() {
     });
   };
 
-  const resetScores = () => {
-    if (!window.confirm("Reset both players' scores, Red & Green Apples, and Break & Run counters to zero? (Player names and match details will be kept)")) return;
+  const executeResetScores = () => {
     setState((prev) => {
       const updated = {
         ...prev,
@@ -514,33 +532,57 @@ export default function App() {
     });
   };
 
-  const resetToDefaults = () => {
-    if (!window.confirm("Restore default sample players ('CHAIRMAN TINDO' & 'BOSS OWIZA') and reference details? This will replace your current match entries.")) return;
+  const resetScores = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Reset Scores & Apples to 0?",
+      description: "Both players' frame scores, Red Apples (🍎), Green Apples (🍏), and Break & Run counters will be reset to 0. Player names, venue, and match details will remain intact.",
+      confirmText: "Reset to 0",
+      cancelText: "Cancel",
+      isDestructive: true,
+      onConfirm: executeResetScores
+    });
+  };
+
+  const executeResetToDefaults = () => {
     const defaults: ScoreState = {
-      name1: 'CHAIRMAN TINDO',
-      name2: 'BOSS OWIZA',
+      name1: 'PLAYER 1',
+      name2: 'PLAYER 2',
       flag1: '🇿🇼',
       flag2: '🇿🇼',
-      score1: 2,
-      score2: 1,
+      score1: 0,
+      score2: 0,
       br1: 0,
       br2: 0,
       appleRed1: 0,
       appleGreen1: 0,
       appleRed2: 0,
       appleGreen2: 0,
-      raceTo: 3,
+      raceTo: 5,
       matchType: 'CHALLENGE MATCH',
       tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
-      pot: '$1,000',
+      pot: '$500',
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: state.room || 'platnumz-live-match',
       overlayPosition: 'bottom',
       updatedAt: Date.now()
     };
+    setState(defaults);
     syncState(defaults);
-    showToast('Scoreboard reset to sample defaults');
+    showToast('Scoreboard reset to default template (0 - 0)');
+  };
+
+  const resetToDefaults = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Restore Default Match Template?",
+      description: "This will reset player names to 'PLAYER 1' & 'PLAYER 2', scores to 0 - 0, Race to 5, Pot to $500, and clear all apple/break counters. Ready to start a fresh match.",
+      confirmText: "Restore Defaults",
+      cancelText: "Cancel",
+      isDestructive: false,
+      onConfirm: executeResetToDefaults
+    });
   };
 
   const selectCountryForPlayer = (c: Country, player: 1 | 2) => {
@@ -624,7 +666,92 @@ export default function App() {
   };
 
   const isHillHill = state.score1 === state.raceTo - 1 && state.score2 === state.raceTo - 1;
-  const winner = state.score1 >= state.raceTo ? state.name1 : state.score2 >= state.raceTo ? state.name2 : null;
+  const totalFrames = (state.score1 || 0) + (state.score2 || 0);
+  const raceTarget = Math.max(1, state.raceTo || 5);
+  const isMatchConcluded = (state.score1 >= raceTarget || state.score2 >= raceTarget);
+  const winnerIndex: 1 | 2 | null = state.score1 >= raceTarget ? 1 : (state.score2 >= raceTarget ? 2 : null);
+  const winner = winnerIndex === 1 ? state.name1 : (winnerIndex === 2 ? state.name2 : null);
+  const runnerUp = winnerIndex === 1 ? state.name2 : (winnerIndex === 2 ? state.name1 : null);
+  const winnerFlag = winnerIndex === 1 ? state.flag1 : (winnerIndex === 2 ? state.flag2 : '');
+  const runnerUpFlag = winnerIndex === 1 ? state.flag2 : (winnerIndex === 2 ? state.flag1 : '');
+  const winnerScore = winnerIndex === 1 ? state.score1 : (winnerIndex === 2 ? state.score2 : 0);
+  const runnerUpScore = winnerIndex === 1 ? state.score2 : (winnerIndex === 2 ? state.score1 : 0);
+  const frameMargin = Math.abs(state.score1 - state.score2);
+
+  const winRate1 = totalFrames > 0 ? ((state.score1 / totalFrames) * 100).toFixed(1) : '0.0';
+  const winRate2 = totalFrames > 0 ? ((state.score2 / totalFrames) * 100).toFixed(1) : '0.0';
+  const totalApples1 = (state.appleRed1 || 0) + (state.appleGreen1 || 0);
+  const totalApples2 = (state.appleRed2 || 0) + (state.appleGreen2 || 0);
+  const brRate1 = state.score1 > 0 ? (((state.br1 || 0) / state.score1) * 100).toFixed(0) : '0';
+  const brRate2 = state.score2 > 0 ? (((state.br2 || 0) / state.score2) * 100).toFixed(0) : '0';
+
+  // Automatically trigger post-match report when match concludes
+  useEffect(() => {
+    if (isMatchConcluded) {
+      if (!hasAutoOpenedReportRef.current) {
+        hasAutoOpenedReportRef.current = true;
+        setShowMatchReportModal(true);
+      }
+    } else {
+      hasAutoOpenedReportRef.current = false;
+    }
+  }, [isMatchConcluded]);
+
+  const generateReportText = () => {
+    const title = `🏆 KRAVO PLATNUMZ OFFICIAL — POST-MATCH REPORT`;
+    const divider = `══════════════════════════════════════════`;
+    const outcome = isMatchConcluded
+      ? `👑 CHAMPION: ${winner} ${winnerFlag} (${winnerScore} frames)\n🥈 RUNNER-UP: ${runnerUp} ${runnerUpFlag} (${runnerUpScore} frames)`
+      : `⚔️ CURRENT LEADER: ${state.score1 >= state.score2 ? state.name1 : state.name2} (${Math.max(state.score1, state.score2)} - ${Math.min(state.score1, state.score2)})`;
+
+    return `${title}
+${divider}
+${outcome}
+🎯 FINAL SCORE: ${state.score1} - ${state.score2} (Race to ${raceTarget})
+🎱 TOTAL FRAMES PLAYED: ${totalFrames}
+⚡ MARGIN: ${frameMargin} frame${frameMargin === 1 ? '' : 's'}
+💰 PRIZE POT: ${state.pot || '$500'}
+📍 VENUE: ${state.venue || 'Harare, Zimbabwe'}
+🏆 EVENT: ${state.tournament || state.matchType || 'Challenge Match'}
+${divider}
+📊 PLAYER PERFORMANCE STATS:
+• ${state.name1} ${state.flag1}:
+  - Frame Win Rate: ${winRate1}% (${state.score1}/${totalFrames} frames won)
+  - Break & Runs (B&R): ${state.br1 || 0} 🔥 (${brRate1}% of won frames)
+  - Red Apples (🍎): ${state.appleRed1 || 0}
+  - Green Apples (🍏): ${state.appleGreen1 || 0}
+  - Total Apple Honors: ${totalApples1}
+
+• ${state.name2} ${state.flag2}:
+  - Frame Win Rate: ${winRate2}% (${state.score2}/${totalFrames} frames won)
+  - Break & Runs (B&R): ${state.br2 || 0} 🔥 (${brRate2}% of won frames)
+  - Red Apples (🍎): ${state.appleRed2 || 0}
+  - Green Apples (🍏): ${state.appleGreen2 || 0}
+  - Total Apple Honors: ${totalApples2}
+${divider}
+🎱 Kravo Platnumz Official Cuesport Scoreboard
+Generated on: ${new Date().toLocaleString()}`;
+  };
+
+  const copyMatchReport = () => {
+    const text = generateReportText();
+    navigator.clipboard.writeText(text);
+    showToast('Copied Post-Match Report to Clipboard!');
+  };
+
+  const downloadMatchReport = () => {
+    const text = generateReportText();
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const cleanRoom = (state.room || 'match').replace(/[^a-zA-Z0-9_-]/g, '');
+    a.download = `kravo-post-match-report-${cleanRoom}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Downloaded Post-Match Report (.txt)');
+  };
+
   const overlayUrl = `${window.location.origin}/overlay.html?room=${encodeURIComponent(state.room)}`;
 
   // Filter countries
@@ -734,6 +861,311 @@ export default function App() {
         </div>
       )}
 
+      {/* In-App Confirmation Modal (Bypasses iFrame sandbox restrictions) */}
+      {confirmModal && confirmModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${confirmModal.isDestructive ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                  {confirmModal.isDestructive ? '⚠️' : '🔄'}
+                </div>
+                <h3 className="text-base font-black text-white">
+                  {confirmModal.title}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {confirmModal.description}
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition"
+              >
+                {confirmModal.cancelText || 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const onConf = confirmModal.onConfirm;
+                  setConfirmModal(null);
+                  onConf();
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-black shadow-lg transition active:scale-95 ${
+                  confirmModal.isDestructive
+                    ? 'bg-red-500 hover:bg-red-400 text-white shadow-red-500/20'
+                    : 'bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 shadow-amber-500/20'
+                }`}
+              >
+                {confirmModal.confirmText || 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POST-MATCH SUMMARY REPORT MODAL */}
+      {showMatchReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-gradient-to-b from-slate-900 via-[#071328] to-slate-950 border-2 border-amber-400/60 p-4 sm:p-6 shadow-2xl space-y-4">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-amber-500/30 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-500/30">
+                  <Trophy className="w-5 h-5 text-slate-950" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-white tracking-wide">POST-MATCH SUMMARY REPORT</h3>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${isMatchConcluded ? 'bg-amber-400 text-slate-950 shadow-sm' : 'bg-blue-900/60 text-blue-200 border border-blue-500/40'}`}>
+                      {isMatchConcluded ? 'Official Result' : 'In Progress'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    {state.tournament || state.matchType || 'Challenge Match'} · {state.venue || 'Harare, Zimbabwe'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowMatchReportModal(false)}
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Winner / Status Hero Card */}
+            <div className="relative rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-[#0c224a] via-[#081836] to-[#040e21] border border-amber-400/40 shadow-xl text-center overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+              
+              {isMatchConcluded ? (
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-black tracking-wider uppercase">
+                    👑 MATCH CHAMPION
+                  </div>
+                  <div className="flex items-center justify-center gap-2.5">
+                    <FlagBadge codeOrFlag={winnerFlag} alt={winner || ''} size="md" />
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-wide">
+                      {winner}
+                    </h2>
+                  </div>
+                  <div className="text-xs text-slate-300 font-medium">
+                    Defeated <strong className="text-white">{runnerUp}</strong> by <strong className="text-amber-300">+{frameMargin} frame{frameMargin === 1 ? '' : 's'}</strong>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="text-xs text-amber-300 font-bold uppercase tracking-wider">LIVE MATCH STANDINGS</div>
+                  <div className="text-xl sm:text-2xl font-black text-white">
+                    {state.score1 > state.score2 ? `${state.name1} Leads` : state.score2 > state.score1 ? `${state.name2} Leads` : 'Match Tied'}
+                  </div>
+                </div>
+              )}
+
+              {/* Large Score Capsule & Race */}
+              <div className="mt-3.5 inline-flex items-center gap-3 sm:gap-4 bg-slate-950/80 border border-amber-400/30 rounded-2xl px-5 py-2.5 shadow-inner">
+                <div className="text-center">
+                  <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[100px]">{state.name1}</span>
+                  <span className="text-2xl sm:text-3xl font-black text-white font-mono">{state.score1}</span>
+                </div>
+                <div className="text-center px-1">
+                  <span className="text-xs font-black text-amber-400 block tracking-widest uppercase">VS</span>
+                  <span className="text-[10px] text-slate-400 font-bold">Race to {raceTarget}</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[100px]">{state.name2}</span>
+                  <span className="text-2xl sm:text-3xl font-black text-white font-mono">{state.score2}</span>
+                </div>
+              </div>
+
+              {/* Quick Meta Pills */}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-3 text-[11px] font-bold text-slate-300">
+                <span className="bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 rounded-lg">
+                  🎱 Total Frames: <strong className="text-amber-300 font-mono">{totalFrames}</strong>
+                </span>
+                <span className="bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 rounded-lg">
+                  💰 Pot: <strong className="text-emerald-300">{state.pot || '$500'}</strong>
+                </span>
+                {isHillHill && (
+                  <span className="bg-red-950/80 border border-red-500/60 px-2.5 py-1 rounded-lg text-red-300">
+                    ⚡ Hill-Hill Thriller
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Head-to-Head Performance Comparison Table */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3.5 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center gap-1.5 text-xs font-black uppercase text-amber-400 tracking-wider">
+                  <BarChart2 className="w-4 h-4 text-amber-400" /> Head-to-Head Performance Metrics
+                </div>
+                <span className="text-[10px] text-slate-400">Official Match Statistics</span>
+              </div>
+
+              {/* Player Columns Comparison */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center text-xs">
+                {/* P1 Name */}
+                <div className="flex items-center justify-center gap-1.5 font-black text-white truncate">
+                  <FlagBadge codeOrFlag={state.flag1} alt={state.name1} size="sm" />
+                  <span className="truncate">{state.name1}</span>
+                </div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase px-2">METRIC</div>
+                {/* P2 Name */}
+                <div className="flex items-center justify-center gap-1.5 font-black text-white truncate">
+                  <span className="truncate">{state.name2}</span>
+                  <FlagBadge codeOrFlag={state.flag2} alt={state.name2} size="sm" />
+                </div>
+              </div>
+
+              {/* Stat Row 1: Frames Won */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+                <div className="text-center font-black text-base font-mono text-blue-400">{state.score1}</div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Frames Won</div>
+                <div className="text-center font-black text-base font-mono text-blue-400">{state.score2}</div>
+              </div>
+
+              {/* Stat Row 2: Win Rate % with Bar */}
+              <div className="space-y-1.5 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <div className="text-center font-black font-mono text-sm text-amber-300">{winRate1}%</div>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Frame Win Rate</div>
+                  <div className="text-center font-black font-mono text-sm text-amber-300">{winRate2}%</div>
+                </div>
+                {/* Visual Ratio Bar */}
+                <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden flex">
+                  <div
+                    style={{ width: `${Math.max(5, Math.min(95, totalFrames > 0 ? (state.score1 / totalFrames) * 100 : 50))}%` }}
+                    className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full transition-all duration-500"
+                  />
+                  <div
+                    style={{ width: `${Math.max(5, Math.min(95, totalFrames > 0 ? (state.score2 / totalFrames) * 100 : 50))}%` }}
+                    className="bg-gradient-to-r from-amber-400 to-amber-500 h-full transition-all duration-500"
+                  />
+                </div>
+              </div>
+
+              {/* Stat Row 3: Break & Run */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+                <div className="text-center font-black text-sm text-white">
+                  🔥 {state.br1 || 0} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate1}% of wins)</span>
+                </div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Break & Runs</div>
+                <div className="text-center font-black text-sm text-white">
+                  🔥 {state.br2 || 0} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate2}% of wins)</span>
+                </div>
+              </div>
+
+              {/* Stat Row 4: Red Apples */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+                <div className="text-center font-black text-sm text-red-400">🍎 {state.appleRed1 || 0}</div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Red Apples</div>
+                <div className="text-center font-black text-sm text-red-400">🍎 {state.appleRed2 || 0}</div>
+              </div>
+
+              {/* Stat Row 5: Green Apples */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+                <div className="text-center font-black text-sm text-emerald-400">🍏 {state.appleGreen1 || 0}</div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Green Apples</div>
+                <div className="text-center font-black text-sm text-emerald-400">🍏 {state.appleGreen2 || 0}</div>
+              </div>
+
+              {/* Stat Row 6: Total Apple Honors */}
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-gradient-to-r from-amber-950/30 via-slate-950 to-amber-950/30 rounded-xl p-2.5 border border-amber-500/30">
+                <div className="text-center font-black text-sm text-amber-300 font-mono">{totalApples1}</div>
+                <div className="text-[11px] font-black text-amber-400 uppercase text-center min-w-[120px]">Total Apple Honors</div>
+                <div className="text-center font-black text-sm text-amber-300 font-mono">{totalApples2}</div>
+              </div>
+            </div>
+
+            {/* Performance Awards / Highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400">Match MVP</div>
+                <div className="text-xs font-black text-amber-300 truncate mt-0.5">
+                  🏆 {winner || 'In Contention'}
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400">Apple Leader</div>
+                <div className="text-xs font-black text-emerald-300 truncate mt-0.5">
+                  🍏 {totalApples1 > totalApples2 ? state.name1 : totalApples2 > totalApples1 ? state.name2 : totalApples1 > 0 ? 'Tied Honors' : 'None Awarded'}
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400">Break & Run Ace</div>
+                <div className="text-xs font-black text-red-300 truncate mt-0.5">
+                  🔥 {(state.br1 || 0) > (state.br2 || 0) ? state.name1 : (state.br2 || 0) > (state.br1 || 0) ? state.name2 : (state.br1 || 0) > 0 ? 'Tied' : 'None'}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons Toolbar */}
+            <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Copy WhatsApp / Social report */}
+                <button
+                  type="button"
+                  onClick={copyMatchReport}
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-slate-950 font-black text-xs shadow-md flex items-center gap-1.5 transition active:scale-95"
+                  title="Copy formatted text to paste into WhatsApp, Facebook, or SMS"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy WhatsApp Report
+                </button>
+
+                {/* Download Text Report */}
+                <button
+                  type="button"
+                  onClick={downloadMatchReport}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition active:scale-95"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download (.txt)
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMatchReportModal(false);
+                    resetToDefaults();
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-800/70 hover:bg-slate-800 text-slate-300 hover:text-white font-bold text-xs transition"
+                >
+                  New Match
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowMatchReportModal(false)}
+                  className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition active:scale-95"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-2 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
@@ -764,6 +1196,21 @@ export default function App() {
                 {syncStatus === 'connected' ? 'Live Synced' : 'Syncing…'}
               </span>
             </div>
+
+            {/* Post-Match Report button */}
+            <button
+              onClick={() => setShowMatchReportModal(true)}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border ${
+                isMatchConcluded
+                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-500/20 animate-pulse'
+                  : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+              }`}
+              title="View Post-Match Summary Report & Performance Statistics"
+            >
+              <BarChart2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Match Report</span>
+              {isMatchConcluded && '🏆'}
+            </button>
 
             {/* Sound toggle */}
             <button
@@ -841,15 +1288,35 @@ export default function App() {
       {/* Main Container */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-4 space-y-3.5">
 
-        {/* WINNER ALERT */}
+        {/* WINNER ALERT & POST-MATCH REPORT CALLOUT */}
         {winner && (
-          <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-500/20 border border-amber-400 rounded-xl p-2.5 text-center shadow-lg animate-pulse">
-            <div className="flex items-center justify-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-400" />
-              <span className="text-[11px] uppercase tracking-wider text-amber-300 font-bold">MATCH CHAMPION:</span>
-              <span className="text-base sm:text-lg font-black text-white">{winner} WINS!</span>
-              <Trophy className="w-5 h-5 text-amber-400" />
+          <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/30 to-amber-500/20 border-2 border-amber-400 rounded-2xl p-3 sm:p-3.5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/30 shrink-0">
+                <Trophy className="w-6 h-6 text-slate-950" />
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    MATCH CONCLUDED
+                  </span>
+                  <span className="text-xs text-amber-200 font-bold">
+                    {totalFrames} Total Frames · Final Score: {state.score1} - {state.score2}
+                  </span>
+                </div>
+                <div className="text-base sm:text-lg font-black text-white">
+                  {winner} WINS THE MATCH!
+                </div>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMatchReportModal(true)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/30 flex items-center gap-1.5 transition active:scale-95 shrink-0"
+            >
+              <BarChart2 className="w-4 h-4" /> View Post-Match Report
+            </button>
           </div>
         )}
 
@@ -1173,6 +1640,18 @@ export default function App() {
             {/* Quick Actions Row */}
             <div className="flex flex-wrap items-center justify-center gap-2 py-0.5">
               <button
+                type="button"
+                onClick={() => setShowMatchReportModal(true)}
+                className={`px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 border transition active:scale-95 shadow-sm ${
+                  isMatchConcluded
+                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 font-black shadow-amber-500/30 animate-pulse'
+                    : 'bg-blue-900/50 hover:bg-blue-800/80 text-amber-300 border-blue-500/40'
+                }`}
+                title="View Post-Match Summary Report & Performance Statistics"
+              >
+                <BarChart2 className="w-3.5 h-3.5 text-amber-400" /> Post-Match Report {isMatchConcluded && '🏆'}
+              </button>
+              <button
                 onClick={swapPlayers}
                 className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition active:scale-95"
               >
@@ -1302,7 +1781,7 @@ export default function App() {
                   type="button"
                   onClick={resetToDefaults}
                   className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition"
-                  title="Restore default Chairman Tindo vs Boss Owiza reference match"
+                  title="Restore clean match template (PLAYER 1 vs PLAYER 2, 0 - 0, Race to 5)"
                 >
                   Restore Sample Defaults
                 </button>

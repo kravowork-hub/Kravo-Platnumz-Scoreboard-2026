@@ -575,7 +575,7 @@
       flex-shrink: 0;
     }
 
-    /* WINNER CELEBRATION MODAL */
+    /* WINNER CELEBRATION & POST-MATCH SUMMARY REPORT */
     #winner-banner {
       display: none;
       position: absolute;
@@ -584,34 +584,95 @@
       transform: translate(-50%, -50%);
       background: radial-gradient(ellipse at center, rgba(3,24,66,0.98) 0%, rgba(2,12,35,0.99) 100%);
       border: 3px solid var(--gold);
-      border-radius: 18px;
-      padding: 26px 44px;
+      border-radius: 20px;
+      padding: 24px 34px;
       text-align: center;
       box-shadow: 0 0 50px rgba(255, 200, 0, 0.5), 0 20px 40px rgba(0,0,0,0.9);
       z-index: 100;
       animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      min-width: 520px;
+      max-width: 90vw;
     }
     @keyframes popIn {
       0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
       100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     }
-    .winner-trophy { font-size: 44px; margin-bottom: 6px; }
+    .winner-trophy { font-size: 40px; margin-bottom: 4px; filter: drop-shadow(0 4px 10px rgba(255,200,0,0.5)); }
     .winner-title {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--gold);
-      letter-spacing: 3px;
+      letter-spacing: 2.5px;
       font-weight: 900;
+      text-transform: uppercase;
     }
     .winner-player-name {
-      font-size: 38px;
+      font-size: 34px;
       font-weight: 1000;
       color: #fff;
-      margin: 6px 0;
+      margin: 4px 0 2px 0;
       text-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
+      letter-spacing: 1px;
     }
     .winner-subtitle {
       font-size: 13px;
       color: var(--gold-light);
+      font-weight: 700;
+    }
+    .winner-score-pill {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 16px;
+      background: rgba(255, 200, 0, 0.15);
+      border: 1px solid var(--gold);
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--gold-light);
+    }
+    .winner-stats-grid {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 14px;
+      padding: 12px 18px;
+      border-top: 1px solid rgba(255, 200, 0, 0.3);
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    .winner-stat-col {
+      flex: 1;
+      text-align: center;
+    }
+    .winner-stat-divider {
+      width: 1px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .winner-stat-player {
+      font-size: 14px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .winner-stat-metric {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-top: 3px;
+    }
+    .winner-stat-metric strong {
+      color: #ffffff;
+      font-weight: 800;
+    }
+    .stat-lbl {
+      color: rgba(255, 255, 255, 0.6);
+      margin-right: 4px;
     }
   </style>
 </head>
@@ -635,7 +696,7 @@
           </div>
 
           <div class="player-1-info">
-            <div id="name1" class="player-name">CHAIRMAN TINDO</div>
+            <div id="name1" class="player-name">PLAYER 1</div>
             <div id="appleBadges1" class="apple-badges-row">
               <div id="appleRedBadge1" class="apple-badge apple-badge-red" style="display:none">
                 <span class="apple-emoji">🍎</span>
@@ -649,20 +710,20 @@
             </div>
           </div>
 
-          <div id="score1" class="score-box">2</div>
+          <div id="score1" class="score-box">0</div>
         </div>
 
         <!-- CENTER RACE-TO CAPSULE -->
         <div class="center-capsule-container">
           <div id="hillHillBadge" class="hill-hill-badge">⚡ HILL - HILL ⚡</div>
           <div class="race-capsule">
-            <span id="raceText" class="race-text">RACE TO 3</span>
+            <span id="raceText" class="race-text">RACE TO 5</span>
           </div>
         </div>
 
         <!-- PLAYER 2 ZONE (Right: Score -> Name & Apple Badges -> Flag) -->
         <div class="player-zone-2">
-          <div id="score2" class="score-box">1</div>
+          <div id="score2" class="score-box">0</div>
 
           <div class="player-2-info">
             <div id="appleBadges2" class="apple-badges-row">
@@ -676,7 +737,7 @@
               </div>
               <div id="brBadge2" class="br-badge">🔥 B&R: <span id="brVal2">0</span></div>
             </div>
-            <div id="name2" class="player-name">BOSS OWIZA</div>
+            <div id="name2" class="player-name">PLAYER 2</div>
           </div>
 
           <div class="flag-box">
@@ -735,12 +796,32 @@
 
     </div>
 
-    <!-- WINNER CELEBRATION MODAL -->
+    <!-- WINNER CELEBRATION & POST-MATCH SUMMARY REPORT -->
     <div id="winner-banner">
       <div class="winner-trophy">🏆</div>
-      <div class="winner-title">MATCH CHAMPION</div>
-      <div id="winnerPlayerName" class="winner-player-name">CHAIRMAN TINDO</div>
-      <div id="winnerDetails" class="winner-subtitle">VICTORY REACHED · PLATINUM SKILLS OPEN</div>
+      <div class="winner-title">MATCH CONCLUDED · POST-MATCH REPORT</div>
+      <div id="winnerPlayerName" class="winner-player-name">PLAYER 1</div>
+      <div id="winnerDetails" class="winner-subtitle">VICTORY REACHED · CHALLENGE MATCH</div>
+      <div id="winnerScoreStats" class="winner-score-pill">TOTAL FRAMES PLAYED: 0 · MARGIN: +0</div>
+
+      <!-- Post-Match Head-to-Head Performance Stats Grid -->
+      <div id="winnerStatsGrid" class="winner-stats-grid">
+        <div class="winner-stat-col">
+          <div id="wStatP1Name" class="winner-stat-player">PLAYER 1</div>
+          <div class="winner-stat-metric"><span class="stat-lbl">Win Rate:</span> <strong id="wStatP1WinRate">0%</strong></div>
+          <div class="winner-stat-metric"><span class="stat-lbl">Break & Run:</span> <strong id="wStatP1BR">🔥 0</strong></div>
+          <div class="winner-stat-metric"><span class="stat-lbl">Apples:</span> <strong id="wStatP1Apples">🍎 0 · 🍏 0</strong></div>
+        </div>
+
+        <div class="winner-stat-divider"></div>
+
+        <div class="winner-stat-col">
+          <div id="wStatP2Name" class="winner-stat-player">PLAYER 2</div>
+          <div class="winner-stat-metric"><span class="stat-lbl">Win Rate:</span> <strong id="wStatP2WinRate">0%</strong></div>
+          <div class="winner-stat-metric"><span class="stat-lbl">Break & Run:</span> <strong id="wStatP2BR">🔥 0</strong></div>
+          <div class="winner-stat-metric"><span class="stat-lbl">Apples:</span> <strong id="wStatP2Apples">🍎 0 · 🍏 0</strong></div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -752,8 +833,8 @@
     const room = requestedRoom.replace(/[^a-zA-Z0-9_-]/g,"").slice(0,80) || "platnumz-live-match";
 
     const $ = id => document.getElementById(id);
-    let lastScore1 = 2;
-    let lastScore2 = 1;
+    let lastScore1 = 0;
+    let lastScore2 = 0;
     let lastAppleRed1 = 0;
     let lastAppleGreen1 = 0;
     let lastAppleRed2 = 0;
@@ -852,20 +933,20 @@
     function renderScoreboard(state) {
       if (!state || typeof state !== "object") return;
 
-      const s1 = safeScore(state.score1 !== undefined ? state.score1 : 2);
-      const s2 = safeScore(state.score2 !== undefined ? state.score2 : 1);
-      const race = Math.max(1, Math.min(999, parseInt(state.raceTo, 10) || 3));
+      const s1 = safeScore(state.score1 !== undefined ? state.score1 : 0);
+      const s2 = safeScore(state.score2 !== undefined ? state.score2 : 0);
+      const race = Math.max(1, Math.min(999, parseInt(state.raceTo, 10) || 5));
 
       if (s1 !== lastScore1) triggerScoreBump("score1");
       if (s2 !== lastScore2) triggerScoreBump("score2");
       lastScore1 = s1;
       lastScore2 = s2;
 
-      setText("name1", state.name1, "CHAIRMAN TINDO");
-      setText("name2", state.name2, "BOSS OWIZA");
-      setText("score1", s1, "2");
-      setText("score2", s2, "1");
-      setText("raceText", "RACE TO " + race, "RACE TO 3");
+      setText("name1", state.name1, "PLAYER 1");
+      setText("name2", state.name2, "PLAYER 2");
+      setText("score1", s1, "0");
+      setText("score2", s2, "0");
+      setText("raceText", "RACE TO " + race, "RACE TO 5");
 
       setText("venue", state.venue, "HARARE, ZIMBABWE");
       const matchTypeVal = (state.matchType !== undefined && state.matchType !== null && state.matchType !== "")
@@ -935,11 +1016,38 @@
       const pos = state.overlayPosition || "bottom";
       document.body.className = "pos-" + pos;
 
-      // Winner
+      // Winner & Post-Match Summary Report
       if (s1 >= race || s2 >= race) {
-        const winner = s1 >= race ? (state.name1 || "CHAIRMAN TINDO") : (state.name2 || "BOSS OWIZA");
+        const isP1Winner = s1 >= race;
+        const winner = isP1Winner ? (state.name1 || "PLAYER 1") : (state.name2 || "PLAYER 2");
+        const totalFrames = s1 + s2;
+        const p1WinRate = totalFrames > 0 ? ((s1 / totalFrames) * 100).toFixed(0) : "0";
+        const p2WinRate = totalFrames > 0 ? ((s2 / totalFrames) * 100).toFixed(0) : "0";
+        const p1BR = parseInt(state.br1, 10) || 0;
+        const p2BR = parseInt(state.br2, 10) || 0;
+        const p1Red = parseInt(state.appleRed1, 10) || 0;
+        const p1Grn = parseInt(state.appleGreen1, 10) || 0;
+        const p2Red = parseInt(state.appleRed2, 10) || 0;
+        const p2Grn = parseInt(state.appleGreen2, 10) || 0;
+
         $("winnerPlayerName").textContent = winner;
-        $("winnerDetails").textContent = `${s1 >= race ? s1 : s2} - ${s1 >= race ? s2 : s1} (Race to ${race}) · ${state.tournament || "PLATINUM SKILLS OPEN"}`;
+        $("winnerDetails").textContent = `${isP1Winner ? s1 : s2} - ${isP1Winner ? s2 : s1} (Race to ${race}) · ${state.tournament || "CHALLENGE MATCH"}`;
+        
+        if ($("winnerScoreStats")) {
+          $("winnerScoreStats").textContent = `TOTAL FRAMES PLAYED: ${totalFrames} · MARGIN: +${Math.abs(s1 - s2)}`;
+        }
+        if ($("wStatP1Name")) {
+          $("wStatP1Name").textContent = state.name1 || "PLAYER 1";
+          $("wStatP1WinRate").textContent = `${p1WinRate}% (${s1}/${totalFrames})`;
+          $("wStatP1BR").textContent = `🔥 ${p1BR}`;
+          $("wStatP1Apples").textContent = `🍎 ${p1Red} · 🍏 ${p1Grn}`;
+        }
+        if ($("wStatP2Name")) {
+          $("wStatP2Name").textContent = state.name2 || "PLAYER 2";
+          $("wStatP2WinRate").textContent = `${p2WinRate}% (${s2}/${totalFrames})`;
+          $("wStatP2BR").textContent = `🔥 ${p2BR}`;
+          $("wStatP2Apples").textContent = `🍎 ${p2Red} · 🍏 ${p2Grn}`;
+        }
         $("winner-banner").style.display = "block";
       } else {
         $("winner-banner").style.display = "none";
@@ -949,17 +1057,17 @@
     // OFFLINE & PERSISTENCE ENGINE
     function getDefaultState() {
       return {
-        name1: "CHAIRMAN TINDO",
-        name2: "BOSS OWIZA",
-        score1: 2,
-        score2: 1,
+        name1: "PLAYER 1",
+        name2: "PLAYER 2",
+        score1: 0,
+        score2: 0,
         br1: 0,
         br2: 0,
         appleRed1: 0,
         appleGreen1: 0,
         appleRed2: 0,
         appleGreen2: 0,
-        raceTo: 3,
+        raceTo: 5,
         flag1: "🇿🇼",
         flag2: "🇿🇼",
         matchType: "CHALLENGE MATCH",

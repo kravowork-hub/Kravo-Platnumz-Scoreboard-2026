@@ -232,7 +232,7 @@
 
         <div class="field">
           <label for="name1">Player 1 Name</label>
-          <input id="name1" maxlength="50" value="CHAIRMAN TINDO" autocomplete="off" />
+          <input id="name1" maxlength="50" value="PLAYER 1" autocomplete="off" />
         </div>
 
         <div class="field">
@@ -250,7 +250,7 @@
         </div>
 
         <div class="score-display">
-          <div id="scoreDisplay1" class="score-number">2</div>
+          <div id="scoreDisplay1" class="score-number">0</div>
           <div class="score-label">FRAMES WON</div>
         </div>
 
@@ -283,7 +283,7 @@
 
         <div class="field">
           <label for="name2">Player 2 Name</label>
-          <input id="name2" maxlength="50" value="BOSS OWIZA" autocomplete="off" />
+          <input id="name2" maxlength="50" value="PLAYER 2" autocomplete="off" />
         </div>
 
         <div class="field">
@@ -571,11 +571,11 @@ function populateCountrySelectors() {
 
 function defaultState() {
   return {
-    name1: "CHAIRMAN TINDO", name2: "BOSS OWIZA",
+    name1: "PLAYER 1", name2: "PLAYER 2",
     flag1: "🇿🇼", flag2: "🇿🇼",
     avatar1: "", avatar2: "",
-    score1: 2, score2: 1, raceTo: 3,
-    tournament: "PLATINUM SKILLS OPEN",
+    score1: 0, score2: 0, raceTo: 5,
+    tournament: "CHALLENGE MATCH",
     venue: "HARARE, ZIMBABWE", pot: "$500",
     brand: "KRAVO PLATNUMZ OFFICIAL",
     customLogo: "",
@@ -846,7 +846,6 @@ function swapPlayers() {
 }
 
 function resetScores() {
-  if (!confirm("Reset both players' scores to zero?")) return;
   $("scoreDisplay1").textContent = "0";
   $("scoreDisplay2").textContent = "0";
   breakRuns.br1 = 0;
@@ -854,12 +853,13 @@ function resetScores() {
   $("brDisplay1").textContent = "0";
   $("brDisplay2").textContent = "0";
   scheduleCloudWrite();
+  setConnection("Scores and break counters reset to 0.", "online");
 }
 
 function resetMatch() {
-  if (!confirm("Start a new match and reset all match details?")) return;
   renderState(defaultState());
   scheduleCloudWrite();
+  setConnection("Scoreboard reset to default template (0 - 0).", "online");
 }
 
 function publishNow() {

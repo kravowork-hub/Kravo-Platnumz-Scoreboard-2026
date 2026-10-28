@@ -122,16 +122,16 @@ async function startServer() {
   // so any client-entered details with real timestamps take immediate priority
   if (!roomStates.has('platnumz-live-match')) {
     roomStates.set('platnumz-live-match', {
-      name1: 'CHAIRMAN TINDO',
-      name2: 'BOSS OWIZA',
-      score1: 2,
-      score2: 1,
+      name1: 'PLAYER 1',
+      name2: 'PLAYER 2',
+      score1: 0,
+      score2: 0,
       br1: 0,
       br2: 0,
-      raceTo: 3,
+      raceTo: 5,
       flag1: '🇿🇼',
       flag2: '🇿🇼',
-      tournament: 'PLATINUM SKILLS OPEN',
+      tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
       pot: '$500',
       brand: 'KRAVO PLATNUMZ OFFICIAL',
