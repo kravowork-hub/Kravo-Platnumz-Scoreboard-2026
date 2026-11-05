@@ -32,12 +32,27 @@ import {
   BarChart2,
   Award,
   FileText,
-  Percent
+  Percent,
+  User,
+  Users,
+  Settings,
+  LogIn,
+  LogOut,
+  Sliders,
+  History,
+  Key,
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  UserX,
+  UserCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { usePWAInstall } from './usePWAInstall';
 import { WORLD_COUNTRIES, Country, getCountryCode, getFlagEmoji } from './countries';
 import { FlagBadge } from './FlagBadge';
 import { RealtimeSyncEngine } from './realtimeSync';
+import { useAuth, ADMIN_EMAIL, UserProfile } from './AuthContext';
 
 export interface ScoreState {
   name1: string;
@@ -66,7 +81,28 @@ export interface ScoreState {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'controller' | 'preview' | 'flags' | 'install' | 'github'>('controller');
+  const [activeTab, setActiveTab] = useState<'controller' | 'preview' | 'account' | 'admin' | 'flags' | 'install' | 'github'>('controller');
+  const {
+    currentUser,
+    userProfile,
+    loading: authLoading,
+    isAdmin,
+    isRevoked,
+    signInWithGoogle,
+    signOut,
+    updateProfileData,
+    flushProfileSave,
+    fetchAllUsers,
+    setAccountStatus
+  } = useAuth();
+
+  // Master Admin State (kravoplatnumzofficial@gmail.com)
+  const [adminUsers, setAdminUsers] = useState<UserProfile[]>([]);
+  const [loadingAdminUsers, setLoadingAdminUsers] = useState(false);
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
+  const [revokingUser, setRevokingUser] = useState<UserProfile | null>(null);
+  const [revocationReason, setRevocationReason] = useState('');
+  const [actionProcessingUid, setActionProcessingUid] = useState<string | null>(null);
 
   // PWA Install Hook
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -171,6 +207,59 @@ export default function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Master Admin functions
+  const loadUsersForAdmin = useCallback(async () => {
+    if (!isAdmin) return;
+    setLoadingAdminUsers(true);
+    try {
+      const users = await fetchAllUsers();
+      setAdminUsers(users);
+    } catch (err: any) {
+      showToast('Error loading accounts: ' + (err.message || 'Permission denied'));
+    } finally {
+      setLoadingAdminUsers(false);
+    }
+  }, [isAdmin, fetchAllUsers]);
+
+  useEffect(() => {
+    if (activeTab === 'admin' && isAdmin) {
+      loadUsersForAdmin();
+    }
+  }, [activeTab, isAdmin, loadUsersForAdmin]);
+
+  const handleConfirmRevoke = async () => {
+    if (!revokingUser) return;
+    setActionProcessingUid(revokingUser.uid);
+    try {
+      await setAccountStatus(
+        revokingUser.uid,
+        'revoked',
+        revocationReason.trim() || 'Access revoked by administrator'
+      );
+      showToast(`Access revoked for ${revokingUser.displayName || revokingUser.email}`);
+      setRevokingUser(null);
+      setRevocationReason('');
+      await loadUsersForAdmin();
+    } catch (err: any) {
+      showToast('Failed to revoke access: ' + (err.message || 'Error'));
+    } finally {
+      setActionProcessingUid(null);
+    }
+  };
+
+  const handleRestoreAccess = async (targetUser: UserProfile) => {
+    setActionProcessingUid(targetUser.uid);
+    try {
+      await setAccountStatus(targetUser.uid, 'active');
+      showToast(`Access restored for ${targetUser.displayName || targetUser.email}`);
+      await loadUsersForAdmin();
+    } catch (err: any) {
+      showToast('Failed to restore access: ' + (err.message || 'Error'));
+    } finally {
+      setActionProcessingUid(null);
+    }
   };
 
   // Online status tracker
@@ -290,48 +379,107 @@ export default function App() {
     }
   }, [state.room]);
 
-  // REAL-TIME MULTI-CHANNEL SYNC
-  const syncState = useCallback((newState: ScoreState) => {
+  // When user logs in with their personalized profile, adopt their personal channel and branding
+  useEffect(() => {
+    if (userProfile) {
+      setState((prev) => {
+        // If current room is still the generic default or matches old profile, update to personal channel
+        const shouldAdoptChannel = !prev.room || prev.room === 'platnumz-live-match' || prev.room === userProfile.channelSlug;
+        const updatedRoom = shouldAdoptChannel ? userProfile.channelSlug : prev.room;
+        const updatedBrand = userProfile.brandName || prev.brand;
+        const updatedVenue = prev.venue === 'HARARE, ZIMBABWE' && userProfile.defaultVenue ? userProfile.defaultVenue : prev.venue;
+        
+        if (updatedRoom !== prev.room || updatedBrand !== prev.brand) {
+          const merged = {
+            ...prev,
+            room: updatedRoom,
+            brand: updatedBrand,
+            venue: updatedVenue,
+            updatedAt: Date.now()
+          };
+          syncState(merged);
+          return merged;
+        }
+        return prev;
+      });
+    }
+  }, [userProfile]);
+
+  const syncDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSyncStateRef = useRef<ScoreState | null>(null);
+
+  // REAL-TIME MULTI-CHANNEL SYNC (Immediate for score buttons, debounced for text typing)
+  const syncState = useCallback((newState: ScoreState, immediate: boolean = true) => {
     const withTimestamp = {
       ...newState,
       updatedAt: newState.updatedAt && newState.updatedAt > 1 ? newState.updatedAt : Date.now()
     };
+
+    // 1. ALWAYS update local React state immediately so text inputs & UI never stutter or lag
     setState(withTimestamp);
-    setSyncStatus('syncing');
+    pendingSyncStateRef.current = withTimestamp;
 
-    // 1. Permanent LocalStorage with multi-key backup
-    try {
-      const serialized = JSON.stringify(withTimestamp);
-      localStorage.setItem('platnumz-scoreboard-state', serialized);
-      if (withTimestamp.room) {
-        localStorage.setItem(`platnumz_state_${withTimestamp.room}`, serialized);
-      }
-      sessionStorage.setItem('platnumz-scoreboard-state', serialized);
-      if (withTimestamp.room) {
-        sessionStorage.setItem(`platnumz_state_${withTimestamp.room}`, serialized);
-      }
-    } catch (e) {}
+    const executeSync = (targetState: ScoreState, isImmediate: boolean) => {
+      setSyncStatus('syncing');
 
-    // 2. Publish via Realtime Engine (MQTT WebSockets + BroadcastChannel + LocalStorage + API)
-    if (syncEngineRef.current) {
-      syncEngineRef.current.publish(withTimestamp);
+      // Permanent LocalStorage with multi-key backup
+      try {
+        const serialized = JSON.stringify(targetState);
+        localStorage.setItem('platnumz-scoreboard-state', serialized);
+        if (targetState.room) {
+          localStorage.setItem(`platnumz_state_${targetState.room}`, serialized);
+        }
+        sessionStorage.setItem('platnumz-scoreboard-state', serialized);
+        if (targetState.room) {
+          sessionStorage.setItem(`platnumz_state_${targetState.room}`, serialized);
+        }
+      } catch (e) {}
+
+      // Publish via Realtime Engine (MQTT + BroadcastChannel + LocalStorage + Firestore + API)
+      if (syncEngineRef.current) {
+        syncEngineRef.current.publish(targetState, isImmediate);
+      }
+    };
+
+    if (immediate) {
+      if (syncDebounceTimerRef.current) {
+        clearTimeout(syncDebounceTimerRef.current);
+        syncDebounceTimerRef.current = null;
+      }
+      executeSync(withTimestamp, true);
+    } else {
+      // Debounce network & disk writes for typing/erasing (300ms)
+      if (syncDebounceTimerRef.current) {
+        clearTimeout(syncDebounceTimerRef.current);
+      }
+      syncDebounceTimerRef.current = setTimeout(() => {
+        syncDebounceTimerRef.current = null;
+        if (pendingSyncStateRef.current) {
+          executeSync(pendingSyncStateRef.current, false);
+        }
+      }, 300);
     }
   }, []);
 
-  // Guarantee that every state update persists permanently in local storage
-  useEffect(() => {
-    try {
-      const serialized = JSON.stringify(state);
-      localStorage.setItem('platnumz-scoreboard-state', serialized);
-      if (state.room) {
-        localStorage.setItem(`platnumz_state_${state.room}`, serialized);
+  const flushSync = useCallback(() => {
+    if (syncDebounceTimerRef.current) {
+      clearTimeout(syncDebounceTimerRef.current);
+      syncDebounceTimerRef.current = null;
+    }
+    if (pendingSyncStateRef.current) {
+      const target = pendingSyncStateRef.current;
+      try {
+        const serialized = JSON.stringify(target);
+        localStorage.setItem('platnumz-scoreboard-state', serialized);
+        if (target.room) {
+          localStorage.setItem(`platnumz_state_${target.room}`, serialized);
+        }
+      } catch (e) {}
+      if (syncEngineRef.current) {
+        syncEngineRef.current.publish(target, true);
       }
-      sessionStorage.setItem('platnumz-scoreboard-state', serialized);
-      if (state.room) {
-        sessionStorage.setItem(`platnumz_state_${state.room}`, serialized);
-      }
-    } catch (e) {}
-  }, [state]);
+    }
+  }, []);
 
   // Listen to incoming real-time updates from Server SSE & API (when deployed with Node.js/Express)
   useEffect(() => {
@@ -1212,6 +1360,38 @@ Generated on: ${new Date().toLocaleString()}`;
               {isMatchConcluded && '🏆'}
             </button>
 
+            {/* User Profile / Login Button */}
+            {currentUser ? (
+              <button
+                onClick={() => setActiveTab('account')}
+                className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-950/80 hover:bg-blue-900 border border-blue-500/40 text-blue-200 text-xs font-bold transition"
+                title="Account & Branding Settings"
+              >
+                {currentUser.photoURL ? (
+                  <img src={currentUser.photoURL} alt="User" className="w-5 h-5 rounded-full object-cover border border-amber-400" />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-amber-400" />
+                )}
+                <span className="hidden sm:inline truncate max-w-[110px]">{userProfile?.brandName || currentUser.displayName || 'My Profile'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  try {
+                    await signInWithGoogle();
+                    showToast('Welcome! Signed in with Google');
+                  } catch (e: any) {
+                    showToast('Sign-in cancelled or failed');
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition active:scale-95"
+                title="Sign in with Google to personalize your branding"
+              >
+                <LogIn className="w-3.5 h-3.5 text-slate-950" />
+                <span>Login</span>
+              </button>
+            )}
+
             {/* Sound toggle */}
             <button
               onClick={() => {
@@ -1251,6 +1431,30 @@ Generated on: ${new Date().toLocaleString()}`;
           </button>
 
           <button
+            onClick={() => setActiveTab('account')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+              activeTab === 'account'
+                ? 'bg-amber-400 text-slate-950 font-black shadow'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" /> Branding & Account {currentUser ? '✨' : ''}
+          </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('admin')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+                activeTab === 'admin'
+                  ? 'bg-rose-600 text-white font-black shadow-lg shadow-rose-600/30'
+                  : 'text-rose-400 hover:text-white hover:bg-rose-950/60 border border-rose-500/30'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5 text-rose-400" /> Admin Hub 👑
+            </button>
+          )}
+
+          <button
             onClick={() => setActiveTab('flags')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'flags'
@@ -1287,6 +1491,31 @@ Generated on: ${new Date().toLocaleString()}`;
 
       {/* Main Container */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-4 space-y-3.5">
+
+        {/* REVOKED ACCESS WARNING BANNER */}
+        {isRevoked && (
+          <div className="bg-gradient-to-r from-red-950 via-rose-950 to-red-950 border-2 border-red-500 rounded-2xl p-4 shadow-2xl flex items-start sm:items-center gap-3.5 text-red-100 animate-in fade-in">
+            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-black shadow-lg shadow-red-600/40 shrink-0">
+              <ShieldAlert className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-red-500 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  BROADCAST ACCESS SUSPENDED
+                </span>
+                <span className="text-xs text-red-300 font-bold">
+                  Action taken by Master Admin ({ADMIN_EMAIL})
+                </span>
+              </div>
+              <p className="text-xs text-red-200 mt-1 leading-relaxed">
+                Your channel publishing privileges have been revoked by the administrator. Contact {ADMIN_EMAIL} to request access reinstatement.
+                {userProfile?.revokedReason ? (
+                  <span className="font-semibold block text-red-300 mt-0.5">Reason: "{userProfile.revokedReason}"</span>
+                ) : null}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* WINNER ALERT & POST-MATCH REPORT CALLOUT */}
         {winner && (
@@ -1365,8 +1594,9 @@ Generated on: ${new Date().toLocaleString()}`;
                     value={state.name1}
                     onChange={(e) => {
                       const updated = { ...state, name1: e.target.value, updatedAt: Date.now() };
-                      syncState(updated);
+                      syncState(updated, false);
                     }}
+                    onBlur={flushSync}
                     placeholder="PLAYER 1 NAME"
                   />
                 </div>
@@ -1515,8 +1745,9 @@ Generated on: ${new Date().toLocaleString()}`;
                     value={state.name2}
                     onChange={(e) => {
                       const updated = { ...state, name2: e.target.value, updatedAt: Date.now() };
-                      syncState(updated);
+                      syncState(updated, false);
                     }}
+                    onBlur={flushSync}
                     placeholder="PLAYER 2 NAME"
                   />
                 </div>
@@ -1689,8 +1920,9 @@ Generated on: ${new Date().toLocaleString()}`;
                     value={state.venue}
                     onChange={(e) => {
                       const updated = { ...state, venue: e.target.value, updatedAt: Date.now() };
-                      syncState(updated);
+                      syncState(updated, false);
                     }}
+                    onBlur={flushSync}
                     placeholder="e.g. HARARE, ZIMBABWE"
                   />
                 </div>
@@ -1707,8 +1939,9 @@ Generated on: ${new Date().toLocaleString()}`;
                         tournament: e.target.value,
                         updatedAt: Date.now()
                       };
-                      syncState(updated);
+                      syncState(updated, false);
                     }}
+                    onBlur={flushSync}
                     placeholder="e.g. Challenge Match, Money Match, Tournament"
                   />
                 </div>
@@ -1720,8 +1953,9 @@ Generated on: ${new Date().toLocaleString()}`;
                     value={state.pot}
                     onChange={(e) => {
                       const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
-                      syncState(updated);
+                      syncState(updated, false);
                     }}
+                    onBlur={flushSync}
                     placeholder="e.g. $500"
                   />
                 </div>
@@ -1735,10 +1969,11 @@ Generated on: ${new Date().toLocaleString()}`;
                     className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white font-mono font-bold text-sm outline-none focus:border-amber-400 transition"
                     value={state.raceTo}
                     onChange={(e) => {
-                      const val = Math.max(1, parseInt(e.target.value, 10) || 3);
+                      const val = Math.max(1, parseInt(e.target.value, 10) || 1);
                       const updated = { ...state, raceTo: val, updatedAt: Date.now() };
-                      syncState(updated);
+                      syncState(updated, false);
                     }}
+                    onBlur={flushSync}
                   />
                 </div>
 
@@ -1749,8 +1984,9 @@ Generated on: ${new Date().toLocaleString()}`;
                     value={state.brand}
                     onChange={(e) => {
                       const updated = { ...state, brand: e.target.value, updatedAt: Date.now() };
-                      syncState(updated);
+                      syncState(updated, false);
                     }}
+                    onBlur={flushSync}
                     placeholder="e.g. KRAVO PLATNUMZ OFFICIAL"
                   />
                 </div>
@@ -1829,6 +2065,571 @@ Generated on: ${new Date().toLocaleString()}`;
                 title="OBS Overlay Preview"
                 className="w-full h-full border-none bg-transparent"
               />
+            </div>
+          </div>
+        )}
+
+        {/* TAB: BRANDING & ACCOUNT PERSONALIZATION */}
+        {activeTab === 'account' && (
+          <div className="max-w-3xl mx-auto space-y-5">
+            {currentUser ? (
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-6 shadow-2xl">
+                {/* User Header Profile */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                  <div className="flex items-center gap-3.5">
+                    {currentUser.photoURL ? (
+                      <img src={currentUser.photoURL} alt="Avatar" className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 shadow-lg" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-2xl bg-amber-400 text-slate-950 font-black text-2xl flex items-center justify-center">
+                        {currentUser.displayName?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-black text-white">{currentUser.displayName || 'Kravo User'}</h3>
+                        {isAdmin ? (
+                          <span className="text-[10px] bg-rose-500/25 text-rose-300 border border-rose-500/40 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm">
+                            <Shield className="w-3 h-3 text-rose-400" /> Master Admin
+                          </span>
+                        ) : isRevoked ? (
+                          <span className="text-[10px] bg-red-500/25 text-red-300 border border-red-500/40 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm">
+                            <ShieldAlert className="w-3 h-3 text-red-400" /> Access Revoked
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+                            Active Streamer
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">{currentUser.email}</p>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('admin')}
+                          className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/50 text-rose-200 text-xs font-bold transition active:scale-95"
+                        >
+                          <Shield className="w-3.5 h-3.5 text-rose-400" /> Open Admin Hub to Revoke / Manage Accounts
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      await signOut();
+                      showToast('Logged out');
+                    }}
+                    className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-red-950/70 hover:text-red-300 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Sign Out
+                  </button>
+                </div>
+
+                {/* Personal OBS Stream Links Card */}
+                <div className="bg-gradient-to-br from-[#0c2044] to-slate-950 border border-blue-500/40 rounded-xl p-4 sm:p-5 space-y-3 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Key className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-black uppercase text-amber-300 tracking-wider">Your Permanent Personal OBS Browser Source</span>
+                    </div>
+                    <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-400/30 px-2 py-0.5 rounded-full font-mono">
+                      Isolated Channel
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Paste this exact URL into OBS Studio as a Browser Source. Only your scoring dashboard controls this overlay, completely private from all other users:
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <div className="flex-1 bg-slate-950/90 border border-slate-700/80 rounded-xl px-3 py-2 font-mono text-xs text-amber-300 truncate select-all">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/overlay.html?room=${userProfile?.channelSlug || 'channel'}` : ''}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `${window.location.origin}/overlay.html?room=${userProfile?.channelSlug || 'channel'}`;
+                        navigator.clipboard.writeText(url);
+                        showToast('Copied Personal OBS URL!');
+                      }}
+                      className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md transition flex items-center justify-center gap-1.5 shrink-0 active:scale-95"
+                    >
+                      <Copy className="w-3.5 h-3.5" /> Copy OBS Link
+                    </button>
+                  </div>
+                </div>
+
+                {/* Personalize Branding Settings Form */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-4 h-4 text-amber-400" />
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider">Customize Your Overlay Branding</h4>
+                    </div>
+                    <span className="text-[10px] text-slate-400">Stored in your Cloud Account</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Brand Name */}
+                    <div>
+                      <label className="text-xs uppercase font-bold text-slate-300 block mb-1">
+                        Brand / League Name
+                      </label>
+                      <input
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-bold outline-none focus:border-amber-400"
+                        value={userProfile?.brandName || ''}
+                        onChange={(e) => updateProfileData({ brandName: e.target.value }, false)}
+                        onBlur={() => flushProfileSave?.()}
+                        placeholder="e.g. QUEENS POOL ACADEMY"
+                      />
+                      <span className="text-[10px] text-slate-500 mt-1 block">Displayed on the live broadcast ticker</span>
+                    </div>
+
+                    {/* Channel Slug */}
+                    <div>
+                      <label className="text-xs uppercase font-bold text-slate-300 block mb-1">
+                        Private Channel Slug
+                      </label>
+                      <input
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs font-bold outline-none focus:border-amber-400"
+                        value={userProfile?.channelSlug || ''}
+                        onChange={(e) => {
+                          const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
+                          updateProfileData({ channelSlug: clean }, false);
+                        }}
+                        onBlur={() => flushProfileSave?.()}
+                        placeholder="e.g. harare-champions"
+                      />
+                      <span className="text-[10px] text-slate-500 mt-1 block">Forms your OBS URL: /overlay.html?room={userProfile?.channelSlug}</span>
+                    </div>
+
+                    {/* Default Venue */}
+                    <div>
+                      <label className="text-xs uppercase font-bold text-slate-300 block mb-1">
+                        Home Venue / Club Location
+                      </label>
+                      <input
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-amber-400"
+                        value={userProfile?.defaultVenue || ''}
+                        onChange={(e) => updateProfileData({ defaultVenue: e.target.value }, false)}
+                        onBlur={() => flushProfileSave?.()}
+                        placeholder="e.g. BULAWAYO CUE CLUB"
+                      />
+                    </div>
+
+                    {/* Quick Broadcast Theme Preset */}
+                    <div>
+                      <label className="text-xs uppercase font-bold text-slate-300 block mb-1">
+                        Broadcast Color Accent
+                      </label>
+                      <div className="flex items-center gap-2 pt-1">
+                        {[
+                          { name: 'Royal Blue', color: '#0066f6' },
+                          { name: 'Emerald Baize', color: '#10b981' },
+                          { name: 'Gold Trophy', color: '#f59e0b' },
+                          { name: 'Crimson Clash', color: '#ef4444' }
+                        ].map((th) => (
+                          <button
+                            key={th.name}
+                            type="button"
+                            onClick={() => {
+                              updateProfileData({ themeColor: th.color }, true);
+                              showToast(`Theme set to ${th.name}`);
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition ${
+                              userProfile?.themeColor === th.color
+                                ? 'bg-slate-800 text-white border-amber-400'
+                                : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                            }`}
+                          >
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: th.color }} />
+                            <span>{th.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Apply Branding to Active Match Button */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!userProfile) return;
+                        const updated = {
+                          ...state,
+                          brand: userProfile.brandName || state.brand,
+                          venue: userProfile.defaultVenue || state.venue,
+                          room: userProfile.channelSlug || state.room,
+                          updatedAt: Date.now()
+                        };
+                        syncState(updated);
+                        showToast('Applied your branding & channel to current match!');
+                      }}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black text-xs shadow-md transition flex items-center gap-2 active:scale-95"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" /> Apply My Branding to Live Scoreboard Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Signed Out State / Value Proposition */
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 text-center space-y-6 shadow-2xl">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-3xl mx-auto shadow-xl shadow-amber-500/20">
+                  <User className="w-8 h-8 text-slate-950" />
+                </div>
+
+                <div className="max-w-md mx-auto space-y-2">
+                  <h3 className="text-xl font-black text-white">Create Your Personal Scoreboard Account</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Sign in with Google to get your own dedicated OBS overlay URL, customize your league logo & brand name, and save match history to the cloud.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-lg mx-auto">
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                    <div className="text-amber-400 font-black text-xs mb-1">🔒 Private OBS Link</div>
+                    <div className="text-[11px] text-slate-400">Never get your overlay overwritten by other streamers.</div>
+                  </div>
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                    <div className="text-amber-400 font-black text-xs mb-1">🎨 Custom Branding</div>
+                    <div className="text-[11px] text-slate-400">Display your own club logo, title, and venue in the stream ticker.</div>
+                  </div>
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                    <div className="text-amber-400 font-black text-xs mb-1">☁️ Multi-Device Sync</div>
+                    <div className="text-[11px] text-slate-400">Score from your phone at table-side while OBS runs on your PC.</div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await signInWithGoogle();
+                      showToast('Welcome! Signed in with Google');
+                    } catch (e: any) {
+                      showToast('Sign-in cancelled or failed');
+                    }
+                  }}
+                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/30 inline-flex items-center gap-2 transition active:scale-95"
+                >
+                  <LogIn className="w-4 h-4 text-slate-950" />
+                  Sign In with Google Account
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB: SUPER ADMIN ACCESS CONTROL & USER REVOCATION HUB */}
+        {activeTab === 'admin' && isAdmin && (
+          <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in">
+            {/* Super Admin Banner Card */}
+            <div className="bg-gradient-to-r from-slate-950 via-rose-950/40 to-slate-950 border border-rose-500/40 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-rose-600/30 shrink-0">
+                    <Shield className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-black text-white tracking-wide">Super Admin Command Center</h3>
+                      <span className="text-[10px] bg-rose-500/25 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full font-bold">
+                        Full Authority
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Master Administrator: <span className="font-mono text-rose-300 font-semibold">{ADMIN_EMAIL}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={loadUsersForAdmin}
+                    disabled={loadingAdminUsers}
+                    className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingAdminUsers ? 'animate-spin text-rose-400' : ''}`} />
+                    Refresh Accounts
+                  </button>
+                </div>
+              </div>
+
+              {/* Metrics row */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-5">
+                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Registered</div>
+                  <div className="text-2xl font-black text-white mt-1 font-mono">
+                    {adminUsers.length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">Accounts in Cloud Firestore</div>
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
+                  <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Active Broadcasters
+                  </div>
+                  <div className="text-2xl font-black text-emerald-400 mt-1 font-mono">
+                    {adminUsers.filter((u) => u.status !== 'revoked').length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">Can publish live scores to OBS</div>
+                </div>
+
+                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
+                  <div className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                    <ShieldAlert className="w-3.5 h-3.5" /> Revoked Accounts
+                  </div>
+                  <div className="text-2xl font-black text-rose-400 mt-1 font-mono">
+                    {adminUsers.filter((u) => u.status === 'revoked').length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">Publishing privileges suspended</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Revoke Confirmation Modal Dialog */}
+            {revokingUser && (
+              <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-slate-900 border-2 border-red-500/60 rounded-2xl p-5 sm:p-6 max-w-md w-full shadow-2xl space-y-4 animate-in zoom-in-95">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-red-600/30 border border-red-500/50 flex items-center justify-center text-red-400">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-white uppercase tracking-wider">Confirm Revoke Access</h4>
+                        <p className="text-xs text-slate-400">Target: {revokingUser.displayName || revokingUser.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRevokingUser(null);
+                        setRevocationReason('');
+                      }}
+                      className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Revoking access will immediately prevent this user from saving scores, broadcasting on their channel, or altering their settings in Firestore.
+                  </p>
+
+                  <div>
+                    <label className="text-xs uppercase font-bold text-slate-300 block mb-1">
+                      Reason for Revocation (Optional note)
+                    </label>
+                    <input
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-red-500"
+                      placeholder="e.g. Terms violation, unauthorized stream, or suspended match"
+                      value={revocationReason}
+                      onChange={(e) => setRevocationReason(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRevokingUser(null);
+                        setRevocationReason('');
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmRevoke}
+                      disabled={actionProcessingUid === revokingUser.uid}
+                      className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs shadow-lg shadow-red-600/30 transition flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {actionProcessingUid === revokingUser.uid ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <UserX className="w-3.5 h-3.5" />
+                      )}
+                      Revoke Access Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Accounts Directory */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                  <h4 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <Users className="w-4 h-4 text-rose-400" /> Registered User Accounts
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Search and manage individual account permissions across the platform
+                  </p>
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={adminSearchQuery}
+                    onChange={(e) => setAdminSearchQuery(e.target.value)}
+                    placeholder="Search name, email, slug..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-rose-500"
+                  />
+                </div>
+              </div>
+
+              {/* Users List */}
+              {loadingAdminUsers ? (
+                <div className="py-12 text-center text-slate-400 space-y-2">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto text-rose-400" />
+                  <p className="text-xs">Loading user registry from Cloud Firestore...</p>
+                </div>
+              ) : adminUsers.length === 0 ? (
+                <div className="py-10 text-center text-slate-500 text-xs">
+                  No accounts found. Click "Refresh Accounts" to sync with Firestore.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {adminUsers
+                    .filter((u) => {
+                      if (!adminSearchQuery.trim()) return true;
+                      const q = adminSearchQuery.toLowerCase();
+                      return (
+                        u.displayName?.toLowerCase().includes(q) ||
+                        u.email?.toLowerCase().includes(q) ||
+                        u.channelSlug?.toLowerCase().includes(q) ||
+                        u.brandName?.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((userItem) => {
+                      const isMasterUser = userItem.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+                      const isItemRevoked = userItem.status === 'revoked';
+
+                      return (
+                        <div
+                          key={userItem.uid}
+                          className={`border rounded-xl p-3.5 sm:p-4 transition flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                            isItemRevoked
+                              ? 'bg-red-950/20 border-red-900/60'
+                              : isMasterUser
+                              ? 'bg-rose-950/20 border-rose-900/40'
+                              : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          {/* User Identity info */}
+                          <div className="flex items-start sm:items-center gap-3">
+                            {userItem.photoURL ? (
+                              <img
+                                src={userItem.photoURL}
+                                alt={userItem.displayName}
+                                className="w-10 h-10 rounded-xl object-cover border border-slate-700 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-black text-amber-400 shrink-0">
+                                {userItem.displayName?.charAt(0) || 'U'}
+                              </div>
+                            )}
+
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-black text-white">{userItem.displayName || 'Unnamed User'}</span>
+                                {isMasterUser ? (
+                                  <span className="text-[10px] bg-rose-500/25 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full font-black">
+                                    Master Admin
+                                  </span>
+                                ) : isItemRevoked ? (
+                                  <span className="text-[10px] bg-red-500/25 text-red-300 border border-red-500/50 px-2 py-0.5 rounded-full font-black flex items-center gap-1">
+                                    <ShieldAlert className="w-3 h-3 text-red-400" /> REVOKED
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                    <Check className="w-3 h-3 text-emerald-400" /> ACTIVE
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-400 font-mono mt-0.5">{userItem.email}</p>
+
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] text-slate-500">
+                                <span>Brand: <strong className="text-slate-300">{userItem.brandName || 'Default'}</strong></span>
+                                <span>•</span>
+                                <span>Channel: <strong className="text-amber-300 font-mono">/overlay.html?room={userItem.channelSlug}</strong></span>
+                                {userItem.defaultVenue && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Venue: {userItem.defaultVenue}</span>
+                                  </>
+                                )}
+                              </div>
+
+                              {isItemRevoked && userItem.revokedReason && (
+                                <p className="text-[11px] text-red-300/90 mt-1 italic">
+                                  Revocation Note: "{userItem.revokedReason}"
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Action Controls */}
+                          <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                            {/* Preview OBS Link */}
+                            <a
+                              href={`/overlay.html?room=${userItem.channelSlug || 'channel'}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1"
+                              title="Preview user overlay in browser"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Preview</span>
+                            </a>
+
+                            {/* Revoke / Restore Action */}
+                            {isMasterUser ? (
+                              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-bold text-slate-500">
+                                Protected
+                              </span>
+                            ) : isItemRevoked ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRestoreAccess(userItem)}
+                                disabled={actionProcessingUid === userItem.uid}
+                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                              >
+                                {actionProcessingUid === userItem.uid ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                )}
+                                Restore Access
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setRevokingUser(userItem)}
+                                disabled={actionProcessingUid === userItem.uid}
+                                className="px-3.5 py-1.5 rounded-lg bg-red-950 hover:bg-red-900/80 text-red-300 border border-red-700/60 text-xs font-black shadow-md transition flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                              >
+                                {actionProcessingUid === userItem.uid ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <UserX className="w-3.5 h-3.5" />
+                                )}
+                                Revoke Access
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           </div>
         )}

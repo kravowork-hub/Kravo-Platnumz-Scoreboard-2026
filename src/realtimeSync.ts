@@ -1,5 +1,7 @@
 import Paho from 'paho-mqtt';
 import { ScoreState } from './App';
+import { db, auth } from './firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export type SyncStatus = 'connected' | 'syncing' | 'offline';
 
@@ -25,6 +27,10 @@ export class RealtimeSyncEngine {
   private pendingPublishState: ScoreState | null = null;
   private clientId: string;
   private destroyed = false;
+  private firestoreTimer: any = null;
+  private pendingFirestoreWrite: { channel: string; data: any } | null = null;
+  private httpTimer: any = null;
+  private pendingHttpState: { room: string; state: ScoreState } | null = null;
 
   constructor(options: SyncEngineOptions) {
     this.onStateReceived = options.onStateReceived;
@@ -149,7 +155,7 @@ export class RealtimeSyncEngine {
           if (this.pendingPublishState) {
             const state = this.pendingPublishState;
             this.pendingPublishState = null;
-            this.publish(state);
+            this.publish(state, true);
           }
         },
         onFailure: (err) => {
@@ -176,7 +182,38 @@ export class RealtimeSyncEngine {
     }, 3000);
   }
 
-  public publish(state: ScoreState) {
+  public flushFirestore() {
+    if (this.firestoreTimer) {
+      clearTimeout(this.firestoreTimer);
+      this.firestoreTimer = null;
+    }
+    if (!this.pendingFirestoreWrite || !db) return;
+    const { channel, data } = this.pendingFirestoreWrite;
+    this.pendingFirestoreWrite = null;
+    try {
+      const channelRef = doc(db, 'channels', channel);
+      setDoc(channelRef, data, { merge: true }).catch((err) => {
+        console.warn('[Firestore] Channel sync notice:', err.message);
+      });
+    } catch (e) {}
+  }
+
+  public flushHttp() {
+    if (this.httpTimer) {
+      clearTimeout(this.httpTimer);
+      this.httpTimer = null;
+    }
+    if (!this.pendingHttpState) return;
+    const { room, state } = this.pendingHttpState;
+    this.pendingHttpState = null;
+    fetch(`/api/sync/${encodeURIComponent(room)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    }).catch(() => {});
+  }
+
+  public publish(state: ScoreState, immediate: boolean = true) {
     if (!state) return;
     const room = state.room || this.currentRoom || 'platnumz-live-match';
 
@@ -193,7 +230,7 @@ export class RealtimeSyncEngine {
       }
     } catch (e) {}
 
-    // 2. Local BroadcastChannel
+    // 2. Local BroadcastChannel (immediate IPC to same-browser tabs / OBS overlays)
     try {
       if (this.broadcastChannel) {
         this.broadcastChannel.postMessage(state);
@@ -218,19 +255,46 @@ export class RealtimeSyncEngine {
       this.pendingPublishState = state;
     }
 
-    // 4. Fallback HTTP POST for local Node.js / Express or serverless function
-    fetch(`/api/sync/${encodeURIComponent(room)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(state)
-    }).catch(() => {
-      // Gracefully ignore network or 404 errors on static hosts
-    });
+    // 4. HTTP POST Fallback (debounced for typing, immediate for score clicks)
+    this.pendingHttpState = { room, state };
+    if (immediate) {
+      this.flushHttp();
+    } else {
+      if (this.httpTimer) clearTimeout(this.httpTimer);
+      this.httpTimer = setTimeout(() => {
+        this.flushHttp();
+      }, 350);
+    }
+
+    // 5. Cloud Firestore Persistence (debounced for typing, immediate for score clicks)
+    if (db) {
+      const cleanChannel = room.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || 'platnumz-live-match';
+      this.pendingFirestoreWrite = {
+        channel: cleanChannel,
+        data: {
+          ...state,
+          ownerUid: auth.currentUser?.uid || 'anonymous',
+          channelSlug: cleanChannel,
+          updatedAt: state.updatedAt || Date.now(),
+        }
+      };
+
+      if (immediate) {
+        this.flushFirestore();
+      } else {
+        if (this.firestoreTimer) clearTimeout(this.firestoreTimer);
+        this.firestoreTimer = setTimeout(() => {
+          this.flushFirestore();
+        }, 350);
+      }
+    }
   }
 
   public destroy() {
     this.destroyed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.firestoreTimer) clearTimeout(this.firestoreTimer);
+    if (this.httpTimer) clearTimeout(this.httpTimer);
     if (typeof window !== 'undefined') {
       window.removeEventListener('storage', this.handleStorageEvent);
     }

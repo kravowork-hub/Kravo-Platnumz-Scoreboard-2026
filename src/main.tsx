@@ -14,4 +14,10 @@ registerSW({
   },
 });
 
-createRoot(document.getElementById('root')!).render(<App />);
+import { AuthProvider } from './AuthContext';
+
+createRoot(document.getElementById('root')!).render(
+  <AuthProvider>
+    <App />
+  </AuthProvider>
+);

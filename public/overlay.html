@@ -829,7 +829,7 @@
     "use strict";
 
     const params = new URLSearchParams(window.location.search);
-    const requestedRoom = params.get("room") || "platnumz-live-match";
+    const requestedRoom = params.get("channel") || params.get("room") || "platnumz-live-match";
     const room = requestedRoom.replace(/[^a-zA-Z0-9_-]/g,"").slice(0,80) || "platnumz-live-match";
 
     const $ = id => document.getElementById(id);

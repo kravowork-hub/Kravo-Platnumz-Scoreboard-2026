@@ -1,0 +1,112 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile and customized scoreboard branding settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "photoURL": { "type": "string", "maxLength": 1000 },
+        "channelSlug": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "brandName": { "type": "string", "maxLength": 80 },
+        "defaultVenue": { "type": "string", "maxLength": 100 },
+        "themeColor": { "type": "string", "maxLength": 20 },
+        "customLogoUrl": { "type": "string", "maxLength": 1000 },
+        "role": { "type": "string", "maxLength": 20, "enum": ["admin", "user"] },
+        "status": { "type": "string", "maxLength": 20, "enum": ["active", "revoked"] },
+        "revokedAt": { "type": "string", "format": "date-time" },
+        "revokedReason": { "type": "string", "maxLength": 200 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "channelSlug", "brandName"]
+    },
+    "LiveMatchState": {
+      "title": "LiveMatchState",
+      "description": "Real-time match scoring and broadcast state for a specific channel/user",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128 },
+        "channelSlug": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "name1": { "type": "string", "maxLength": 64 },
+        "name2": { "type": "string", "maxLength": 64 },
+        "flag1": { "type": "string", "maxLength": 16 },
+        "flag2": { "type": "string", "maxLength": 16 },
+        "avatar1": { "type": "string", "maxLength": 1000 },
+        "avatar2": { "type": "string", "maxLength": 1000 },
+        "score1": { "type": "number" },
+        "score2": { "type": "number" },
+        "br1": { "type": "number" },
+        "br2": { "type": "number" },
+        "appleRed1": { "type": "number" },
+        "appleGreen1": { "type": "number" },
+        "appleRed2": { "type": "number" },
+        "appleGreen2": { "type": "number" },
+        "raceTo": { "type": "number" },
+        "matchType": { "type": "string", "maxLength": 80 },
+        "tournament": { "type": "string", "maxLength": 80 },
+        "venue": { "type": "string", "maxLength": 100 },
+        "pot": { "type": "string", "maxLength": 40 },
+        "brand": { "type": "string", "maxLength": 80 },
+        "room": { "type": "string", "maxLength": 80 },
+        "overlayPosition": { "type": "string", "maxLength": 20 },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["ownerUid", "channelSlug", "name1", "name2", "score1", "score2", "raceTo", "updatedAt"]
+    },
+    "MatchArchive": {
+      "title": "MatchArchive",
+      "description": "Historical concluded match summary and performance statistics",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "maxLength": 128 },
+        "channelSlug": { "type": "string", "maxLength": 64 },
+        "winnerName": { "type": "string", "maxLength": 64 },
+        "runnerUpName": { "type": "string", "maxLength": 64 },
+        "winnerScore": { "type": "number" },
+        "runnerUpScore": { "type": "number" },
+        "totalFrames": { "type": "number" },
+        "raceTo": { "type": "number" },
+        "venue": { "type": "string", "maxLength": 100 },
+        "tournament": { "type": "string", "maxLength": 80 },
+        "pot": { "type": "string", "maxLength": 40 },
+        "statsP1": { "type": "object" },
+        "statsP2": { "type": "object" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerUid", "winnerName", "winnerScore", "runnerUpScore", "totalFrames"]
+    },
+    "AdminProfile": {
+      "title": "AdminProfile",
+      "description": "Administrator account record and privileges",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "role": { "type": "string", "maxLength": 20 },
+        "assignedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminProfile" },
+      "description": "Registry of system administrators"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile with custom branding and channel configuration"
+    },
+    "/channels/{channelId}": {
+      "schema": { "$ref": "#/entities/LiveMatchState" },
+      "description": "Current live broadcast and scoreboard state for a specific channel"
+    },
+    "/channels/{channelId}/history/{matchId}": {
+      "schema": { "$ref": "#/entities/MatchArchive" },
+      "description": "Saved past concluded match reports for this channel"
+    }
+  }
+}
