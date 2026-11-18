@@ -52,6 +52,7 @@
         "brand": { "type": "string", "maxLength": 80 },
         "room": { "type": "string", "maxLength": 80 },
         "overlayPosition": { "type": "string", "maxLength": 20 },
+        "activeShooter": { "type": "number", "description": "Active shooter indicator (0 = off, 1 = Player 1, 2 = Player 2)" },
         "updatedAt": { "type": "number" }
       },
       "required": ["ownerUid", "channelSlug", "name1", "name2", "score1", "score2", "raceTo", "updatedAt"]

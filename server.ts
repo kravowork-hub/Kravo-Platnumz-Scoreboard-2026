@@ -137,6 +137,7 @@ async function startServer() {
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: 'platnumz-live-match',
       overlayPosition: 'bottom',
+      activeShooter: 0,
       updatedAt: 1
     });
   }

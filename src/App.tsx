@@ -46,7 +46,8 @@ import {
   ShieldCheck,
   UserX,
   UserCheck,
-  AlertTriangle
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
 import { usePWAInstall } from './usePWAInstall';
 import { WORLD_COUNTRIES, Country, getCountryCode, getFlagEmoji } from './countries';
@@ -77,6 +78,7 @@ export interface ScoreState {
   brand: string;
   room: string;
   overlayPosition?: 'bottom' | 'top';
+  activeShooter?: 0 | 1 | 2;
   updatedAt: number;
 }
 
@@ -138,6 +140,7 @@ export default function App() {
             brand: 'KRAVO PLATNUMZ OFFICIAL',
             room: 'platnumz-live-match',
             overlayPosition: 'bottom',
+            activeShooter: 0,
             ...parsed,
             updatedAt: parsedTime > 1 ? parsedTime : (parsed.name1 && parsed.name1 !== 'PLAYER 1' ? Date.now() : 1)
           };
@@ -167,6 +170,7 @@ export default function App() {
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: 'platnumz-live-match',
       overlayPosition: 'bottom',
+      activeShooter: 0,
       updatedAt: 1
     };
   });
@@ -588,6 +592,15 @@ export default function App() {
       } else if (k === 'R') {
         e.preventDefault();
         resetScores();
+      } else if (k === '1') {
+        e.preventDefault();
+        setActiveShooter(1);
+      } else if (k === '2') {
+        e.preventDefault();
+        setActiveShooter(2);
+      } else if (k === '0') {
+        e.preventDefault();
+        setActiveShooter(0);
       }
     };
 
@@ -629,13 +642,31 @@ export default function App() {
       if (delta > 0) playBreakAndRunChime();
       const updated = { ...prev, [key]: nextVal, updatedAt: Date.now() };
       syncState(updated);
-      showToast(`P${player} ${color === 'red' ? '🍎 Red Apple' : '🍏 Green Apple'}: ${nextVal}`);
+      showToast(`P${player} ${color === 'red' ? '🍎 Red Apple (One Visit Clearance)' : '🍏 Green Apple (Break & Run)'}: ${nextVal}`);
+      return updated;
+    });
+  };
+
+  const setActiveShooter = (target: 0 | 1 | 2) => {
+    setState((prev) => {
+      const current = prev.activeShooter || 0;
+      const nextShooter: 0 | 1 | 2 = target !== 0 && current === target ? 0 : target;
+      const updated = { ...prev, activeShooter: nextShooter, updatedAt: Date.now() };
+      syncState(updated, true);
+      if (nextShooter === 0) {
+        showToast('At Table indicator removed');
+      } else {
+        const playerName = nextShooter === 1 ? (prev.name1 || 'PLAYER 1') : (prev.name2 || 'PLAYER 2');
+        showToast(`${playerName} marked AT TABLE`);
+      }
       return updated;
     });
   };
 
   const swapPlayers = () => {
     setState((prev) => {
+      const nextShooter: 0 | 1 | 2 =
+        prev.activeShooter === 1 ? 2 : prev.activeShooter === 2 ? 1 : 0;
       const updated = {
         ...prev,
         name1: prev.name2,
@@ -652,6 +683,7 @@ export default function App() {
         appleRed2: prev.appleRed1 || 0,
         appleGreen1: prev.appleGreen2 || 0,
         appleGreen2: prev.appleGreen1 || 0,
+        activeShooter: nextShooter,
         updatedAt: Date.now()
       };
       syncState(updated);
@@ -672,6 +704,7 @@ export default function App() {
         appleGreen1: 0,
         appleRed2: 0,
         appleGreen2: 0,
+        activeShooter: 0 as const,
         updatedAt: Date.now()
       };
       syncState(updated);
@@ -684,7 +717,7 @@ export default function App() {
     setConfirmModal({
       isOpen: true,
       title: "Reset Scores & Apples to 0?",
-      description: "Both players' frame scores, Red Apples (🍎), Green Apples (🍏), and Break & Run counters will be reset to 0. Player names, venue, and match details will remain intact.",
+      description: "Both players' frame scores, Green Apples (🍏 Break & Run), and Red Apples (🍎 One Visit Clearance) will be reset to 0. Player names, venue, and match details will remain intact.",
       confirmText: "Reset to 0",
       cancelText: "Cancel",
       isDestructive: true,
@@ -714,6 +747,7 @@ export default function App() {
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: state.room || 'platnumz-live-match',
       overlayPosition: 'bottom',
+      activeShooter: 0,
       updatedAt: Date.now()
     };
     setState(defaults);
@@ -830,8 +864,10 @@ export default function App() {
   const winRate2 = totalFrames > 0 ? ((state.score2 / totalFrames) * 100).toFixed(1) : '0.0';
   const totalApples1 = (state.appleRed1 || 0) + (state.appleGreen1 || 0);
   const totalApples2 = (state.appleRed2 || 0) + (state.appleGreen2 || 0);
-  const brRate1 = state.score1 > 0 ? (((state.br1 || 0) / state.score1) * 100).toFixed(0) : '0';
-  const brRate2 = state.score2 > 0 ? (((state.br2 || 0) / state.score2) * 100).toFixed(0) : '0';
+  const effectiveBR1 = (state.appleGreen1 || 0) + (state.br1 || 0);
+  const effectiveBR2 = (state.appleGreen2 || 0) + (state.br2 || 0);
+  const brRate1 = state.score1 > 0 ? ((effectiveBR1 / state.score1) * 100).toFixed(0) : '0';
+  const brRate2 = state.score2 > 0 ? ((effectiveBR2 / state.score2) * 100).toFixed(0) : '0';
 
   // Automatically trigger post-match report when match concludes
   useEffect(() => {
@@ -865,17 +901,15 @@ ${divider}
 📊 PLAYER PERFORMANCE STATS:
 • ${state.name1} ${state.flag1}:
   - Frame Win Rate: ${winRate1}% (${state.score1}/${totalFrames} frames won)
-  - Break & Runs (B&R): ${state.br1 || 0} 🔥 (${brRate1}% of won frames)
-  - Red Apples (🍎): ${state.appleRed1 || 0}
-  - Green Apples (🍏): ${state.appleGreen1 || 0}
-  - Total Apple Honors: ${totalApples1}
+  - Break & Runs (🍏 Green Apples): ${effectiveBR1} (${brRate1}% of won frames)
+  - One Visit Clearances (🍎 Red Apples): ${state.appleRed1 || 0}
+  - Total Clearance Honors: ${totalApples1}
 
 • ${state.name2} ${state.flag2}:
   - Frame Win Rate: ${winRate2}% (${state.score2}/${totalFrames} frames won)
-  - Break & Runs (B&R): ${state.br2 || 0} 🔥 (${brRate2}% of won frames)
-  - Red Apples (🍎): ${state.appleRed2 || 0}
-  - Green Apples (🍏): ${state.appleGreen2 || 0}
-  - Total Apple Honors: ${totalApples2}
+  - Break & Runs (🍏 Green Apples): ${effectiveBR2} (${brRate2}% of won frames)
+  - One Visit Clearances (🍎 Red Apples): ${state.appleRed2 || 0}
+  - Total Clearance Honors: ${totalApples2}
 ${divider}
 🎱 Kravo Platnumz Official Cuesport Scoreboard
 Generated on: ${new Date().toLocaleString()}`;
@@ -1208,35 +1242,28 @@ Generated on: ${new Date().toLocaleString()}`;
                 </div>
               </div>
 
-              {/* Stat Row 3: Break & Run */}
+              {/* Stat Row 3: Break & Runs (Green Apples 🍏) */}
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
-                <div className="text-center font-black text-sm text-white">
-                  🔥 {state.br1 || 0} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate1}% of wins)</span>
+                <div className="text-center font-black text-sm text-emerald-400">
+                  🍏 {effectiveBR1} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate1}% of wins)</span>
                 </div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Break & Runs</div>
-                <div className="text-center font-black text-sm text-white">
-                  🔥 {state.br2 || 0} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate2}% of wins)</span>
+                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[130px]">Break & Runs (🍏)</div>
+                <div className="text-center font-black text-sm text-emerald-400">
+                  🍏 {effectiveBR2} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate2}% of wins)</span>
                 </div>
               </div>
 
-              {/* Stat Row 4: Red Apples */}
+              {/* Stat Row 4: One Visit Clearances (Red Apples 🍎) */}
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
                 <div className="text-center font-black text-sm text-red-400">🍎 {state.appleRed1 || 0}</div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Red Apples</div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[130px]">One Visit Clearances (🍎)</div>
                 <div className="text-center font-black text-sm text-red-400">🍎 {state.appleRed2 || 0}</div>
               </div>
 
-              {/* Stat Row 5: Green Apples */}
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
-                <div className="text-center font-black text-sm text-emerald-400">🍏 {state.appleGreen1 || 0}</div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Green Apples</div>
-                <div className="text-center font-black text-sm text-emerald-400">🍏 {state.appleGreen2 || 0}</div>
-              </div>
-
-              {/* Stat Row 6: Total Apple Honors */}
+              {/* Stat Row 5: Total Apple Honors */}
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-gradient-to-r from-amber-950/30 via-slate-950 to-amber-950/30 rounded-xl p-2.5 border border-amber-500/30">
                 <div className="text-center font-black text-sm text-amber-300 font-mono">{totalApples1}</div>
-                <div className="text-[11px] font-black text-amber-400 uppercase text-center min-w-[120px]">Total Apple Honors</div>
+                <div className="text-[11px] font-black text-amber-400 uppercase text-center min-w-[130px]">Total Apple Honors</div>
                 <div className="text-center font-black text-sm text-amber-300 font-mono">{totalApples2}</div>
               </div>
             </div>
@@ -1251,16 +1278,16 @@ Generated on: ${new Date().toLocaleString()}`;
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
-                <div className="text-[10px] uppercase font-bold text-slate-400">Apple Leader</div>
-                <div className="text-xs font-black text-emerald-300 truncate mt-0.5">
-                  🍏 {totalApples1 > totalApples2 ? state.name1 : totalApples2 > totalApples1 ? state.name2 : totalApples1 > 0 ? 'Tied Honors' : 'None Awarded'}
+                <div className="text-[10px] uppercase font-bold text-slate-400">One Visit Leader</div>
+                <div className="text-xs font-black text-red-300 truncate mt-0.5">
+                  🍎 {(state.appleRed1 || 0) > (state.appleRed2 || 0) ? state.name1 : (state.appleRed2 || 0) > (state.appleRed1 || 0) ? state.name2 : (state.appleRed1 || 0) > 0 ? 'Tied Honors' : 'None Awarded'}
                 </div>
               </div>
 
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
                 <div className="text-[10px] uppercase font-bold text-slate-400">Break & Run Ace</div>
-                <div className="text-xs font-black text-red-300 truncate mt-0.5">
-                  🔥 {(state.br1 || 0) > (state.br2 || 0) ? state.name1 : (state.br2 || 0) > (state.br1 || 0) ? state.name2 : (state.br1 || 0) > 0 ? 'Tied' : 'None'}
+                <div className="text-xs font-black text-emerald-300 truncate mt-0.5">
+                  🍏 {effectiveBR1 > effectiveBR2 ? state.name1 : effectiveBR2 > effectiveBR1 ? state.name2 : effectiveBR1 > 0 ? 'Tied' : 'None'}
                 </div>
               </div>
             </div>
@@ -1566,18 +1593,56 @@ Generated on: ${new Date().toLocaleString()}`;
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
 
               {/* PLAYER 1 CARD */}
-              <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border border-blue-500/40 rounded-2xl p-3.5 sm:p-4 shadow-xl relative">
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-400" />
-                    <span className="text-[10px] uppercase font-black tracking-wider text-blue-400">PLAYER 1</span>
+              <div
+                className={`rounded-2xl p-3.5 sm:p-4 shadow-xl relative transition-all duration-200 border ${
+                  state.activeShooter === 1
+                    ? 'bg-gradient-to-b from-[#1a3363] via-[#0e2042] to-[#071328] border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_28px_rgba(251,191,36,0.24)]'
+                    : state.activeShooter === 2
+                    ? 'bg-gradient-to-b from-[#0b1b36] to-[#071328] border-blue-500/25 opacity-90'
+                    : 'bg-gradient-to-b from-[#0b1b36] to-[#071328] border-blue-500/40'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${state.activeShooter === 1 ? 'bg-amber-400 animate-ping' : 'bg-blue-400'}`} />
+                    <span className={`text-[10px] uppercase font-black tracking-wider ${state.activeShooter === 1 ? 'text-amber-300' : 'text-blue-400'}`}>
+                      PLAYER 1
+                    </span>
+                    {state.activeShooter === 1 && (
+                      <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                        AT TABLE
+                      </span>
+                    )}
                   </div>
-                  <button
-                    onClick={() => setTargetPlayerForFlag(1)}
-                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
-                  >
-                    Change Flag <Globe className="w-2.5 h-2.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setActiveShooter(1)}
+                      className={`text-[10px] px-2.5 py-0.5 rounded-md font-black transition flex items-center gap-1 active:scale-95 border ${
+                        state.activeShooter === 1
+                          ? 'bg-amber-400/20 hover:bg-red-500/25 text-amber-200 hover:text-red-200 border-amber-400/60 hover:border-red-400/60'
+                          : 'bg-slate-900/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border-slate-700 hover:border-amber-400/50'
+                      }`}
+                      title={state.activeShooter === 1 ? 'Click to remove AT TABLE indicator (Hotkey 1 or 0)' : 'Mark Player 1 as active shooter AT TABLE (Hotkey 1)'}
+                    >
+                      {state.activeShooter === 1 ? (
+                        <>
+                          <X className="w-2.5 h-2.5" /> Clear At Table
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set At Table
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setTargetPlayerForFlag(1)}
+                      className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
+                    >
+                      Change Flag <Globe className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 mb-3">
@@ -1638,63 +1703,31 @@ Generated on: ${new Date().toLocaleString()}`;
                   </div>
                 </div>
 
-                {/* Break & Run (Red Apple & Green Apple) Options */}
+                {/* Clearance Honors: Green Apple (Break & Run) & Red Apple (One Visit Clearance) */}
                 <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 sm:p-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs sm:text-sm">
-                      <span className="text-base">🍏</span> Break & Run Options (Apples)
+                      <span className="text-base">🍏</span> Clearance Honors (Apples)
                     </span>
-                    <span className="text-[10px] text-slate-400">Clearances off the break</span>
+                    <span className="text-[10px] text-slate-400">🍏 Break & Run · 🍎 One Visit</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
-                    {/* RED APPLE */}
-                    <div className="flex items-center justify-between bg-red-950/50 border border-red-500/40 rounded-xl px-2.5 py-2 shadow-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl select-none leading-none filter drop-shadow">🍎</span>
-                        <div>
-                          <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
-                          <span className="text-[9px] text-red-400/80 font-semibold hidden sm:block">Break & Run</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => updateApple(1, 'red', -1)}
-                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
-                          title="Decrease Red Apple"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
-                          {state.appleRed1 || 0}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => updateApple(1, 'red', 1)}
-                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
-                          title="Increase Red Apple"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* GREEN APPLE */}
+                    {/* GREEN APPLE — BREAK & RUN */}
                     <div className="flex items-center justify-between bg-emerald-950/50 border border-emerald-500/40 rounded-xl px-2.5 py-2 shadow-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl select-none leading-none filter drop-shadow">🍏</span>
-                        <div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍏</span>
+                        <div className="min-w-0">
                           <span className="text-xs font-black text-emerald-200 block leading-tight">Green Apple</span>
-                          <span className="text-[9px] text-emerald-400/80 font-semibold hidden sm:block">Break & Run</span>
+                          <span className="text-[9px] text-emerald-400/90 font-semibold block leading-tight">Break & Run</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'green', -1)}
                           className="w-8 h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
-                          title="Decrease Green Apple"
+                          title="Decrease Break & Run (Green Apple)"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
@@ -1705,7 +1738,42 @@ Generated on: ${new Date().toLocaleString()}`;
                           type="button"
                           onClick={() => updateApple(1, 'green', 1)}
                           className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
-                          title="Increase Green Apple"
+                          title="Increase Break & Run (Green Apple)"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* RED APPLE — ONE VISIT CLEARANCE */}
+                    <div className="flex items-center justify-between bg-red-950/50 border border-red-500/40 rounded-xl px-2.5 py-2 shadow-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍎</span>
+                        <div className="min-w-0">
+                          <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
+                          <span className="text-[9px] text-red-400/90 font-semibold block leading-tight">
+                            <span className="sm:hidden">One Visit</span>
+                            <span className="hidden sm:inline">One Visit Clearance</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateApple(1, 'red', -1)}
+                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
+                          title="Decrease One Visit Clearance (Red Apple)"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
+                          {state.appleRed1 || 0}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateApple(1, 'red', 1)}
+                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          title="Increase One Visit Clearance (Red Apple)"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -1717,18 +1785,56 @@ Generated on: ${new Date().toLocaleString()}`;
               </div>
 
               {/* PLAYER 2 CARD */}
-              <div className="bg-gradient-to-b from-[#0b1b36] to-[#071328] border border-blue-500/40 rounded-2xl p-3.5 sm:p-4 shadow-xl relative">
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-400" />
-                    <span className="text-[10px] uppercase font-black tracking-wider text-blue-400">PLAYER 2</span>
+              <div
+                className={`rounded-2xl p-3.5 sm:p-4 shadow-xl relative transition-all duration-200 border ${
+                  state.activeShooter === 2
+                    ? 'bg-gradient-to-b from-[#1a3363] via-[#0e2042] to-[#071328] border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_28px_rgba(251,191,36,0.24)]'
+                    : state.activeShooter === 1
+                    ? 'bg-gradient-to-b from-[#0b1b36] to-[#071328] border-blue-500/25 opacity-90'
+                    : 'bg-gradient-to-b from-[#0b1b36] to-[#071328] border-blue-500/40'
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${state.activeShooter === 2 ? 'bg-amber-400 animate-ping' : 'bg-blue-400'}`} />
+                    <span className={`text-[10px] uppercase font-black tracking-wider ${state.activeShooter === 2 ? 'text-amber-300' : 'text-blue-400'}`}>
+                      PLAYER 2
+                    </span>
+                    {state.activeShooter === 2 && (
+                      <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                        AT TABLE
+                      </span>
+                    )}
                   </div>
-                  <button
-                    onClick={() => setTargetPlayerForFlag(2)}
-                    className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
-                  >
-                    Change Flag <Globe className="w-2.5 h-2.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setActiveShooter(2)}
+                      className={`text-[10px] px-2.5 py-0.5 rounded-md font-black transition flex items-center gap-1 active:scale-95 border ${
+                        state.activeShooter === 2
+                          ? 'bg-amber-400/20 hover:bg-red-500/25 text-amber-200 hover:text-red-200 border-amber-400/60 hover:border-red-400/60'
+                          : 'bg-slate-900/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border-slate-700 hover:border-amber-400/50'
+                      }`}
+                      title={state.activeShooter === 2 ? 'Click to remove AT TABLE indicator (Hotkey 2 or 0)' : 'Mark Player 2 as active shooter AT TABLE (Hotkey 2)'}
+                    >
+                      {state.activeShooter === 2 ? (
+                        <>
+                          <X className="w-2.5 h-2.5" /> Clear At Table
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set At Table
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setTargetPlayerForFlag(2)}
+                      className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
+                    >
+                      Change Flag <Globe className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 mb-3">
@@ -1789,63 +1895,31 @@ Generated on: ${new Date().toLocaleString()}`;
                   </div>
                 </div>
 
-                {/* Break & Run (Red Apple & Green Apple) Options */}
+                {/* Clearance Honors: Green Apple (Break & Run) & Red Apple (One Visit Clearance) */}
                 <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 sm:p-3 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs sm:text-sm">
-                      <span className="text-base">🍏</span> Break & Run Options (Apples)
+                      <span className="text-base">🍏</span> Clearance Honors (Apples)
                     </span>
-                    <span className="text-[10px] text-slate-400">Clearances off the break</span>
+                    <span className="text-[10px] text-slate-400">🍏 Break & Run · 🍎 One Visit</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
-                    {/* RED APPLE */}
-                    <div className="flex items-center justify-between bg-red-950/50 border border-red-500/40 rounded-xl px-2.5 py-2 shadow-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl select-none leading-none filter drop-shadow">🍎</span>
-                        <div>
-                          <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
-                          <span className="text-[9px] text-red-400/80 font-semibold hidden sm:block">Break & Run</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => updateApple(2, 'red', -1)}
-                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
-                          title="Decrease Red Apple"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
-                          {state.appleRed2 || 0}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => updateApple(2, 'red', 1)}
-                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
-                          title="Increase Red Apple"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* GREEN APPLE */}
+                    {/* GREEN APPLE — BREAK & RUN */}
                     <div className="flex items-center justify-between bg-emerald-950/50 border border-emerald-500/40 rounded-xl px-2.5 py-2 shadow-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl select-none leading-none filter drop-shadow">🍏</span>
-                        <div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍏</span>
+                        <div className="min-w-0">
                           <span className="text-xs font-black text-emerald-200 block leading-tight">Green Apple</span>
-                          <span className="text-[9px] text-emerald-400/80 font-semibold hidden sm:block">Break & Run</span>
+                          <span className="text-[9px] text-emerald-400/90 font-semibold block leading-tight">Break & Run</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'green', -1)}
                           className="w-8 h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
-                          title="Decrease Green Apple"
+                          title="Decrease Break & Run (Green Apple)"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
@@ -1856,7 +1930,42 @@ Generated on: ${new Date().toLocaleString()}`;
                           type="button"
                           onClick={() => updateApple(2, 'green', 1)}
                           className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
-                          title="Increase Green Apple"
+                          title="Increase Break & Run (Green Apple)"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* RED APPLE — ONE VISIT CLEARANCE */}
+                    <div className="flex items-center justify-between bg-red-950/50 border border-red-500/40 rounded-xl px-2.5 py-2 shadow-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍎</span>
+                        <div className="min-w-0">
+                          <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
+                          <span className="text-[9px] text-red-400/90 font-semibold block leading-tight">
+                            <span className="sm:hidden">One Visit</span>
+                            <span className="hidden sm:inline">One Visit Clearance</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateApple(2, 'red', -1)}
+                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
+                          title="Decrease One Visit Clearance (Red Apple)"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
+                          {state.appleRed2 || 0}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateApple(2, 'red', 1)}
+                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          title="Increase One Visit Clearance (Red Apple)"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -1870,6 +1979,49 @@ Generated on: ${new Date().toLocaleString()}`;
 
             {/* Quick Actions Row */}
             <div className="flex flex-wrap items-center justify-center gap-2 py-0.5">
+              {/* Active Shooter (At Table) Segmented Control with instant Off/Remove option */}
+              <div className="inline-flex items-center bg-slate-900 border border-slate-700/80 rounded-lg p-0.5 gap-0.5 shadow-sm">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-amber-400" /> At Table:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveShooter(1)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-black transition flex items-center gap-1 ${
+                    state.activeShooter === 1
+                      ? 'bg-amber-400 text-slate-950 shadow'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                  title="Mark Player 1 At Table (Hotkey 1)"
+                >
+                  P1 <kbd className="text-[9px] opacity-70 font-mono">1</kbd>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveShooter(0)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1 ${
+                    (state.activeShooter || 0) === 0
+                      ? 'bg-slate-700 text-white shadow'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-red-300'
+                  }`}
+                  title="Remove At Table indicator when not tracking turns (Hotkey 0)"
+                >
+                  Off <kbd className="text-[9px] opacity-70 font-mono">0</kbd>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveShooter(2)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-black transition flex items-center gap-1 ${
+                    state.activeShooter === 2
+                      ? 'bg-amber-400 text-slate-950 shadow'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                  title="Mark Player 2 At Table (Hotkey 2)"
+                >
+                  P2 <kbd className="text-[9px] opacity-70 font-mono">2</kbd>
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setShowMatchReportModal(true)}
