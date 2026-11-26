@@ -1308,7 +1308,7 @@ Generated on: ${new Date().toLocaleString()}`;
                 </div>
                 <div className="text-center px-1">
                   <span className="text-xs font-black text-amber-400 block tracking-widest uppercase">VS</span>
-                  <span className="text-[10px] text-slate-400 font-bold">Race to {raceTarget}</span>
+                  <span className="text-[11px] text-slate-200 font-black uppercase tracking-wider">Race to {raceTarget}</span>
                 </div>
                 <div className="text-center">
                   <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[100px]">{stripNameBoldMarkers(state.name2)}</span>
