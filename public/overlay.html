@@ -705,6 +705,10 @@
       margin: 0 2px;
     }
 
+    .is-hidden {
+      display: none !important;
+    }
+
     .brand-group {
       display: inline-flex;
       align-items: center;
@@ -1158,9 +1162,17 @@
       if ($("tournament")) $("tournament").textContent = matchTypeVal;
       const rawPot = state.pot;
       const hasPotValue = (rawPot === undefined || rawPot === null) ? true : String(rawPot).trim() !== "";
-      const showPot = state.showPot !== false && hasPotValue;
-      if ($("potGroup")) $("potGroup").style.display = showPot ? "inline-flex" : "none";
-      if ($("potDivider")) $("potDivider").style.display = showPot ? "inline" : "none";
+      const showPot = state.showPot !== false && state.showPot !== "false" && hasPotValue;
+      const potGroupEl = $("potGroup");
+      const potDividerEl = $("potDivider");
+      if (potGroupEl) {
+        potGroupEl.style.display = showPot ? "inline-flex" : "none";
+        potGroupEl.classList.toggle("is-hidden", !showPot);
+      }
+      if (potDividerEl) {
+        potDividerEl.style.display = showPot ? "inline" : "none";
+        potDividerEl.classList.toggle("is-hidden", !showPot);
+      }
       if (showPot) {
         setText("pot", rawPot, "$500");
       }

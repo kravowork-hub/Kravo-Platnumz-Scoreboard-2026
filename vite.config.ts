@@ -100,12 +100,21 @@ export default defineConfig(() => {
         workbox: {
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+          globIgnores: ['**/overlay.html', '**/controller.html'],
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [/^\/api\/.*/, /^\/overlay\.html/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
           runtimeCaching: [
+            {
+              urlPattern: /\/overlay\.html/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'overlay-html-cache',
+                networkTimeoutSeconds: 3
+              }
+            },
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: 'CacheFirst',

@@ -451,6 +451,8 @@ export default function App() {
 
   const syncDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pendingSyncStateRef = useRef<ScoreState | null>(null);
+  const latestStateRef = useRef<ScoreState>(state);
+  latestStateRef.current = state;
 
   // REAL-TIME MULTI-CHANNEL SYNC (Immediate for score buttons, debounced for text typing)
   const syncState = useCallback((newState: ScoreState, immediate: boolean = true) => {
@@ -2383,8 +2385,9 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => {
-                        const nextShowPot = state.showPot === false;
-                        const updated = { ...state, showPot: nextShowPot, updatedAt: Date.now() };
+                        const latest = latestStateRef.current;
+                        const nextShowPot = latest.showPot === false;
+                        const updated: ScoreState = { ...latest, showPot: nextShowPot, updatedAt: Date.now() };
                         syncState(updated, true);
                         showToast(nextShowPot ? 'Prize Pot shown on overlay' : 'Prize Pot removed for tournament');
                       }}

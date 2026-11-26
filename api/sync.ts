@@ -37,9 +37,11 @@ export default async function handler(req: IncomingMessage & { query?: any; body
     tournament: 'CHALLENGE MATCH',
     venue: 'HARARE, ZIMBABWE',
     pot: '$500',
+    showPot: true,
     brand: 'KRAVO PLATNUMZ OFFICIAL',
     room: room,
     overlayPosition: 'bottom',
+    activeShooter: 0,
     updatedAt: 1
   };
 

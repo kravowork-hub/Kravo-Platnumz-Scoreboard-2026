@@ -23,6 +23,14 @@ async function startServer() {
     next();
   });
 
+  // Ensure OBS overlay HTML is never stale-cached by browsers or service workers
+  app.get('/overlay.html', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
+
   // Serve static files from public
   app.use(express.static(path.join(__dirname, 'public')));
 
@@ -45,21 +53,21 @@ async function startServer() {
     }
   });
 
-  // Explicit PWA Service Worker Endpoint
+  // Explicit PWA Service Worker Endpoint (use live dev-dist SW in dev so stale precaches are purged)
   app.get('/sw.js', async (_req, res, next) => {
     try {
       const fs = await import('fs/promises');
-      let swPath = path.join(__dirname, 'dist', 'sw.js');
+      const devSwPath = path.join(__dirname, 'dev-dist', 'sw.js');
       try {
-        await fs.access(swPath);
+        await fs.access(devSwPath);
+        const content = await fs.readFile(devSwPath, 'utf-8');
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Service-Worker-Allowed', '/');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.send(content);
       } catch {
-        swPath = path.join(__dirname, 'public', 'sw.js');
+        next();
       }
-      const content = await fs.readFile(swPath, 'utf-8');
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      res.setHeader('Service-Worker-Allowed', '/');
-      res.setHeader('Cache-Control', 'no-cache');
-      return res.send(content);
     } catch {
       next();
     }
@@ -70,7 +78,12 @@ async function startServer() {
     try {
       const fs = await import('fs/promises');
       const file = req.path.replace(/^\//, '');
-      const filePath = path.join(__dirname, 'dist', file);
+      let filePath = path.join(__dirname, 'dev-dist', file);
+      try {
+        await fs.access(filePath);
+      } catch {
+        filePath = path.join(__dirname, 'dist', file);
+      }
       const content = await fs.readFile(filePath, 'utf-8');
       res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
@@ -84,11 +97,11 @@ async function startServer() {
   app.get('/registerSW.js', async (_req, res, next) => {
     try {
       const fs = await import('fs/promises');
-      let filePath = path.join(__dirname, 'dist', 'registerSW.js');
+      let filePath = path.join(__dirname, 'dev-dist', 'registerSW.js');
       try {
         await fs.access(filePath);
       } catch {
-        filePath = path.join(__dirname, 'public', 'registerSW.js');
+        filePath = path.join(__dirname, 'dist', 'registerSW.js');
       }
       const content = await fs.readFile(filePath, 'utf-8');
       res.setHeader('Content-Type', 'application/javascript; charset=utf-8');

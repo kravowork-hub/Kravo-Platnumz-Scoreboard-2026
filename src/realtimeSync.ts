@@ -269,14 +269,17 @@ export class RealtimeSyncEngine {
     // 5. Cloud Firestore Persistence (debounced for typing, immediate for score clicks)
     if (db) {
       const cleanChannel = room.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || 'platnumz-live-match';
-      this.pendingFirestoreWrite = {
-        channel: cleanChannel,
-        data: {
+      const cleanPayload = Object.fromEntries(
+        Object.entries({
           ...state,
           ownerUid: auth.currentUser?.uid || 'anonymous',
           channelSlug: cleanChannel,
           updatedAt: state.updatedAt || Date.now(),
-        }
+        }).filter(([, v]) => v !== undefined)
+      );
+      this.pendingFirestoreWrite = {
+        channel: cleanChannel,
+        data: cleanPayload
       };
 
       if (immediate) {
