@@ -124,6 +124,8 @@ async function startServer() {
     roomStates.set('platnumz-live-match', {
       name1: 'PLAYER 1',
       name2: 'PLAYER 2',
+      nameBold1: true,
+      nameBold2: true,
       score1: 0,
       score2: 0,
       br1: 0,
@@ -134,6 +136,7 @@ async function startServer() {
       tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
       pot: '$500',
+      showPot: true,
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: 'platnumz-live-match',
       overlayPosition: 'bottom',

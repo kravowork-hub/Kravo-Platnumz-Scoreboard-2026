@@ -81,7 +81,7 @@
       gap: 16px;
     }
 
-    /* PLAYER 1 SECTION (Left: Flag -> Full Name -> Apples -> Score Box, AT TABLE marker on top) */
+    /* PLAYER 1 SECTION (Left: Flag -> Full Name -> Apples -> Score Box, ON TABLE marker on top) */
     .player-zone-1 {
       position: relative;
       flex: 1;
@@ -114,7 +114,7 @@
       flex: 1;
     }
 
-    /* PLAYER 2 SECTION (Right: Score Box -> Apples -> Full Name -> Flag, AT TABLE marker on top) */
+    /* PLAYER 2 SECTION (Right: Score Box -> Apples -> Full Name -> Flag, ON TABLE marker on top) */
     .player-zone-2 {
       position: relative;
       flex: 1;
@@ -319,6 +319,7 @@
       .player-zone-1 .flag-box,
       .player-zone-2 .flag-box,
       .flag-box::after,
+      .at-table-badge,
       .at-table-dot {
         animation: none !important;
         transform: none !important;
@@ -342,10 +343,10 @@
       z-index: 1;
     }
 
-    /* COMPLETE PLAYER NAMES: Full First Name & Surname with No Ellipses */
+    /* COMPLETE PLAYER NAMES: Full First Name & Surname with Whole/Partial Bold Options */
     .player-name {
       font-size: clamp(17px, 1.45vw, 22px);
-      font-weight: 800;
+      font-weight: 900;
       color: #ffffff;
       text-transform: uppercase;
       letter-spacing: 0.6px;
@@ -353,6 +354,22 @@
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
       flex: 1;
       min-width: 0;
+    }
+
+    .player-name.is-normal {
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .player-name.is-partial {
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    .player-name .name-bold-part {
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.88);
     }
 
     .player-2-info .player-name {
@@ -365,12 +382,17 @@
       text-shadow: 0 0 12px rgba(255, 200, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.85);
     }
 
+    .player-zone-1.is-shooting .player-name .name-bold-part,
+    .player-zone-2.is-shooting .player-name .name-bold-part {
+      color: #fff2a6;
+    }
+
     .player-zone-1.is-shooting .score-box,
     .player-zone-2.is-shooting .score-box {
       box-shadow: 0 0 0 2px #ffc800, 0 3px 12px rgba(255, 200, 0, 0.5);
     }
 
-    /* ACTIVE SHOOTER ("AT TABLE") BROADCAST MARKER ON TOP OF SCOREBOARD */
+    /* ACTIVE SHOOTER ("ON TABLE") BROADCAST MARKER ON TOP OF SCOREBOARD */
     .at-table-badge {
       display: none;
       position: absolute;
@@ -390,7 +412,14 @@
       z-index: 25;
       border: 1.5px solid rgba(255, 240, 170, 0.9);
       border-bottom: none;
+      transform-origin: bottom center;
+      will-change: transform, box-shadow;
       box-shadow: 0 -4px 16px rgba(255, 200, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      animation: atTableBadgeBreathe 2.1s ease-in-out infinite;
+    }
+
+    .at-table-badge.is-activating {
+      animation: atTableBadgeActivate 0.48s cubic-bezier(0.22, 1, 0.36, 1), atTableBadgeBreathe 2.1s ease-in-out 0.48s infinite;
     }
 
     .player-zone-1 .at-table-badge {
@@ -414,6 +443,32 @@
     @keyframes atTablePulse {
       0%, 100% { transform: scale(0.85); opacity: 0.75; }
       50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    @keyframes atTableBadgeActivate {
+      0% {
+        transform: scale(0.85);
+        box-shadow: 0 -2px 6px rgba(255, 200, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      }
+      55% {
+        transform: scale(1.09);
+        box-shadow: 0 -8px 28px rgba(255, 224, 102, 0.95), 0 -3px 38px rgba(255, 200, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 -4px 16px rgba(255, 200, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    @keyframes atTableBadgeBreathe {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 -4px 14px rgba(255, 200, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      }
+      50% {
+        transform: scale(1.055);
+        box-shadow: 0 -6px 24px rgba(255, 215, 64, 0.85), 0 -2px 34px rgba(255, 200, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      }
     }
 
     /* APPLE BREAK & RUN BADGES (Red Apple 🍎 & Green Apple 🍏) — Prominent Broadcast Scale */
@@ -573,19 +628,20 @@
     }
 
     /* ==========================================================
-       3. NEW DEDICATED BOTTOM INFORMATION BAR (BLUE THEMED)
-       Single horizontal row: VENUE | MATCH TYPE | POT | BRAND
+       3. TWO-LINE DEDICATED BOTTOM INFORMATION BAR (BLUE THEMED)
+       Line 1: VENUE | MATCH TYPE
+       Line 2: POT | BRAND
        ========================================================== */
     .bottom-ticker-bar {
       position: relative;
       width: 100%;
-      min-height: 36px;
-      height: 38px;
+      min-height: 54px;
+      height: auto;
       background: linear-gradient(180deg, #07204e 0%, #03112c 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 24px;
+      padding: 6px 24px 7px 24px;
       border-top: 1px solid rgba(56, 189, 248, 0.28);
       border-radius: 0 0 8px 8px;
       overflow: hidden;
@@ -593,20 +649,28 @@
 
     .ticker-content {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       width: 100%;
-      font-size: clamp(12.5px, 1.1vw, 14.5px);
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      gap: 3px;
+    }
+
+    .ticker-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
       white-space: nowrap;
-      gap: 16px;
+      gap: 18px;
+      line-height: 1.25;
+      min-width: 0;
     }
 
     .ticker-group {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       min-width: 0;
       overflow: hidden;
       flex-shrink: 1;
@@ -615,8 +679,8 @@
     .ticker-label {
       color: var(--gold);
       font-weight: 900;
-      letter-spacing: 0.8px;
-      font-size: 13px;
+      letter-spacing: 0.9px;
+      font-size: clamp(14px, 1.22vw, 16px);
       text-transform: uppercase;
       flex-shrink: 0;
     }
@@ -624,8 +688,9 @@
     .ticker-val {
       color: #ffffff;
       font-weight: 700;
-      font-size: 13.5px;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      font-size: clamp(14.5px, 1.28vw, 17px);
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -634,7 +699,7 @@
     .ticker-divider {
       color: rgba(255, 255, 255, 0.35);
       font-weight: 400;
-      font-size: 13.5px;
+      font-size: clamp(14px, 1.22vw, 16px);
       flex-shrink: 0;
       user-select: none;
       margin: 0 2px;
@@ -643,18 +708,18 @@
     .brand-group {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       color: var(--gold);
       font-weight: 900;
-      letter-spacing: 0.8px;
-      font-size: 13px;
+      letter-spacing: 0.9px;
+      font-size: clamp(14px, 1.22vw, 16px);
       text-transform: uppercase;
       flex-shrink: 0;
     }
 
     .kp-logo-icon {
-      width: 21px;
-      height: 17px;
+      width: 23px;
+      height: 19px;
       display: inline-block;
       vertical-align: middle;
       filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
@@ -770,10 +835,10 @@
       <!-- 1. MAIN TOP SCOREBOARD -->
       <section class="score-bar" aria-label="Platnumz Pool match scoreboard">
 
-        <!-- PLAYER 1 ZONE (Left: Flag -> Name & B&R -> Score, AT TABLE tab on top) -->
+        <!-- PLAYER 1 ZONE (Left: Flag -> Name & B&R -> Score, ON TABLE tab on top) -->
         <div id="playerZone1" class="player-zone-1">
           <span id="atTableBadge1" class="at-table-badge" style="display:none">
-            <span class="at-table-dot" aria-hidden="true"></span>AT TABLE
+            <span class="at-table-dot" aria-hidden="true"></span>ON TABLE
           </span>
 
           <div class="flag-box">
@@ -811,10 +876,10 @@
           </div>
         </div>
 
-        <!-- PLAYER 2 ZONE (Right: Score -> Apple Badges & Name -> Flag, AT TABLE tab on top) -->
+        <!-- PLAYER 2 ZONE (Right: Score -> Apple Badges & Name -> Flag, ON TABLE tab on top) -->
         <div id="playerZone2" class="player-zone-2">
           <span id="atTableBadge2" class="at-table-badge" style="display:none">
-            <span class="at-table-dot" aria-hidden="true"></span>AT TABLE
+            <span class="at-table-dot" aria-hidden="true"></span>ON TABLE
           </span>
 
           <div id="score2" class="score-box">0</div>
@@ -846,44 +911,48 @@
 
       </section>
 
-      <!-- 2. DEDICATED BOTTOM INFORMATION BAR -->
+      <!-- 2. TWO-LINE DEDICATED BOTTOM INFORMATION BAR -->
       <section class="bottom-ticker-bar" aria-label="Match information">
         <div class="ticker-content">
-          <div class="ticker-group">
-            <span class="ticker-label">VENUE:</span>
-            <span id="venue" class="ticker-val">HARARE, ZIMBABWE</span>
+          <!-- Line 1: Venue & Match Type -->
+          <div class="ticker-row ticker-row-top">
+            <div class="ticker-group">
+              <span class="ticker-label">VENUE:</span>
+              <span id="venue" class="ticker-val">HARARE, ZIMBABWE</span>
+            </div>
+
+            <span class="ticker-divider">|</span>
+
+            <div class="ticker-group">
+              <span id="matchType" class="ticker-val ticker-match-val">CHALLENGE MATCH</span>
+              <span id="tournament" style="display:none">CHALLENGE MATCH</span>
+            </div>
           </div>
 
-          <span class="ticker-divider">|</span>
+          <!-- Line 2: Prize Pot & Brand -->
+          <div class="ticker-row ticker-row-bottom">
+            <div id="potGroup" class="ticker-group">
+              <span class="ticker-label">POT:</span>
+              <span id="pot" class="ticker-val">$500</span>
+            </div>
 
-          <div class="ticker-group">
-            <span id="matchType" class="ticker-val ticker-match-val">CHALLENGE MATCH</span>
-            <span id="tournament" style="display:none">CHALLENGE MATCH</span>
-          </div>
+            <span id="potDivider" class="ticker-divider">|</span>
 
-          <span class="ticker-divider">|</span>
-
-          <div class="ticker-group">
-            <span class="ticker-label">POT:</span>
-            <span id="pot" class="ticker-val">$500</span>
-          </div>
-
-          <span class="ticker-divider">|</span>
-
-          <div class="brand-group">
-            <svg class="kp-logo-icon" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 3H9V25H4V3Z" fill="url(#kpGoldGrad)" />
-              <path d="M9 13.5L18 3H24.5L14 14.5L24.5 25H18L9 15.5" fill="url(#kpGoldGrad)" />
-              <path d="M21 3H29C32.866 3 36 6.134 36 10C36 13.866 32.866 17 29 17H21V12.5H28C29.38 12.5 30.5 11.38 30.5 10C30.5 8.62 29.38 7.5 28 7.5H21V3Z" fill="url(#kpGoldGrad)" />
-              <defs>
-                <linearGradient id="kpGoldGrad" x1="0" y1="0" x2="36" y2="28" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#FFE885" />
-                  <stop offset="0.5" stop-color="#FFC800" />
-                  <stop offset="1" stop-color="#C59615" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <span id="brand">KRAVO PLATNUMZ OFFICIAL</span>
+            <div class="brand-group">
+              <svg class="kp-logo-icon" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 3H9V25H4V3Z" fill="url(#kpGoldGrad)" />
+                <path d="M9 13.5L18 3H24.5L14 14.5L24.5 25H18L9 15.5" fill="url(#kpGoldGrad)" />
+                <path d="M21 3H29C32.866 3 36 6.134 36 10C36 13.866 32.866 17 29 17H21V12.5H28C29.38 12.5 30.5 11.38 30.5 10C30.5 8.62 29.38 7.5 28 7.5H21V3Z" fill="url(#kpGoldGrad)" />
+                <defs>
+                  <linearGradient id="kpGoldGrad" x1="0" y1="0" x2="36" y2="28" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#FFE885" />
+                    <stop offset="0.5" stop-color="#FFC800" />
+                    <stop offset="1" stop-color="#C59615" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span id="brand">KRAVO PLATNUMZ OFFICIAL</span>
+            </div>
           </div>
         </div>
       </section>
@@ -933,6 +1002,7 @@
     let lastAppleGreen1 = 0;
     let lastAppleRed2 = 0;
     let lastAppleGreen2 = 0;
+    let lastActiveShooter = 0;
     let lastUpdatedAt = 0;
 
     function safeScore(value) {
@@ -947,6 +1017,44 @@
         el.textContent = String(value);
       } else {
         el.textContent = fallback || "";
+      }
+    }
+
+    function stripBoldMarkers(value) {
+      return String(value || "").replace(/\*\*/g, "");
+    }
+
+    function setFormattedName(id, value, isAllBold, fallback) {
+      const el = $(id);
+      if (!el) return;
+      const raw = (value !== undefined && value !== null && String(value).trim() !== "")
+        ? String(value)
+        : (fallback || "");
+
+      const hasMarkers = /\*\*[^*]+\*\*/.test(raw);
+      el.classList.remove("is-normal", "is-partial");
+      el.textContent = "";
+
+      if (hasMarkers) {
+        el.classList.add("is-partial");
+        const parts = raw.split(/(\*\*[^*]+\*\*)/g);
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (!part) continue;
+          if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+            const strong = document.createElement("strong");
+            strong.className = "name-bold-part";
+            strong.textContent = part.slice(2, -2);
+            el.appendChild(strong);
+          } else {
+            el.appendChild(document.createTextNode(part));
+          }
+        }
+      } else {
+        if (isAllBold === false) {
+          el.classList.add("is-normal");
+        }
+        el.textContent = stripBoldMarkers(raw);
       }
     }
 
@@ -1036,8 +1144,8 @@
       lastScore1 = s1;
       lastScore2 = s2;
 
-      setText("name1", state.name1, "PLAYER 1");
-      setText("name2", state.name2, "PLAYER 2");
+      setFormattedName("name1", state.name1, state.nameBold1 !== false, "PLAYER 1");
+      setFormattedName("name2", state.name2, state.nameBold2 !== false, "PLAYER 2");
       setText("score1", s1, "0");
       setText("score2", s2, "0");
       setText("raceText", "RACE TO " + race, "RACE TO 5");
@@ -1048,7 +1156,14 @@
         : (state.tournament || "CHALLENGE MATCH");
       setText("matchType", matchTypeVal, "CHALLENGE MATCH");
       if ($("tournament")) $("tournament").textContent = matchTypeVal;
-      setText("pot", state.pot, "$500");
+      const rawPot = state.pot;
+      const hasPotValue = (rawPot === undefined || rawPot === null) ? true : String(rawPot).trim() !== "";
+      const showPot = state.showPot !== false && hasPotValue;
+      if ($("potGroup")) $("potGroup").style.display = showPot ? "inline-flex" : "none";
+      if ($("potDivider")) $("potDivider").style.display = showPot ? "inline" : "none";
+      if (showPot) {
+        setText("pot", rawPot, "$500");
+      }
       setText("brand", state.brand, "KRAVO PLATNUMZ OFFICIAL");
 
       // Uniform Flag handling for Zimbabwe and all world countries
@@ -1102,8 +1217,10 @@
         $("brBadge2").style.display = "none";
       }
 
-      // Active Shooter ("AT TABLE") indicator & player zone spotlight (0 = off/hidden)
+      // Active Shooter ("ON TABLE") indicator & player zone spotlight (0 = off/hidden)
       const activeShooter = parseInt(state.activeShooter, 10) || 0;
+      const shooterChanged = activeShooter !== lastActiveShooter;
+      lastActiveShooter = activeShooter;
       const pz1 = $("playerZone1");
       const pz2 = $("playerZone2");
       if (pz1) {
@@ -1114,11 +1231,27 @@
         pz2.classList.toggle("is-shooting", activeShooter === 2);
         pz2.classList.toggle("is-waiting", activeShooter === 1);
       }
-      if ($("atTableBadge1")) {
-        $("atTableBadge1").style.display = activeShooter === 1 ? "inline-flex" : "none";
+      const badge1 = $("atTableBadge1");
+      const badge2 = $("atTableBadge2");
+      if (badge1) {
+        badge1.style.display = activeShooter === 1 ? "inline-flex" : "none";
+        if (activeShooter === 1 && shooterChanged) {
+          badge1.classList.remove("is-activating");
+          void badge1.offsetWidth;
+          badge1.classList.add("is-activating");
+        } else if (activeShooter !== 1) {
+          badge1.classList.remove("is-activating");
+        }
       }
-      if ($("atTableBadge2")) {
-        $("atTableBadge2").style.display = activeShooter === 2 ? "inline-flex" : "none";
+      if (badge2) {
+        badge2.style.display = activeShooter === 2 ? "inline-flex" : "none";
+        if (activeShooter === 2 && shooterChanged) {
+          badge2.classList.remove("is-activating");
+          void badge2.offsetWidth;
+          badge2.classList.add("is-activating");
+        } else if (activeShooter !== 2) {
+          badge2.classList.remove("is-activating");
+        }
       }
 
       // Hill-Hill Badge
@@ -1132,7 +1265,7 @@
       // Winner & Post-Match Summary Report
       if (s1 >= race || s2 >= race) {
         const isP1Winner = s1 >= race;
-        const winner = isP1Winner ? (state.name1 || "PLAYER 1") : (state.name2 || "PLAYER 2");
+        const winner = stripBoldMarkers(isP1Winner ? (state.name1 || "PLAYER 1") : (state.name2 || "PLAYER 2"));
         const totalFrames = s1 + s2;
         const p1WinRate = totalFrames > 0 ? ((s1 / totalFrames) * 100).toFixed(0) : "0";
         const p2WinRate = totalFrames > 0 ? ((s2 / totalFrames) * 100).toFixed(0) : "0";
@@ -1150,13 +1283,13 @@
           $("winnerScoreStats").textContent = `TOTAL FRAMES PLAYED: ${totalFrames} · MARGIN: +${Math.abs(s1 - s2)}`;
         }
         if ($("wStatP1Name")) {
-          $("wStatP1Name").textContent = state.name1 || "PLAYER 1";
+          $("wStatP1Name").textContent = stripBoldMarkers(state.name1 || "PLAYER 1");
           $("wStatP1WinRate").textContent = `${p1WinRate}% (${s1}/${totalFrames})`;
           $("wStatP1BR").textContent = `🍏 ${p1BR}`;
           $("wStatP1Apples").textContent = `🍎 ${p1Red}`;
         }
         if ($("wStatP2Name")) {
-          $("wStatP2Name").textContent = state.name2 || "PLAYER 2";
+          $("wStatP2Name").textContent = stripBoldMarkers(state.name2 || "PLAYER 2");
           $("wStatP2WinRate").textContent = `${p2WinRate}% (${s2}/${totalFrames})`;
           $("wStatP2BR").textContent = `🍏 ${p2BR}`;
           $("wStatP2Apples").textContent = `🍎 ${p2Red}`;
@@ -1172,6 +1305,8 @@
       return {
         name1: "PLAYER 1",
         name2: "PLAYER 2",
+        nameBold1: true,
+        nameBold2: true,
         score1: 0,
         score2: 0,
         br1: 0,
@@ -1187,6 +1322,7 @@
         tournament: "CHALLENGE MATCH",
         venue: "HARARE, ZIMBABWE",
         pot: "$500",
+        showPot: true,
         brand: "KRAVO PLATNUMZ OFFICIAL",
         room: room,
         overlayPosition: "bottom",

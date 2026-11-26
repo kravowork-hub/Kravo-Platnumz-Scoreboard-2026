@@ -58,6 +58,8 @@ import { useAuth, ADMIN_EMAIL, UserProfile } from './AuthContext';
 export interface ScoreState {
   name1: string;
   name2: string;
+  nameBold1?: boolean;
+  nameBold2?: boolean;
   flag1: string;
   flag2: string;
   avatar1?: string;
@@ -75,6 +77,7 @@ export interface ScoreState {
   tournament: string;
   venue: string;
   pot: string;
+  showPot?: boolean;
   brand: string;
   room: string;
   overlayPosition?: 'bottom' | 'top';
@@ -137,10 +140,13 @@ export default function App() {
             tournament: parsed.tournament || parsed.matchType || 'CHALLENGE MATCH',
             venue: 'HARARE, ZIMBABWE',
             pot: '$500',
+            showPot: true,
             brand: 'KRAVO PLATNUMZ OFFICIAL',
             room: 'platnumz-live-match',
             overlayPosition: 'bottom',
             activeShooter: 0,
+            nameBold1: true,
+            nameBold2: true,
             ...parsed,
             updatedAt: parsedTime > 1 ? parsedTime : (parsed.name1 && parsed.name1 !== 'PLAYER 1' ? Date.now() : 1)
           };
@@ -152,6 +158,8 @@ export default function App() {
     return {
       name1: 'PLAYER 1',
       name2: 'PLAYER 2',
+      nameBold1: true,
+      nameBold2: true,
       flag1: '🇿🇼',
       flag2: '🇿🇼',
       score1: 0,
@@ -167,6 +175,7 @@ export default function App() {
       tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
       pot: '$500',
+      showPot: true,
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: 'platnumz-live-match',
       overlayPosition: 'bottom',
@@ -207,10 +216,41 @@ export default function App() {
 
   const channelRef = useRef<BroadcastChannel | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const name1InputRef = useRef<HTMLInputElement | null>(null);
+  const name2InputRef = useRef<HTMLInputElement | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const stripNameBoldMarkers = (val: string) => (val || '').replace(/\*\*/g, '');
+
+  const renderFormattedNameJSX = (raw: string, isAllBold: boolean = true) => {
+    const str = raw || '';
+    const hasMarkers = /\*\*[^*]+\*\*/.test(str);
+    if (hasMarkers) {
+      const parts = str.split(/(\*\*[^*]+\*\*)/g);
+      return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+          return (
+            <strong key={i} className="font-black text-white">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return (
+          <span key={i} className="font-normal text-slate-300">
+            {part}
+          </span>
+        );
+      });
+    }
+    return (
+      <span className={isAllBold === false ? 'font-normal text-slate-200' : 'font-black text-white'}>
+        {stripNameBoldMarkers(str)}
+      </span>
+    );
   };
 
   // Master Admin functions
@@ -654,11 +694,99 @@ export default function App() {
       const updated = { ...prev, activeShooter: nextShooter, updatedAt: Date.now() };
       syncState(updated, true);
       if (nextShooter === 0) {
-        showToast('At Table indicator removed');
+        showToast('On Table indicator removed');
       } else {
-        const playerName = nextShooter === 1 ? (prev.name1 || 'PLAYER 1') : (prev.name2 || 'PLAYER 2');
-        showToast(`${playerName} marked AT TABLE`);
+        const rawName = nextShooter === 1 ? (prev.name1 || 'PLAYER 1') : (prev.name2 || 'PLAYER 2');
+        showToast(`${stripNameBoldMarkers(rawName)} marked ON TABLE`);
       }
+      return updated;
+    });
+  };
+
+  const applyNameBoldMode = (player: 1 | 2, mode: 'all' | 'normal' | 'first' | 'last' | 'selection') => {
+    const nameKey = player === 1 ? 'name1' : 'name2';
+    const boldKey = player === 1 ? 'nameBold1' : 'nameBold2';
+    const inputEl = player === 1 ? name1InputRef.current : name2InputRef.current;
+
+    if (mode === 'selection') {
+      const currentRaw = state[nameKey] || '';
+      const start = inputEl?.selectionStart ?? 0;
+      const end = inputEl?.selectionEnd ?? 0;
+
+      if (!inputEl || end <= start) {
+        showToast('Highlight part of the name in the box first, or use 1st / Last');
+        return;
+      }
+
+      const selected = currentRaw.slice(start, end);
+      let nextName = currentRaw;
+      if (selected.startsWith('**') && selected.endsWith('**') && selected.length > 4) {
+        nextName = currentRaw.slice(0, start) + selected.slice(2, -2) + currentRaw.slice(end);
+      } else if (
+        start >= 2 &&
+        currentRaw.slice(start - 2, start) === '**' &&
+        currentRaw.slice(end, end + 2) === '**'
+      ) {
+        nextName = currentRaw.slice(0, start - 2) + selected + currentRaw.slice(end + 2);
+      } else {
+        const cleanSelected = selected.replace(/\*\*/g, '');
+        if (!cleanSelected.trim()) return;
+        nextName = currentRaw.slice(0, start) + `**${cleanSelected}**` + currentRaw.slice(end);
+      }
+
+      setState((prev) => {
+        const updated = {
+          ...prev,
+          [nameKey]: nextName,
+          [boldKey]: false,
+          updatedAt: Date.now()
+        };
+        syncState(updated, true);
+        return updated;
+      });
+      showToast(`P${player} partial bold updated`);
+      return;
+    }
+
+    setState((prev) => {
+      const clean = stripNameBoldMarkers(prev[nameKey] || '').trim();
+      let nextName = prev[nameKey] || '';
+      let nextAllBold = prev[boldKey] !== false;
+
+      if (mode === 'all') {
+        nextName = stripNameBoldMarkers(prev[nameKey] || '');
+        nextAllBold = true;
+        showToast(`P${player} full name set to Bold`);
+      } else if (mode === 'normal') {
+        nextName = stripNameBoldMarkers(prev[nameKey] || '');
+        nextAllBold = false;
+        showToast(`P${player} name set to Normal weight`);
+      } else if (mode === 'first') {
+        const words = clean.split(/\s+/).filter(Boolean);
+        if (words.length > 0) {
+          nextName = words.length === 1 ? `**${words[0]}**` : `**${words[0]}** ${words.slice(1).join(' ')}`;
+        }
+        nextAllBold = false;
+        showToast(`P${player} first word set to Bold`);
+      } else if (mode === 'last') {
+        const words = clean.split(/\s+/).filter(Boolean);
+        if (words.length > 0) {
+          nextName =
+            words.length === 1
+              ? `**${words[0]}**`
+              : `${words.slice(0, -1).join(' ')} **${words[words.length - 1]}**`;
+        }
+        nextAllBold = false;
+        showToast(`P${player} last word set to Bold`);
+      }
+
+      const updated = {
+        ...prev,
+        [nameKey]: nextName,
+        [boldKey]: nextAllBold,
+        updatedAt: Date.now()
+      };
+      syncState(updated, true);
       return updated;
     });
   };
@@ -671,6 +799,8 @@ export default function App() {
         ...prev,
         name1: prev.name2,
         name2: prev.name1,
+        nameBold1: prev.nameBold2 ?? true,
+        nameBold2: prev.nameBold1 ?? true,
         flag1: prev.flag2,
         flag2: prev.flag1,
         avatar1: prev.avatar2,
@@ -729,6 +859,8 @@ export default function App() {
     const defaults: ScoreState = {
       name1: 'PLAYER 1',
       name2: 'PLAYER 2',
+      nameBold1: true,
+      nameBold2: true,
       flag1: '🇿🇼',
       flag2: '🇿🇼',
       score1: 0,
@@ -744,6 +876,7 @@ export default function App() {
       tournament: 'CHALLENGE MATCH',
       venue: 'HARARE, ZIMBABWE',
       pot: '$500',
+      showPot: true,
       brand: 'KRAVO PLATNUMZ OFFICIAL',
       room: state.room || 'platnumz-live-match',
       overlayPosition: 'bottom',
@@ -882,30 +1015,36 @@ export default function App() {
   }, [isMatchConcluded]);
 
   const generateReportText = () => {
+    const p1Clean = stripNameBoldMarkers(state.name1 || 'PLAYER 1');
+    const p2Clean = stripNameBoldMarkers(state.name2 || 'PLAYER 2');
+    const winClean = stripNameBoldMarkers(winner || '');
+    const runClean = stripNameBoldMarkers(runnerUp || '');
     const title = `🏆 KRAVO PLATNUMZ OFFICIAL — POST-MATCH REPORT`;
     const divider = `══════════════════════════════════════════`;
     const outcome = isMatchConcluded
-      ? `👑 CHAMPION: ${winner} ${winnerFlag} (${winnerScore} frames)\n🥈 RUNNER-UP: ${runnerUp} ${runnerUpFlag} (${runnerUpScore} frames)`
-      : `⚔️ CURRENT LEADER: ${state.score1 >= state.score2 ? state.name1 : state.name2} (${Math.max(state.score1, state.score2)} - ${Math.min(state.score1, state.score2)})`;
+      ? `👑 CHAMPION: ${winClean} ${winnerFlag} (${winnerScore} frames)\n🥈 RUNNER-UP: ${runClean} ${runnerUpFlag} (${runnerUpScore} frames)`
+      : `⚔️ CURRENT LEADER: ${state.score1 >= state.score2 ? p1Clean : p2Clean} (${Math.max(state.score1, state.score2)} - ${Math.min(state.score1, state.score2)})`;
+
+    const showPotInReport = state.showPot !== false && Boolean((state.pot || '').trim());
+    const potLine = showPotInReport ? `\n💰 PRIZE POT: ${(state.pot || '').trim()}` : '';
 
     return `${title}
 ${divider}
 ${outcome}
 🎯 FINAL SCORE: ${state.score1} - ${state.score2} (Race to ${raceTarget})
 🎱 TOTAL FRAMES PLAYED: ${totalFrames}
-⚡ MARGIN: ${frameMargin} frame${frameMargin === 1 ? '' : 's'}
-💰 PRIZE POT: ${state.pot || '$500'}
+⚡ MARGIN: ${frameMargin} frame${frameMargin === 1 ? '' : 's'}${potLine}
 📍 VENUE: ${state.venue || 'Harare, Zimbabwe'}
 🏆 EVENT: ${state.tournament || state.matchType || 'Challenge Match'}
 ${divider}
 📊 PLAYER PERFORMANCE STATS:
-• ${state.name1} ${state.flag1}:
+• ${p1Clean} ${state.flag1}:
   - Frame Win Rate: ${winRate1}% (${state.score1}/${totalFrames} frames won)
   - Break & Runs (🍏 Green Apples): ${effectiveBR1} (${brRate1}% of won frames)
   - One Visit Clearances (🍎 Red Apples): ${state.appleRed1 || 0}
   - Total Clearance Honors: ${totalApples1}
 
-• ${state.name2} ${state.flag2}:
+• ${p2Clean} ${state.flag2}:
   - Frame Win Rate: ${winRate2}% (${state.score2}/${totalFrames} frames won)
   - Break & Runs (🍏 Green Apples): ${effectiveBR2} (${brRate2}% of won frames)
   - One Visit Clearances (🍎 Red Apples): ${state.appleRed2 || 0}
@@ -1143,18 +1282,18 @@ Generated on: ${new Date().toLocaleString()}`;
                   <div className="flex items-center justify-center gap-2.5">
                     <FlagBadge codeOrFlag={winnerFlag} alt={winner || ''} size="md" />
                     <h2 className="text-2xl sm:text-3xl font-black text-white tracking-wide">
-                      {winner}
+                      {stripNameBoldMarkers(winner || '')}
                     </h2>
                   </div>
                   <div className="text-xs text-slate-300 font-medium">
-                    Defeated <strong className="text-white">{runnerUp}</strong> by <strong className="text-amber-300">+{frameMargin} frame{frameMargin === 1 ? '' : 's'}</strong>
+                    Defeated <strong className="text-white">{stripNameBoldMarkers(runnerUp || '')}</strong> by <strong className="text-amber-300">+{frameMargin} frame{frameMargin === 1 ? '' : 's'}</strong>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <div className="text-xs text-amber-300 font-bold uppercase tracking-wider">LIVE MATCH STANDINGS</div>
                   <div className="text-xl sm:text-2xl font-black text-white">
-                    {state.score1 > state.score2 ? `${state.name1} Leads` : state.score2 > state.score1 ? `${state.name2} Leads` : 'Match Tied'}
+                    {state.score1 > state.score2 ? `${stripNameBoldMarkers(state.name1)} Leads` : state.score2 > state.score1 ? `${stripNameBoldMarkers(state.name2)} Leads` : 'Match Tied'}
                   </div>
                 </div>
               )}
@@ -1162,7 +1301,7 @@ Generated on: ${new Date().toLocaleString()}`;
               {/* Large Score Capsule & Race */}
               <div className="mt-3.5 inline-flex items-center gap-3 sm:gap-4 bg-slate-950/80 border border-amber-400/30 rounded-2xl px-5 py-2.5 shadow-inner">
                 <div className="text-center">
-                  <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[100px]">{state.name1}</span>
+                  <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[100px]">{stripNameBoldMarkers(state.name1)}</span>
                   <span className="text-2xl sm:text-3xl font-black text-white font-mono">{state.score1}</span>
                 </div>
                 <div className="text-center px-1">
@@ -1170,7 +1309,7 @@ Generated on: ${new Date().toLocaleString()}`;
                   <span className="text-[10px] text-slate-400 font-bold">Race to {raceTarget}</span>
                 </div>
                 <div className="text-center">
-                  <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[100px]">{state.name2}</span>
+                  <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[100px]">{stripNameBoldMarkers(state.name2)}</span>
                   <span className="text-2xl sm:text-3xl font-black text-white font-mono">{state.score2}</span>
                 </div>
               </div>
@@ -1180,9 +1319,11 @@ Generated on: ${new Date().toLocaleString()}`;
                 <span className="bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 rounded-lg">
                   🎱 Total Frames: <strong className="text-amber-300 font-mono">{totalFrames}</strong>
                 </span>
-                <span className="bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 rounded-lg">
-                  💰 Pot: <strong className="text-emerald-300">{state.pot || '$500'}</strong>
-                </span>
+                {state.showPot !== false && Boolean((state.pot || '').trim()) && (
+                  <span className="bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 rounded-lg">
+                    💰 Pot: <strong className="text-emerald-300">{state.pot}</strong>
+                  </span>
+                )}
                 {isHillHill && (
                   <span className="bg-red-950/80 border border-red-500/60 px-2.5 py-1 rounded-lg text-red-300">
                     ⚡ Hill-Hill Thriller
@@ -1204,14 +1345,14 @@ Generated on: ${new Date().toLocaleString()}`;
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center text-xs">
                 {/* P1 Name */}
                 <div className="flex items-center justify-center gap-1.5 font-black text-white truncate">
-                  <FlagBadge codeOrFlag={state.flag1} alt={state.name1} size="sm" />
-                  <span className="truncate">{state.name1}</span>
+                  <FlagBadge codeOrFlag={state.flag1} alt={stripNameBoldMarkers(state.name1)} size="sm" />
+                  <span className="truncate">{stripNameBoldMarkers(state.name1)}</span>
                 </div>
                 <div className="text-[10px] font-bold text-slate-500 uppercase px-2">METRIC</div>
                 {/* P2 Name */}
                 <div className="flex items-center justify-center gap-1.5 font-black text-white truncate">
-                  <span className="truncate">{state.name2}</span>
-                  <FlagBadge codeOrFlag={state.flag2} alt={state.name2} size="sm" />
+                  <span className="truncate">{stripNameBoldMarkers(state.name2)}</span>
+                  <FlagBadge codeOrFlag={state.flag2} alt={stripNameBoldMarkers(state.name2)} size="sm" />
                 </div>
               </div>
 
@@ -1561,7 +1702,7 @@ Generated on: ${new Date().toLocaleString()}`;
                   </span>
                 </div>
                 <div className="text-base sm:text-lg font-black text-white">
-                  {winner} WINS THE MATCH!
+                  {stripNameBoldMarkers(winner)} WINS THE MATCH!
                 </div>
               </div>
             </div>
@@ -1609,9 +1750,12 @@ Generated on: ${new Date().toLocaleString()}`;
                       PLAYER 1
                     </span>
                     {state.activeShooter === 1 && (
-                      <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md">
+                      <span
+                        key={`on-table-p1-${state.activeShooter}`}
+                        className="on-table-badge-pulse inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md"
+                      >
                         <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-                        AT TABLE
+                        ON TABLE
                       </span>
                     )}
                   </div>
@@ -1624,15 +1768,15 @@ Generated on: ${new Date().toLocaleString()}`;
                           ? 'bg-amber-400/20 hover:bg-red-500/25 text-amber-200 hover:text-red-200 border-amber-400/60 hover:border-red-400/60'
                           : 'bg-slate-900/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border-slate-700 hover:border-amber-400/50'
                       }`}
-                      title={state.activeShooter === 1 ? 'Click to remove AT TABLE indicator (Hotkey 1 or 0)' : 'Mark Player 1 as active shooter AT TABLE (Hotkey 1)'}
+                      title={state.activeShooter === 1 ? 'Click to remove ON TABLE indicator (Hotkey 1 or 0)' : 'Mark Player 1 as active shooter ON TABLE (Hotkey 1)'}
                     >
                       {state.activeShooter === 1 ? (
                         <>
-                          <X className="w-2.5 h-2.5" /> Clear At Table
+                          <X className="w-2.5 h-2.5" /> Clear On Table
                         </>
                       ) : (
                         <>
-                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set At Table
+                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set On Table
                         </>
                       )}
                     </button>
@@ -1645,7 +1789,7 @@ Generated on: ${new Date().toLocaleString()}`;
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-1.5">
                   <button
                     type="button"
                     onClick={() => setTargetPlayerForFlag(1)}
@@ -1655,7 +1799,12 @@ Generated on: ${new Date().toLocaleString()}`;
                     <FlagBadge codeOrFlag={state.flag1} size="md" alt="P1 Flag" />
                   </button>
                   <input
-                    className="flex-1 min-w-0 bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-base sm:text-lg font-black text-white outline-none focus:border-amber-400 transition"
+                    ref={name1InputRef}
+                    className={`flex-1 min-w-0 bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-base sm:text-lg text-white outline-none focus:border-amber-400 transition ${
+                      state.nameBold1 === false && !/\*\*[^*]+\*\*/.test(state.name1 || '')
+                        ? 'font-medium'
+                        : 'font-black'
+                    }`}
                     value={state.name1}
                     onChange={(e) => {
                       const updated = { ...state, name1: e.target.value, updatedAt: Date.now() };
@@ -1664,6 +1813,67 @@ Generated on: ${new Date().toLocaleString()}`;
                     onBlur={flushSync}
                     placeholder="PLAYER 1 NAME"
                   />
+                </div>
+
+                {/* Name Boldness Controls (Whole Name or Selected/Word Part) */}
+                <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2.5 px-0.5">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-[9px] uppercase font-bold text-slate-400 mr-0.5">Name:</span>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(1, 'all')}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-black transition ${
+                        state.nameBold1 !== false && !/\*\*[^*]+\*\*/.test(state.name1 || '')
+                          ? 'bg-amber-400 text-slate-950 border-amber-300'
+                          : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
+                      }`}
+                      title="Make entire name bold"
+                    >
+                      All Bold
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(1, 'normal')}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition ${
+                        state.nameBold1 === false && !/\*\*[^*]+\*\*/.test(state.name1 || '')
+                          ? 'bg-blue-500 text-white border-blue-400'
+                          : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
+                      }`}
+                      title="Make entire name regular weight"
+                    >
+                      Normal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(1, 'first')}
+                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      title="Bold only the 1st word"
+                    >
+                      1st Word
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(1, 'last')}
+                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      title="Bold only the last word"
+                    >
+                      Last Word
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyNameBoldMode(1, 'selection')}
+                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 font-black transition"
+                      title="Highlight any part of the name above and click to toggle bold on just that part (or wrap with **text**)"
+                    >
+                      B Selected
+                    </button>
+                  </div>
+                  {(/\*\*[^*]+\*\*/.test(state.name1 || '') || state.nameBold1 === false) && (
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wide truncate max-w-full">
+                      Overlay: {renderFormattedNameJSX(state.name1 || 'PLAYER 1', state.nameBold1 !== false)}
+                    </span>
+                  )}
                 </div>
 
                 {/* Integrated Compact Horizontal Score Row */}
@@ -1801,9 +2011,12 @@ Generated on: ${new Date().toLocaleString()}`;
                       PLAYER 2
                     </span>
                     {state.activeShooter === 2 && (
-                      <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md">
+                      <span
+                        key={`on-table-p2-${state.activeShooter}`}
+                        className="on-table-badge-pulse inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-md"
+                      >
                         <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-                        AT TABLE
+                        ON TABLE
                       </span>
                     )}
                   </div>
@@ -1816,15 +2029,15 @@ Generated on: ${new Date().toLocaleString()}`;
                           ? 'bg-amber-400/20 hover:bg-red-500/25 text-amber-200 hover:text-red-200 border-amber-400/60 hover:border-red-400/60'
                           : 'bg-slate-900/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border-slate-700 hover:border-amber-400/50'
                       }`}
-                      title={state.activeShooter === 2 ? 'Click to remove AT TABLE indicator (Hotkey 2 or 0)' : 'Mark Player 2 as active shooter AT TABLE (Hotkey 2)'}
+                      title={state.activeShooter === 2 ? 'Click to remove ON TABLE indicator (Hotkey 2 or 0)' : 'Mark Player 2 as active shooter ON TABLE (Hotkey 2)'}
                     >
                       {state.activeShooter === 2 ? (
                         <>
-                          <X className="w-2.5 h-2.5" /> Clear At Table
+                          <X className="w-2.5 h-2.5" /> Clear On Table
                         </>
                       ) : (
                         <>
-                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set At Table
+                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set On Table
                         </>
                       )}
                     </button>
@@ -1837,7 +2050,7 @@ Generated on: ${new Date().toLocaleString()}`;
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-1.5">
                   <button
                     type="button"
                     onClick={() => setTargetPlayerForFlag(2)}
@@ -1847,7 +2060,12 @@ Generated on: ${new Date().toLocaleString()}`;
                     <FlagBadge codeOrFlag={state.flag2} size="md" alt="P2 Flag" />
                   </button>
                   <input
-                    className="flex-1 min-w-0 bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-base sm:text-lg font-black text-white outline-none focus:border-amber-400 transition"
+                    ref={name2InputRef}
+                    className={`flex-1 min-w-0 bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-1.5 text-base sm:text-lg text-white outline-none focus:border-amber-400 transition ${
+                      state.nameBold2 === false && !/\*\*[^*]+\*\*/.test(state.name2 || '')
+                        ? 'font-medium'
+                        : 'font-black'
+                    }`}
                     value={state.name2}
                     onChange={(e) => {
                       const updated = { ...state, name2: e.target.value, updatedAt: Date.now() };
@@ -1856,6 +2074,67 @@ Generated on: ${new Date().toLocaleString()}`;
                     onBlur={flushSync}
                     placeholder="PLAYER 2 NAME"
                   />
+                </div>
+
+                {/* Name Boldness Controls (Whole Name or Selected/Word Part) */}
+                <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2.5 px-0.5">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-[9px] uppercase font-bold text-slate-400 mr-0.5">Name:</span>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(2, 'all')}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-black transition ${
+                        state.nameBold2 !== false && !/\*\*[^*]+\*\*/.test(state.name2 || '')
+                          ? 'bg-amber-400 text-slate-950 border-amber-300'
+                          : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
+                      }`}
+                      title="Make entire name bold"
+                    >
+                      All Bold
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(2, 'normal')}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition ${
+                        state.nameBold2 === false && !/\*\*[^*]+\*\*/.test(state.name2 || '')
+                          ? 'bg-blue-500 text-white border-blue-400'
+                          : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
+                      }`}
+                      title="Make entire name regular weight"
+                    >
+                      Normal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(2, 'first')}
+                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      title="Bold only the 1st word"
+                    >
+                      1st Word
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyNameBoldMode(2, 'last')}
+                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      title="Bold only the last word"
+                    >
+                      Last Word
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyNameBoldMode(2, 'selection')}
+                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 font-black transition"
+                      title="Highlight any part of the name above and click to toggle bold on just that part (or wrap with **text**)"
+                    >
+                      B Selected
+                    </button>
+                  </div>
+                  {(/\*\*[^*]+\*\*/.test(state.name2 || '') || state.nameBold2 === false) && (
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wide truncate max-w-full">
+                      Overlay: {renderFormattedNameJSX(state.name2 || 'PLAYER 2', state.nameBold2 !== false)}
+                    </span>
+                  )}
                 </div>
 
                 {/* Integrated Compact Horizontal Score Row */}
@@ -1979,10 +2258,10 @@ Generated on: ${new Date().toLocaleString()}`;
 
             {/* Quick Actions Row */}
             <div className="flex flex-wrap items-center justify-center gap-2 py-0.5">
-              {/* Active Shooter (At Table) Segmented Control with instant Off/Remove option */}
+              {/* Active Shooter (On Table) Segmented Control with instant Off/Remove option */}
               <div className="inline-flex items-center bg-slate-900 border border-slate-700/80 rounded-lg p-0.5 gap-0.5 shadow-sm">
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-amber-400" /> At Table:
+                  <Zap className="w-3 h-3 text-amber-400" /> On Table:
                 </span>
                 <button
                   type="button"
@@ -1992,7 +2271,7 @@ Generated on: ${new Date().toLocaleString()}`;
                       ? 'bg-amber-400 text-slate-950 shadow'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
-                  title="Mark Player 1 At Table (Hotkey 1)"
+                  title="Mark Player 1 On Table (Hotkey 1)"
                 >
                   P1 <kbd className="text-[9px] opacity-70 font-mono">1</kbd>
                 </button>
@@ -2004,7 +2283,7 @@ Generated on: ${new Date().toLocaleString()}`;
                       ? 'bg-slate-700 text-white shadow'
                       : 'text-slate-400 hover:bg-slate-800 hover:text-red-300'
                   }`}
-                  title="Remove At Table indicator when not tracking turns (Hotkey 0)"
+                  title="Remove On Table indicator when not tracking turns (Hotkey 0)"
                 >
                   Off <kbd className="text-[9px] opacity-70 font-mono">0</kbd>
                 </button>
@@ -2016,7 +2295,7 @@ Generated on: ${new Date().toLocaleString()}`;
                       ? 'bg-amber-400 text-slate-950 shadow'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
-                  title="Mark Player 2 At Table (Hotkey 2)"
+                  title="Mark Player 2 On Table (Hotkey 2)"
                 >
                   P2 <kbd className="text-[9px] opacity-70 font-mono">2</kbd>
                 </button>
@@ -2099,17 +2378,42 @@ Generated on: ${new Date().toLocaleString()}`;
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Prize Pot</label>
-                  <input
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
-                    value={state.pot}
-                    onChange={(e) => {
-                      const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
-                      syncState(updated, false);
-                    }}
-                    onBlur={flushSync}
-                    placeholder="e.g. $500"
-                  />
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <label className="text-xs uppercase font-bold text-slate-300">Prize Pot</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextShowPot = state.showPot === false;
+                        const updated = { ...state, showPot: nextShowPot, updatedAt: Date.now() };
+                        syncState(updated, true);
+                        showToast(nextShowPot ? 'Prize Pot shown on overlay' : 'Prize Pot removed for tournament');
+                      }}
+                      title={state.showPot === false ? 'Show Prize Pot on overlay' : 'Remove Prize Pot altogether for tournaments'}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border transition cursor-pointer ${
+                        state.showPot === false
+                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
+                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-red-950/60 hover:text-red-300 hover:border-red-700/50'
+                      }`}
+                    >
+                      {state.showPot === false ? 'Show Pot' : 'Remove Pot'}
+                    </button>
+                  </div>
+                  {state.showPot === false ? (
+                    <div className="w-full bg-slate-950/60 border border-dashed border-slate-700/80 rounded-lg px-3 py-2 text-slate-400 text-xs font-semibold flex items-center justify-between">
+                      <span>Pot hidden (Tournament mode)</span>
+                    </div>
+                  ) : (
+                    <input
+                      className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
+                      value={state.pot}
+                      onChange={(e) => {
+                        const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
+                        syncState(updated, false);
+                      }}
+                      onBlur={flushSync}
+                      placeholder="e.g. $500 (empty hides POT)"
+                    />
+                  )}
                 </div>
 
                 <div>
