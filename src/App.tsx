@@ -1087,12 +1087,12 @@ Generated on: ${new Date().toLocaleString()}`;
   });
 
   return (
-    <div className="min-h-screen bg-[#050811] text-slate-100 flex flex-col font-sans select-none">
+    <div className="min-h-screen bg-[#050811] text-slate-100 flex flex-col font-sans select-none overflow-x-hidden">
       {/* Toast popup */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 text-sm animate-bounce">
-          <Check className="w-4 h-4" />
-          {toastMessage}
+        <div className="fixed top-3 right-3 left-3 sm:left-auto z-50 bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-lg shadow-2xl flex items-center justify-center sm:justify-start gap-2 text-xs sm:text-sm animate-bounce">
+          <Check className="w-4 h-4 shrink-0" />
+          <span className="truncate">{toastMessage}</span>
         </div>
       )}
 
@@ -1135,8 +1135,8 @@ Generated on: ${new Date().toLocaleString()}`;
 
       {/* Quick Flag Selector Modal */}
       {targetPlayerForFlag !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl bg-slate-900 border border-slate-700 p-5 shadow-2xl flex flex-col space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4">
+          <div className="w-full max-w-2xl max-h-[88vh] rounded-2xl bg-slate-900 border border-slate-700 p-4 sm:p-5 shadow-2xl flex flex-col space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Globe className="w-5 h-5 text-amber-400" />
@@ -1144,7 +1144,7 @@ Generated on: ${new Date().toLocaleString()}`;
                   Select Flag for Player {targetPlayerForFlag}
                 </h3>
               </div>
-              <button onClick={() => setTargetPlayerForFlag(null)} className="text-slate-400 hover:text-white p-1">
+              <button onClick={() => setTargetPlayerForFlag(null)} className="text-slate-400 hover:text-white p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1154,8 +1154,8 @@ Generated on: ${new Date().toLocaleString()}`;
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search countries by name or code (e.g. Zimbabwe, ZW, South Africa)..."
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-amber-400"
+                  placeholder="Search countries by name or code..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 sm:py-2 text-base sm:text-xs text-white outline-none focus:border-amber-400"
                   value={flagSearch}
                   onChange={(e) => setFlagSearch(e.target.value)}
                   autoFocus
@@ -1359,17 +1359,17 @@ Generated on: ${new Date().toLocaleString()}`;
               </div>
 
               {/* Stat Row 1: Frames Won */}
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 bg-slate-950/60 rounded-xl p-2 sm:p-2.5 border border-slate-800/80">
                 <div className="text-center font-black text-base font-mono text-blue-400">{state.score1}</div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Frames Won</div>
+                <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase text-center min-w-[85px] sm:min-w-[120px]">Frames Won</div>
                 <div className="text-center font-black text-base font-mono text-blue-400">{state.score2}</div>
               </div>
 
               {/* Stat Row 2: Win Rate % with Bar */}
-              <div className="space-y-1.5 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <div className="space-y-1.5 bg-slate-950/60 rounded-xl p-2 sm:p-2.5 border border-slate-800/80">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2">
                   <div className="text-center font-black font-mono text-sm text-amber-300">{winRate1}%</div>
-                  <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[120px]">Frame Win Rate</div>
+                  <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase text-center min-w-[85px] sm:min-w-[120px]">Frame Win Rate</div>
                   <div className="text-center font-black font-mono text-sm text-amber-300">{winRate2}%</div>
                 </div>
                 {/* Visual Ratio Bar */}
@@ -1386,27 +1386,27 @@ Generated on: ${new Date().toLocaleString()}`;
               </div>
 
               {/* Stat Row 3: Break & Runs (Green Apples 🍏) */}
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 bg-slate-950/60 rounded-xl p-2 sm:p-2.5 border border-slate-800/80">
                 <div className="text-center font-black text-sm text-emerald-400">
                   🍏 {effectiveBR1} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate1}% of wins)</span>
                 </div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[130px]">Break & Runs (🍏)</div>
+                <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase text-center min-w-[92px] sm:min-w-[130px]">Break & Runs (🍏)</div>
                 <div className="text-center font-black text-sm text-emerald-400">
                   🍏 {effectiveBR2} <span className="text-[10px] text-slate-400 block sm:inline font-normal">({brRate2}% of wins)</span>
                 </div>
               </div>
 
               {/* Stat Row 4: One Visit Clearances (Red Apples 🍎) */}
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-slate-950/60 rounded-xl p-2.5 border border-slate-800/80">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 bg-slate-950/60 rounded-xl p-2 sm:p-2.5 border border-slate-800/80">
                 <div className="text-center font-black text-sm text-red-400">🍎 {state.appleRed1 || 0}</div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase text-center min-w-[130px]">One Visit Clearances (🍎)</div>
+                <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase text-center min-w-[92px] sm:min-w-[130px]">One Visit (🍎)</div>
                 <div className="text-center font-black text-sm text-red-400">🍎 {state.appleRed2 || 0}</div>
               </div>
 
               {/* Stat Row 5: Total Apple Honors */}
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-gradient-to-r from-amber-950/30 via-slate-950 to-amber-950/30 rounded-xl p-2.5 border border-amber-500/30">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-amber-950/30 via-slate-950 to-amber-950/30 rounded-xl p-2 sm:p-2.5 border border-amber-500/30">
                 <div className="text-center font-black text-sm text-amber-300 font-mono">{totalApples1}</div>
-                <div className="text-[11px] font-black text-amber-400 uppercase text-center min-w-[130px]">Total Apple Honors</div>
+                <div className="text-[10px] sm:text-[11px] font-black text-amber-400 uppercase text-center min-w-[92px] sm:min-w-[130px]">Total Apples</div>
                 <div className="text-center font-black text-sm text-amber-300 font-mono">{totalApples2}</div>
               </div>
             </div>
@@ -1484,25 +1484,25 @@ Generated on: ${new Date().toLocaleString()}`;
         </div>
       )}
 
-      {/* Top Header */}
-      <header className="bg-slate-900/90 border-b border-slate-800/80 px-4 py-2 sticky top-0 z-40 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-amber-500/20">
+      {/* Top Header (Compact sticky bar on mobile, full sticky chrome on desktop) */}
+      <header className="bg-slate-900/95 border-b border-slate-800/80 px-3 sm:px-4 py-2 sticky top-0 z-40 backdrop-blur-md">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-amber-500/20 shrink-0">
               P
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xs sm:text-sm font-black tracking-wide text-white">PLATNUMZ SCOREBOARD</h1>
-                <span className="text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-bold">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h1 className="text-xs sm:text-sm font-black tracking-wide text-white truncate">PLATNUMZ SCOREBOARD</h1>
+                <span className="hidden sm:inline-flex text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-bold shrink-0">
                   PRO CUESPORT
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400">Master Controller & OBS Overlay Synchronizer</p>
+              <p className="hidden sm:block text-[10px] text-slate-400 truncate">Master Controller & OBS Overlay Synchronizer</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Real-time sync badge */}
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-[11px] font-bold">
               <span
@@ -1518,7 +1518,7 @@ Generated on: ${new Date().toLocaleString()}`;
             {/* Post-Match Report button */}
             <button
               onClick={() => setShowMatchReportModal(true)}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border ${
+              className={`min-h-[36px] sm:min-h-0 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition border ${
                 isMatchConcluded
                   ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-500/20 animate-pulse'
                   : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
@@ -1534,7 +1534,7 @@ Generated on: ${new Date().toLocaleString()}`;
             {currentUser ? (
               <button
                 onClick={() => setActiveTab('account')}
-                className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-950/80 hover:bg-blue-900 border border-blue-500/40 text-blue-200 text-xs font-bold transition"
+                className="min-h-[36px] sm:min-h-0 flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-950/80 hover:bg-blue-900 border border-blue-500/40 text-blue-200 text-xs font-bold transition"
                 title="Account & Branding Settings"
               >
                 {currentUser.photoURL ? (
@@ -1554,7 +1554,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     showToast('Sign-in cancelled or failed');
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition active:scale-95"
+                className="min-h-[36px] sm:min-h-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition active:scale-95"
                 title="Sign in with Google to personalize your branding"
               >
                 <LogIn className="w-3.5 h-3.5 text-slate-950" />
@@ -1568,19 +1568,21 @@ Generated on: ${new Date().toLocaleString()}`;
                 setSoundEnabled(!soundEnabled);
                 showToast(soundEnabled ? 'Muted' : 'Sound Enabled');
               }}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+              className="min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center justify-center"
               title="Toggle Audio Feedback"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Tab Switcher */}
-        <div className="max-w-4xl mx-auto mt-2 flex items-center gap-1 overflow-x-auto border-t border-slate-800/80 pt-2">
+      {/* Scrollable Navigation Tab Strip */}
+      <nav aria-label="Scoreboard Sections" className="bg-slate-900/75 border-b border-slate-800/80 px-3 sm:px-4 py-2">
+        <div className="max-w-4xl mx-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('controller')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`whitespace-nowrap shrink-0 min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'controller'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -1591,7 +1593,7 @@ Generated on: ${new Date().toLocaleString()}`;
 
           <button
             onClick={() => setActiveTab('preview')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`whitespace-nowrap shrink-0 min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'preview'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -1602,7 +1604,7 @@ Generated on: ${new Date().toLocaleString()}`;
 
           <button
             onClick={() => setActiveTab('account')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`whitespace-nowrap shrink-0 min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'account'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -1614,7 +1616,7 @@ Generated on: ${new Date().toLocaleString()}`;
           {isAdmin && (
             <button
               onClick={() => setActiveTab('admin')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+              className={`whitespace-nowrap shrink-0 min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
                 activeTab === 'admin'
                   ? 'bg-rose-600 text-white font-black shadow-lg shadow-rose-600/30'
                   : 'text-rose-400 hover:text-white hover:bg-rose-950/60 border border-rose-500/30'
@@ -1626,7 +1628,7 @@ Generated on: ${new Date().toLocaleString()}`;
 
           <button
             onClick={() => setActiveTab('flags')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`whitespace-nowrap shrink-0 min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'flags'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -1637,7 +1639,7 @@ Generated on: ${new Date().toLocaleString()}`;
 
           <button
             onClick={() => setActiveTab('install')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`whitespace-nowrap shrink-0 min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'install'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -1648,7 +1650,7 @@ Generated on: ${new Date().toLocaleString()}`;
 
           <button
             onClick={() => setActiveTab('github')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+            className={`whitespace-nowrap shrink-0 min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
               activeTab === 'github'
                 ? 'bg-amber-400 text-slate-950 font-black shadow'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -1657,7 +1659,7 @@ Generated on: ${new Date().toLocaleString()}`;
             <Github className="w-3.5 h-3.5" /> GitHub Sync
           </button>
         </div>
-      </header>
+      </nav>
 
       {/* Main Container */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-4 space-y-3.5">
@@ -1765,7 +1767,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => setActiveShooter(1)}
-                      className={`text-[10px] px-2.5 py-0.5 rounded-md font-black transition flex items-center gap-1 active:scale-95 border ${
+                      className={`min-h-[34px] sm:min-h-0 text-[11px] sm:text-[10px] px-2.5 py-1 sm:py-0.5 rounded-md font-black transition flex items-center gap-1 active:scale-95 border ${
                         state.activeShooter === 1
                           ? 'bg-amber-400/20 hover:bg-red-500/25 text-amber-200 hover:text-red-200 border-amber-400/60 hover:border-red-400/60'
                           : 'bg-slate-900/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border-slate-700 hover:border-amber-400/50'
@@ -1774,19 +1776,19 @@ Generated on: ${new Date().toLocaleString()}`;
                     >
                       {state.activeShooter === 1 ? (
                         <>
-                          <X className="w-2.5 h-2.5" /> Clear On Table
+                          <X className="w-3 h-3 sm:w-2.5 sm:h-2.5" /> Clear On Table
                         </>
                       ) : (
                         <>
-                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set On Table
+                          <Zap className="w-3 h-3 sm:w-2.5 sm:h-2.5 text-amber-400" /> Set On Table
                         </>
                       )}
                     </button>
                     <button
                       onClick={() => setTargetPlayerForFlag(1)}
-                      className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
+                      className="min-h-[34px] sm:min-h-0 text-[11px] sm:text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2.5 sm:px-2 py-1 sm:py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
                     >
-                      Change Flag <Globe className="w-2.5 h-2.5" />
+                      Change Flag <Globe className="w-3 h-3 sm:w-2.5 sm:h-2.5" />
                     </button>
                   </div>
                 </div>
@@ -1819,12 +1821,12 @@ Generated on: ${new Date().toLocaleString()}`;
 
                 {/* Name Boldness Controls (Whole Name or Selected/Word Part) */}
                 <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2.5 px-0.5">
-                  <div className="flex flex-wrap items-center gap-1">
-                    <span className="text-[9px] uppercase font-bold text-slate-400 mr-0.5">Name:</span>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-1">
+                    <span className="text-[10px] sm:text-[9px] uppercase font-bold text-slate-400 mr-0.5">Name:</span>
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(1, 'all')}
-                      className={`text-[10px] px-1.5 py-0.5 rounded border font-black transition ${
+                      className={`min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border font-black transition ${
                         state.nameBold1 !== false && !/\*\*[^*]+\*\*/.test(state.name1 || '')
                           ? 'bg-amber-400 text-slate-950 border-amber-300'
                           : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
@@ -1836,7 +1838,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(1, 'normal')}
-                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition ${
+                      className={`min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border font-medium transition ${
                         state.nameBold1 === false && !/\*\*[^*]+\*\*/.test(state.name1 || '')
                           ? 'bg-blue-500 text-white border-blue-400'
                           : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
@@ -1848,7 +1850,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(1, 'first')}
-                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      className="min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
                       title="Bold only the 1st word"
                     >
                       1st Word
@@ -1856,7 +1858,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(1, 'last')}
-                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      className="min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
                       title="Bold only the last word"
                     >
                       Last Word
@@ -1865,7 +1867,7 @@ Generated on: ${new Date().toLocaleString()}`;
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyNameBoldMode(1, 'selection')}
-                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 font-black transition"
+                      className="min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border bg-slate-900/80 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 font-black transition"
                       title="Highlight any part of the name above and click to toggle bold on just that part (or wrap with **text**)"
                     >
                       B Selected
@@ -1880,22 +1882,22 @@ Generated on: ${new Date().toLocaleString()}`;
 
                 {/* Integrated Compact Horizontal Score Row */}
                 <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2 mb-2.5">
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2">
                     {/* -1 Button */}
                     <button
                       onClick={() => updateScore(1, -1)}
-                      className="h-14 sm:h-16 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 transition active:scale-95 border border-slate-700"
+                      className="h-14 sm:h-16 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 transition active:scale-95 border border-slate-700 px-1.5"
                       title="Decrease Score (Hotkey A)"
                     >
-                      <div className="flex items-center gap-1">
-                        <Minus className="w-4 h-4" /> <span>−1 Frame</span>
+                      <div className="flex items-center gap-1 whitespace-nowrap">
+                        <Minus className="w-4 h-4 shrink-0" /> <span>−1 Frame</span>
                       </div>
-                      <kbd className="text-[9px] text-slate-400 bg-slate-900/80 px-1 py-0.2 rounded font-mono">Key A</kbd>
+                      <kbd className="hidden sm:inline-block text-[9px] text-slate-400 bg-slate-900/80 px-1 py-0.2 rounded font-mono">Key A</kbd>
                     </button>
 
                     {/* Score Number Display */}
-                    <div className="px-5 sm:px-7 py-1 text-center bg-slate-900/90 rounded-lg border border-slate-700/60 shadow-inner min-w-[90px]">
-                      <div className="text-4xl sm:text-5xl font-black tracking-tight text-white font-mono leading-none">
+                    <div className="px-3.5 sm:px-7 py-1 text-center bg-slate-900/90 rounded-lg border border-slate-700/60 shadow-inner min-w-[68px] sm:min-w-[90px]">
+                      <div className="text-3xl sm:text-5xl font-black tracking-tight text-white font-mono leading-none">
                         {state.score1}
                       </div>
                       <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mt-1">Frames</div>
@@ -1904,44 +1906,44 @@ Generated on: ${new Date().toLocaleString()}`;
                     {/* +1 Button */}
                     <button
                       onClick={() => updateScore(1, 1)}
-                      className="h-14 sm:h-16 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 shadow-md shadow-amber-500/20 transition active:scale-95"
+                      className="h-14 sm:h-16 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 shadow-md shadow-amber-500/20 transition active:scale-95 px-1.5"
                       title="Increase Score (Hotkey Q)"
                     >
-                      <div className="flex items-center gap-1">
-                        <Plus className="w-4 h-4" /> <span>+1 Frame</span>
+                      <div className="flex items-center gap-1 whitespace-nowrap">
+                        <Plus className="w-4 h-4 shrink-0" /> <span>+1 Frame</span>
                       </div>
-                      <kbd className="text-[9px] text-slate-900 bg-amber-300 px-1 py-0.2 rounded font-mono font-bold">Key Q</kbd>
+                      <kbd className="hidden sm:inline-block text-[9px] text-slate-900 bg-amber-300 px-1 py-0.2 rounded font-mono font-bold">Key Q</kbd>
                     </button>
                   </div>
                 </div>
 
                 {/* Clearance Honors: Green Apple (Break & Run) & Red Apple (One Visit Clearance) */}
                 <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 sm:p-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                     <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs sm:text-sm">
                       <span className="text-base">🍏</span> Clearance Honors (Apples)
                     </span>
                     <span className="text-[10px] text-slate-400">🍏 Break & Run · 🍎 One Visit</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* GREEN APPLE — BREAK & RUN */}
                     <div className="flex items-center justify-between bg-emerald-950/50 border border-emerald-500/40 rounded-xl px-2.5 py-2 shadow-sm">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍏</span>
                         <div className="min-w-0">
                           <span className="text-xs font-black text-emerald-200 block leading-tight">Green Apple</span>
-                          <span className="text-[9px] text-emerald-400/90 font-semibold block leading-tight">Break & Run</span>
+                          <span className="text-[10px] sm:text-[9px] text-emerald-400/90 font-semibold block leading-tight">Break & Run</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'green', -1)}
-                          className="w-8 h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
                           title="Decrease Break & Run (Green Apple)"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                         <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-emerald-500/50 shadow-inner">
                           {state.appleGreen1 || 0}
@@ -1949,10 +1951,10 @@ Generated on: ${new Date().toLocaleString()}`;
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'green', 1)}
-                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase Break & Run (Green Apple)"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -1963,9 +1965,8 @@ Generated on: ${new Date().toLocaleString()}`;
                         <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍎</span>
                         <div className="min-w-0">
                           <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
-                          <span className="text-[9px] text-red-400/90 font-semibold block leading-tight">
-                            <span className="sm:hidden">One Visit</span>
-                            <span className="hidden sm:inline">One Visit Clearance</span>
+                          <span className="text-[10px] sm:text-[9px] text-red-400/90 font-semibold block leading-tight">
+                            One Visit Clearance
                           </span>
                         </div>
                       </div>
@@ -1973,10 +1974,10 @@ Generated on: ${new Date().toLocaleString()}`;
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'red', -1)}
-                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
                           title="Decrease One Visit Clearance (Red Apple)"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                         <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
                           {state.appleRed1 || 0}
@@ -1984,10 +1985,10 @@ Generated on: ${new Date().toLocaleString()}`;
                         <button
                           type="button"
                           onClick={() => updateApple(1, 'red', 1)}
-                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase One Visit Clearance (Red Apple)"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -2026,7 +2027,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => setActiveShooter(2)}
-                      className={`text-[10px] px-2.5 py-0.5 rounded-md font-black transition flex items-center gap-1 active:scale-95 border ${
+                      className={`min-h-[34px] sm:min-h-0 text-[11px] sm:text-[10px] px-2.5 py-1 sm:py-0.5 rounded-md font-black transition flex items-center gap-1 active:scale-95 border ${
                         state.activeShooter === 2
                           ? 'bg-amber-400/20 hover:bg-red-500/25 text-amber-200 hover:text-red-200 border-amber-400/60 hover:border-red-400/60'
                           : 'bg-slate-900/80 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 border-slate-700 hover:border-amber-400/50'
@@ -2035,19 +2036,19 @@ Generated on: ${new Date().toLocaleString()}`;
                     >
                       {state.activeShooter === 2 ? (
                         <>
-                          <X className="w-2.5 h-2.5" /> Clear On Table
+                          <X className="w-3 h-3 sm:w-2.5 sm:h-2.5" /> Clear On Table
                         </>
                       ) : (
                         <>
-                          <Zap className="w-2.5 h-2.5 text-amber-400" /> Set On Table
+                          <Zap className="w-3 h-3 sm:w-2.5 sm:h-2.5 text-amber-400" /> Set On Table
                         </>
                       )}
                     </button>
                     <button
                       onClick={() => setTargetPlayerForFlag(2)}
-                      className="text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2 py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
+                      className="min-h-[34px] sm:min-h-0 text-[11px] sm:text-[10px] text-amber-300 hover:text-white bg-blue-900/60 hover:bg-blue-800 px-2.5 sm:px-2 py-1 sm:py-0.5 rounded-md border border-blue-400/30 font-bold transition flex items-center gap-1"
                     >
-                      Change Flag <Globe className="w-2.5 h-2.5" />
+                      Change Flag <Globe className="w-3 h-3 sm:w-2.5 sm:h-2.5" />
                     </button>
                   </div>
                 </div>
@@ -2080,12 +2081,12 @@ Generated on: ${new Date().toLocaleString()}`;
 
                 {/* Name Boldness Controls (Whole Name or Selected/Word Part) */}
                 <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2.5 px-0.5">
-                  <div className="flex flex-wrap items-center gap-1">
-                    <span className="text-[9px] uppercase font-bold text-slate-400 mr-0.5">Name:</span>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-1">
+                    <span className="text-[10px] sm:text-[9px] uppercase font-bold text-slate-400 mr-0.5">Name:</span>
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(2, 'all')}
-                      className={`text-[10px] px-1.5 py-0.5 rounded border font-black transition ${
+                      className={`min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border font-black transition ${
                         state.nameBold2 !== false && !/\*\*[^*]+\*\*/.test(state.name2 || '')
                           ? 'bg-amber-400 text-slate-950 border-amber-300'
                           : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
@@ -2097,7 +2098,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(2, 'normal')}
-                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition ${
+                      className={`min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border font-medium transition ${
                         state.nameBold2 === false && !/\*\*[^*]+\*\*/.test(state.name2 || '')
                           ? 'bg-blue-500 text-white border-blue-400'
                           : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white'
@@ -2109,7 +2110,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(2, 'first')}
-                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      className="min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
                       title="Bold only the 1st word"
                     >
                       1st Word
@@ -2117,7 +2118,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     <button
                       type="button"
                       onClick={() => applyNameBoldMode(2, 'last')}
-                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
+                      className="min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-amber-300 border-slate-700 font-semibold transition"
                       title="Bold only the last word"
                     >
                       Last Word
@@ -2126,7 +2127,7 @@ Generated on: ${new Date().toLocaleString()}`;
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => applyNameBoldMode(2, 'selection')}
-                      className="text-[10px] px-1.5 py-0.5 rounded border bg-slate-900/80 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 font-black transition"
+                      className="min-h-[30px] sm:min-h-0 text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 sm:py-0.5 rounded border bg-slate-900/80 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 font-black transition"
                       title="Highlight any part of the name above and click to toggle bold on just that part (or wrap with **text**)"
                     >
                       B Selected
@@ -2141,22 +2142,22 @@ Generated on: ${new Date().toLocaleString()}`;
 
                 {/* Integrated Compact Horizontal Score Row */}
                 <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2 mb-2.5">
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2">
                     {/* -1 Button */}
                     <button
                       onClick={() => updateScore(2, -1)}
-                      className="h-14 sm:h-16 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 transition active:scale-95 border border-slate-700"
+                      className="h-14 sm:h-16 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 transition active:scale-95 border border-slate-700 px-1.5"
                       title="Decrease Score (Hotkey L)"
                     >
-                      <div className="flex items-center gap-1">
-                        <Minus className="w-4 h-4" /> <span>−1 Frame</span>
+                      <div className="flex items-center gap-1 whitespace-nowrap">
+                        <Minus className="w-4 h-4 shrink-0" /> <span>−1 Frame</span>
                       </div>
-                      <kbd className="text-[9px] text-slate-400 bg-slate-900/80 px-1 py-0.2 rounded font-mono">Key L</kbd>
+                      <kbd className="hidden sm:inline-block text-[9px] text-slate-400 bg-slate-900/80 px-1 py-0.2 rounded font-mono">Key L</kbd>
                     </button>
 
                     {/* Score Number Display */}
-                    <div className="px-5 sm:px-7 py-1 text-center bg-slate-900/90 rounded-lg border border-slate-700/60 shadow-inner min-w-[90px]">
-                      <div className="text-4xl sm:text-5xl font-black tracking-tight text-white font-mono leading-none">
+                    <div className="px-3.5 sm:px-7 py-1 text-center bg-slate-900/90 rounded-lg border border-slate-700/60 shadow-inner min-w-[68px] sm:min-w-[90px]">
+                      <div className="text-3xl sm:text-5xl font-black tracking-tight text-white font-mono leading-none">
                         {state.score2}
                       </div>
                       <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold mt-1">Frames</div>
@@ -2165,44 +2166,44 @@ Generated on: ${new Date().toLocaleString()}`;
                     {/* +1 Button */}
                     <button
                       onClick={() => updateScore(2, 1)}
-                      className="h-14 sm:h-16 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 shadow-md shadow-amber-500/20 transition active:scale-95"
+                      className="h-14 sm:h-16 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-0.5 shadow-md shadow-amber-500/20 transition active:scale-95 px-1.5"
                       title="Increase Score (Hotkey P)"
                     >
-                      <div className="flex items-center gap-1">
-                        <Plus className="w-4 h-4" /> <span>+1 Frame</span>
+                      <div className="flex items-center gap-1 whitespace-nowrap">
+                        <Plus className="w-4 h-4 shrink-0" /> <span>+1 Frame</span>
                       </div>
-                      <kbd className="text-[9px] text-slate-900 bg-amber-300 px-1 py-0.2 rounded font-mono font-bold">Key P</kbd>
+                      <kbd className="hidden sm:inline-block text-[9px] text-slate-900 bg-amber-300 px-1 py-0.2 rounded font-mono font-bold">Key P</kbd>
                     </button>
                   </div>
                 </div>
 
                 {/* Clearance Honors: Green Apple (Break & Run) & Red Apple (One Visit Clearance) */}
                 <div className="bg-slate-950/60 rounded-xl border border-white/5 p-2.5 sm:p-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                     <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs sm:text-sm">
                       <span className="text-base">🍏</span> Clearance Honors (Apples)
                     </span>
                     <span className="text-[10px] text-slate-400">🍏 Break & Run · 🍎 One Visit</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {/* GREEN APPLE — BREAK & RUN */}
                     <div className="flex items-center justify-between bg-emerald-950/50 border border-emerald-500/40 rounded-xl px-2.5 py-2 shadow-sm">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍏</span>
                         <div className="min-w-0">
                           <span className="text-xs font-black text-emerald-200 block leading-tight">Green Apple</span>
-                          <span className="text-[9px] text-emerald-400/90 font-semibold block leading-tight">Break & Run</span>
+                          <span className="text-[10px] sm:text-[9px] text-emerald-400/90 font-semibold block leading-tight">Break & Run</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'green', -1)}
-                          className="w-8 h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-emerald-900/70 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold flex items-center justify-center border border-emerald-700/60 transition shadow"
                           title="Decrease Break & Run (Green Apple)"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                         <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-emerald-500/50 shadow-inner">
                           {state.appleGreen2 || 0}
@@ -2210,10 +2211,10 @@ Generated on: ${new Date().toLocaleString()}`;
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'green', 1)}
-                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase Break & Run (Green Apple)"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -2224,9 +2225,8 @@ Generated on: ${new Date().toLocaleString()}`;
                         <span className="text-2xl select-none leading-none filter drop-shadow shrink-0">🍎</span>
                         <div className="min-w-0">
                           <span className="text-xs font-black text-red-200 block leading-tight">Red Apple</span>
-                          <span className="text-[9px] text-red-400/90 font-semibold block leading-tight">
-                            <span className="sm:hidden">One Visit</span>
-                            <span className="hidden sm:inline">One Visit Clearance</span>
+                          <span className="text-[10px] sm:text-[9px] text-red-400/90 font-semibold block leading-tight">
+                            One Visit Clearance
                           </span>
                         </div>
                       </div>
@@ -2234,10 +2234,10 @@ Generated on: ${new Date().toLocaleString()}`;
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'red', -1)}
-                          className="w-8 h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-red-900/70 hover:bg-red-800 active:scale-95 text-red-200 font-bold flex items-center justify-center border border-red-700/60 transition shadow"
                           title="Decrease One Visit Clearance (Red Apple)"
                         >
-                          <Minus className="w-3.5 h-3.5" />
+                          <Minus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                         <div className="min-w-8 text-center font-mono font-black text-lg text-white px-2 py-0.5 rounded-lg bg-slate-950 border border-red-500/50 shadow-inner">
                           {state.appleRed2 || 0}
@@ -2245,10 +2245,10 @@ Generated on: ${new Date().toLocaleString()}`;
                         <button
                           type="button"
                           onClick={() => updateApple(2, 'red', 1)}
-                          className="w-8 h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
+                          className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:brightness-110 active:scale-95 text-white font-bold flex items-center justify-center shadow transition"
                           title="Increase One Visit Clearance (Red Apple)"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -2261,52 +2261,52 @@ Generated on: ${new Date().toLocaleString()}`;
             {/* Quick Actions Row */}
             <div className="flex flex-wrap items-center justify-center gap-2 py-0.5">
               {/* Active Shooter (On Table) Segmented Control with instant Off/Remove option */}
-              <div className="inline-flex items-center bg-slate-900 border border-slate-700/80 rounded-lg p-0.5 gap-0.5 shadow-sm">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1">
+              <div className="inline-flex items-center bg-slate-900 border border-slate-700/80 rounded-lg p-0.5 gap-0.5 shadow-sm max-w-full">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1 whitespace-nowrap">
                   <Zap className="w-3 h-3 text-amber-400" /> On Table:
                 </span>
                 <button
                   type="button"
                   onClick={() => setActiveShooter(1)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-black transition flex items-center gap-1 ${
+                  className={`min-h-[36px] sm:min-h-0 px-3 sm:px-2.5 py-1 rounded-md text-xs font-black transition flex items-center gap-1 whitespace-nowrap ${
                     state.activeShooter === 1
                       ? 'bg-amber-400 text-slate-950 shadow'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
                   title="Mark Player 1 On Table (Hotkey 1)"
                 >
-                  P1 <kbd className="text-[9px] opacity-70 font-mono">1</kbd>
+                  P1 <kbd className="hidden sm:inline text-[9px] opacity-70 font-mono">1</kbd>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveShooter(0)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1 ${
+                  className={`min-h-[36px] sm:min-h-0 px-3 sm:px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1 whitespace-nowrap ${
                     (state.activeShooter || 0) === 0
                       ? 'bg-slate-700 text-white shadow'
                       : 'text-slate-400 hover:bg-slate-800 hover:text-red-300'
                   }`}
                   title="Remove On Table indicator when not tracking turns (Hotkey 0)"
                 >
-                  Off <kbd className="text-[9px] opacity-70 font-mono">0</kbd>
+                  Off <kbd className="hidden sm:inline text-[9px] opacity-70 font-mono">0</kbd>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveShooter(2)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-black transition flex items-center gap-1 ${
+                  className={`min-h-[36px] sm:min-h-0 px-3 sm:px-2.5 py-1 rounded-md text-xs font-black transition flex items-center gap-1 whitespace-nowrap ${
                     state.activeShooter === 2
                       ? 'bg-amber-400 text-slate-950 shadow'
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
                   title="Mark Player 2 On Table (Hotkey 2)"
                 >
-                  P2 <kbd className="text-[9px] opacity-70 font-mono">2</kbd>
+                  P2 <kbd className="hidden sm:inline text-[9px] opacity-70 font-mono">2</kbd>
                 </button>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowMatchReportModal(true)}
-                className={`px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 border transition active:scale-95 shadow-sm ${
+                className={`min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 border transition active:scale-95 shadow-sm ${
                   isMatchConcluded
                     ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 font-black shadow-amber-500/30 animate-pulse'
                     : 'bg-blue-900/50 hover:bg-blue-800/80 text-amber-300 border-blue-500/40'
@@ -2317,15 +2317,15 @@ Generated on: ${new Date().toLocaleString()}`;
               </button>
               <button
                 onClick={swapPlayers}
-                className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition active:scale-95"
+                className="min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition active:scale-95"
               >
-                <ArrowLeftRight className="w-3.5 h-3.5 text-amber-400" /> Swap Players & Flags <kbd className="text-[9px] text-slate-400 bg-slate-900 px-1 py-0.2 rounded font-mono">S</kbd>
+                <ArrowLeftRight className="w-3.5 h-3.5 text-amber-400" /> Swap Players & Flags <kbd className="hidden sm:inline text-[9px] text-slate-400 bg-slate-900 px-1 py-0.2 rounded font-mono">S</kbd>
               </button>
               <button
                 onClick={resetScores}
-                className="px-3.5 py-1.5 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-800/80 text-red-300 font-bold text-xs flex items-center gap-1.5 transition active:scale-95"
+                className="min-h-[38px] sm:min-h-0 px-3.5 py-1.5 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-800/80 text-red-300 font-bold text-xs flex items-center gap-1.5 transition active:scale-95"
               >
-                <RefreshCw className="w-3.5 h-3.5" /> Reset Scores & Break/Run <kbd className="text-[9px] text-red-300 bg-red-950 px-1 py-0.2 rounded font-mono">R</kbd>
+                <RefreshCw className="w-3.5 h-3.5" /> Reset Scores & Break/Run <kbd className="hidden sm:inline text-[9px] text-red-300 bg-red-950 px-1 py-0.2 rounded font-mono">R</kbd>
               </button>
             </div>
 
@@ -2344,12 +2344,12 @@ Generated on: ${new Date().toLocaleString()}`;
                 </div>
               </div>
 
-              {/* Centralized Form Fields with Enhanced Font Size */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              {/* Centralized Form Fields with Enhanced Font Size & Mobile Ergonomics */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Venue / City</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
+                    className="w-full min-h-[44px] sm:min-h-0 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-base sm:text-sm font-medium outline-none focus:border-amber-400 transition"
                     value={state.venue}
                     onChange={(e) => {
                       const updated = { ...state, venue: e.target.value, updatedAt: Date.now() };
@@ -2363,7 +2363,7 @@ Generated on: ${new Date().toLocaleString()}`;
                 <div>
                   <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Match Type</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
+                    className="w-full min-h-[44px] sm:min-h-0 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-base sm:text-sm font-medium outline-none focus:border-amber-400 transition"
                     value={state.matchType || state.tournament || ''}
                     onChange={(e) => {
                       const updated = {
@@ -2392,7 +2392,7 @@ Generated on: ${new Date().toLocaleString()}`;
                         showToast(nextShowPot ? 'Prize Pot shown on overlay' : 'Prize Pot removed for tournament');
                       }}
                       title={state.showPot === false ? 'Show Prize Pot on overlay' : 'Remove Prize Pot altogether for tournaments'}
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border transition cursor-pointer ${
+                      className={`px-2.5 py-1 sm:px-2 sm:py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border transition cursor-pointer whitespace-nowrap shrink-0 ${
                         state.showPot === false
                           ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
                           : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-red-950/60 hover:text-red-300 hover:border-red-700/50'
@@ -2402,12 +2402,12 @@ Generated on: ${new Date().toLocaleString()}`;
                     </button>
                   </div>
                   {state.showPot === false ? (
-                    <div className="w-full bg-slate-950/60 border border-dashed border-slate-700/80 rounded-lg px-3 py-2 text-slate-400 text-xs font-semibold flex items-center justify-between">
+                    <div className="w-full min-h-[44px] sm:min-h-0 bg-slate-950/60 border border-dashed border-slate-700/80 rounded-lg px-3 py-2 text-slate-400 text-xs font-semibold flex items-center justify-between">
                       <span>Pot hidden (Tournament mode)</span>
                     </div>
                   ) : (
                     <input
-                      className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
+                      className="w-full min-h-[44px] sm:min-h-0 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-base sm:text-sm font-medium outline-none focus:border-amber-400 transition"
                       value={state.pot}
                       onChange={(e) => {
                         const updated = { ...state, pot: e.target.value, updatedAt: Date.now() };
@@ -2425,7 +2425,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     type="number"
                     min="1"
                     max="99"
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white font-mono font-bold text-sm outline-none focus:border-amber-400 transition"
+                    className="w-full min-h-[44px] sm:min-h-0 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white font-mono font-bold text-base sm:text-sm outline-none focus:border-amber-400 transition"
                     value={state.raceTo}
                     onChange={(e) => {
                       const val = Math.max(1, parseInt(e.target.value, 10) || 1);
@@ -2439,7 +2439,7 @@ Generated on: ${new Date().toLocaleString()}`;
                 <div>
                   <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Brand / Media</label>
                   <input
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 transition"
+                    className="w-full min-h-[44px] sm:min-h-0 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-base sm:text-sm font-medium outline-none focus:border-amber-400 transition"
                     value={state.brand}
                     onChange={(e) => {
                       const updated = { ...state, brand: e.target.value, updatedAt: Date.now() };
@@ -2453,7 +2453,7 @@ Generated on: ${new Date().toLocaleString()}`;
                 <div>
                   <label className="text-xs uppercase font-bold text-slate-300 block mb-1">Overlay Position</label>
                   <select
-                    className="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-sm font-medium outline-none focus:border-amber-400 cursor-pointer transition"
+                    className="w-full min-h-[44px] sm:min-h-0 bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-2 text-white text-base sm:text-sm font-medium outline-none focus:border-amber-400 cursor-pointer transition"
                     value={state.overlayPosition || 'bottom'}
                     onChange={(e) => {
                       const pos = (e.target.value === 'top' ? 'top' : 'bottom') as 'bottom' | 'top';
@@ -2475,7 +2475,7 @@ Generated on: ${new Date().toLocaleString()}`;
                 <button
                   type="button"
                   onClick={resetToDefaults}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition"
+                  className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition"
                   title="Restore clean match template (PLAYER 1 vs PLAYER 2, 0 - 0, Race to 5)"
                 >
                   Restore Sample Defaults
@@ -2488,41 +2488,41 @@ Generated on: ${new Date().toLocaleString()}`;
         {/* TAB 2: LIVE OBS PREVIEW */}
         {activeTab === 'preview' && (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
               <div>
                 <h3 className="text-sm font-black text-white flex items-center gap-2">
                   <Tv className="w-4 h-4 text-amber-400" /> Live Broadcast Simulator
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Real-time OBS stream overlay with styled flags, names, and Break & Run badges.
+                  Real-time OBS stream overlay — auto-adjusts cleanly across mobile, tablet, and 1080p screens.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(overlayUrl);
                     showToast('Copied OBS URL!');
                   }}
-                  className="px-3.5 py-1.5 rounded-lg bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow"
+                  className="flex-1 sm:flex-initial justify-center min-h-[40px] sm:min-h-0 px-3.5 py-1.5 rounded-lg bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow"
                 >
                   <Copy className="w-3.5 h-3.5" /> Copy OBS URL
                 </button>
                 <button
                   onClick={() => window.open(overlayUrl, '_blank')}
-                  className="px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-700"
+                  className="flex-1 sm:flex-initial justify-center min-h-[40px] sm:min-h-0 px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-700"
                 >
                   <ExternalLink className="w-3.5 h-3.5" /> Open Direct Overlay
                 </button>
               </div>
             </div>
 
-            {/* Simulated 1080p Screen */}
-            <div className="relative rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-[#030914] aspect-video w-full flex flex-col justify-end">
+            {/* Responsive Broadcast Simulator Frame */}
+            <div className="relative rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl bg-[#030914] min-h-[300px] sm:min-h-0 sm:aspect-video w-full flex flex-col justify-end">
               <iframe
                 src={`/overlay.html?room=${encodeURIComponent(state.room)}`}
                 title="OBS Overlay Preview"
-                className="w-full h-full border-none bg-transparent"
+                className="w-full h-[300px] sm:h-full border-none bg-transparent"
               />
             </div>
           </div>
@@ -2635,7 +2635,7 @@ Generated on: ${new Date().toLocaleString()}`;
                         Brand / League Name
                       </label>
                       <input
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-bold outline-none focus:border-amber-400"
+                        className="w-full min-h-[42px] sm:min-h-0 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-base sm:text-xs font-bold outline-none focus:border-amber-400"
                         value={userProfile?.brandName || ''}
                         onChange={(e) => updateProfileData({ brandName: e.target.value }, false)}
                         onBlur={() => flushProfileSave?.()}
@@ -2650,7 +2650,7 @@ Generated on: ${new Date().toLocaleString()}`;
                         Private Channel Slug
                       </label>
                       <input
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-amber-300 font-mono text-xs font-bold outline-none focus:border-amber-400"
+                        className="w-full min-h-[42px] sm:min-h-0 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-amber-300 font-mono text-base sm:text-xs font-bold outline-none focus:border-amber-400"
                         value={userProfile?.channelSlug || ''}
                         onChange={(e) => {
                           const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 32);
@@ -2659,7 +2659,7 @@ Generated on: ${new Date().toLocaleString()}`;
                         onBlur={() => flushProfileSave?.()}
                         placeholder="e.g. harare-champions"
                       />
-                      <span className="text-[10px] text-slate-500 mt-1 block">Forms your OBS URL: /overlay.html?room={userProfile?.channelSlug}</span>
+                      <span className="text-[10px] text-slate-500 mt-1 block break-all">Forms your OBS URL: /overlay.html?room={userProfile?.channelSlug}</span>
                     </div>
 
                     {/* Default Venue */}
@@ -2668,7 +2668,7 @@ Generated on: ${new Date().toLocaleString()}`;
                         Home Venue / Club Location
                       </label>
                       <input
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-amber-400"
+                        className="w-full min-h-[42px] sm:min-h-0 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-base sm:text-xs outline-none focus:border-amber-400"
                         value={userProfile?.defaultVenue || ''}
                         onChange={(e) => updateProfileData({ defaultVenue: e.target.value }, false)}
                         onBlur={() => flushProfileSave?.()}
@@ -2681,7 +2681,7 @@ Generated on: ${new Date().toLocaleString()}`;
                       <label className="text-xs uppercase font-bold text-slate-300 block mb-1">
                         Broadcast Color Accent
                       </label>
-                      <div className="flex items-center gap-2 pt-1">
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
                         {[
                           { name: 'Royal Blue', color: '#0066f6' },
                           { name: 'Emerald Baize', color: '#10b981' },
@@ -2695,13 +2695,13 @@ Generated on: ${new Date().toLocaleString()}`;
                               updateProfileData({ themeColor: th.color }, true);
                               showToast(`Theme set to ${th.name}`);
                             }}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition ${
+                            className={`flex items-center gap-1.5 px-2.5 py-2 sm:py-1.5 rounded-lg border text-[11px] font-bold transition ${
                               userProfile?.themeColor === th.color
                                 ? 'bg-slate-800 text-white border-amber-400'
                                 : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
                             }`}
                           >
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: th.color }} />
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: th.color }} />
                             <span>{th.name}</span>
                           </button>
                         ))}
@@ -2939,7 +2939,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     value={adminSearchQuery}
                     onChange={(e) => setAdminSearchQuery(e.target.value)}
                     placeholder="Search name, email, slug..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-rose-500"
+                    className="w-full min-h-[40px] sm:min-h-0 bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-base sm:text-xs text-white placeholder-slate-500 outline-none focus:border-rose-500"
                   />
                 </div>
               </div>
@@ -3095,12 +3095,12 @@ Generated on: ${new Date().toLocaleString()}`;
 
         {/* TAB 3: FLAGS DIRECTORY (ALL WORLD FLAGS) */}
         {activeTab === 'flags' && (
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-5">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-base font-black text-white uppercase tracking-wider">
+                  <Globe className="w-5 h-5 text-amber-400 shrink-0" />
+                  <h3 className="text-sm sm:text-base font-black text-white uppercase tracking-wider">
                     All World Flags ({WORLD_COUNTRIES.length} Countries)
                   </h3>
                 </div>
@@ -3114,7 +3114,7 @@ Generated on: ${new Date().toLocaleString()}`;
                 <input
                   type="text"
                   placeholder="Search countries by name or code..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-amber-400"
+                  className="w-full min-h-[42px] sm:min-h-0 bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-base sm:text-xs text-white outline-none focus:border-amber-400"
                   value={flagSearch}
                   onChange={(e) => setFlagSearch(e.target.value)}
                 />
@@ -3122,12 +3122,12 @@ Generated on: ${new Date().toLocaleString()}`;
             </div>
 
             {/* Continent / Region Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
               {['All', 'Africa', 'Europe', 'Americas', 'Asia', 'Oceania'].map((region) => (
                 <button
                   key={region}
                   onClick={() => setSelectedRegion(region)}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                  className={`shrink-0 min-h-[36px] sm:min-h-0 px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
                     selectedRegion === region
                       ? 'bg-amber-400 text-slate-950 shadow'
                       : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
@@ -3139,11 +3139,11 @@ Generated on: ${new Date().toLocaleString()}`;
             </div>
 
             {/* Countries Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 max-h-[550px] overflow-y-auto p-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-3.5 max-h-[550px] overflow-y-auto p-1">
               {filteredCountries.map((c) => (
                 <div
                   key={c.code}
-                  className="bg-slate-950 border border-slate-800/90 hover:border-amber-400/50 rounded-xl p-3 flex flex-col items-center text-center transition group shadow-sm"
+                  className="bg-slate-950 border border-slate-800/90 hover:border-amber-400/50 rounded-xl p-2.5 sm:p-3 flex flex-col items-center text-center transition group shadow-sm"
                 >
                   <div className="my-1">
                     <FlagBadge codeOrFlag={c.code} alt={c.name} size="md" />
@@ -3162,7 +3162,7 @@ Generated on: ${new Date().toLocaleString()}`;
                         syncState(updated);
                         showToast(`P1 Flag set to ${c.name}`);
                       }}
-                      className="py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300 transition"
+                      className="min-h-[32px] sm:min-h-0 py-1.5 sm:py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300 transition"
                       title={`Assign ${c.name} to Player 1`}
                     >
                       Set P1
@@ -3173,7 +3173,7 @@ Generated on: ${new Date().toLocaleString()}`;
                         syncState(updated);
                         showToast(`P2 Flag set to ${c.name}`);
                       }}
-                      className="py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300 transition"
+                      className="min-h-[32px] sm:min-h-0 py-1.5 sm:py-1 rounded bg-slate-800 hover:bg-amber-400 hover:text-slate-950 text-[10px] font-bold text-slate-300 transition"
                       title={`Assign ${c.name} to Player 2`}
                     >
                       Set P2
@@ -3221,9 +3221,9 @@ Generated on: ${new Date().toLocaleString()}`;
 
               {/* METHOD 1: 1-Line Terminal Command */}
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                    <Terminal className="w-4 h-4 text-emerald-400" /> Method 1: Instant Terminal Command (Recommended)
+                    <Terminal className="w-4 h-4 text-emerald-400 shrink-0" /> Method 1: Instant Terminal Command (Recommended)
                   </span>
                   <button
                     onClick={() => {
@@ -3231,7 +3231,7 @@ Generated on: ${new Date().toLocaleString()}`;
                       navigator.clipboard.writeText(cmd);
                       showToast('Copied Linux Mint Install Command!');
                     }}
-                    className="text-[11px] font-bold text-amber-300 hover:text-white bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition active:scale-95"
+                    className="text-[11px] font-bold text-amber-300 hover:text-white bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition active:scale-95 shrink-0"
                   >
                     <Copy className="w-3 h-3" /> Copy Command
                   </button>
@@ -3267,16 +3267,16 @@ Generated on: ${new Date().toLocaleString()}`;
 
               {/* METHOD 2: Linux Mint Web App Manager */}
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                    <Monitor className="w-4 h-4 text-amber-400" /> Method 2: Linux Mint Web App Manager (Built-in GUI)
+                    <Monitor className="w-4 h-4 text-amber-400 shrink-0" /> Method 2: Linux Mint Web App Manager (Built-in GUI)
                   </span>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(window.location.origin);
                       showToast('Copied App URL!');
                     }}
-                    className="text-[11px] font-bold text-amber-300 hover:text-white bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition active:scale-95"
+                    className="text-[11px] font-bold text-amber-300 hover:text-white bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition active:scale-95 shrink-0"
                   >
                     <Copy className="w-3 h-3" /> Copy URL
                   </button>
@@ -3293,7 +3293,7 @@ Generated on: ${new Date().toLocaleString()}`;
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center font-bold text-[11px] shrink-0 border border-slate-700">3</span>
-                    <span>Fill in <strong>Name:</strong> <code className="text-amber-300 font-mono">Platnumz Scoreboard</code> and <strong>Address:</strong> <code className="text-amber-300 font-mono">{typeof window !== 'undefined' ? window.location.origin : '...'}</code>.</span>
+                    <span className="min-w-0 break-words">Fill in <strong>Name:</strong> <code className="text-amber-300 font-mono">Platnumz Scoreboard</code> and <strong>Address:</strong> <code className="text-amber-300 font-mono break-all">{typeof window !== 'undefined' ? window.location.origin : '...'}</code>.</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center font-bold text-[11px] shrink-0 border border-slate-700">4</span>
@@ -3309,7 +3309,7 @@ Generated on: ${new Date().toLocaleString()}`;
                     Method 3: Direct .desktop Launcher File
                   </span>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Download <code className="text-amber-300 font-mono">platnumz-scoreboard.desktop</code> and place it into <code className="text-slate-300 font-mono">~/.local/share/applications/</code> or on your Desktop.
+                    Download <code className="text-amber-300 font-mono">platnumz-scoreboard.desktop</code> and place it into <code className="text-slate-300 font-mono break-all">~/.local/share/applications/</code> or on your Desktop.
                   </p>
                 </div>
                 <button
@@ -3322,19 +3322,19 @@ Generated on: ${new Date().toLocaleString()}`;
             </div>
 
             {/* PWA & OTHER PLATFORMS HUB */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-2xl shadow-lg shadow-amber-500/20">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-600 to-blue-700 flex items-center justify-center font-black text-slate-950 text-2xl shadow-lg shadow-amber-500/20 shrink-0">
                   P
                 </div>
-                <div>
-                  <h3 className="text-lg font-black text-white">Browser & Mobile Standalone Installation (PWA)</h3>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-black text-white">Browser & Mobile Standalone Installation (PWA)</h3>
                   <p className="text-xs text-slate-400">Install Platnumz Scoreboard on your phone, tablet, or PC to run full-screen without browser URL bars.</p>
                 </div>
               </div>
 
               {/* Status Box */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current App State:</div>
                   <div className="text-sm font-black text-white mt-0.5">
@@ -3406,14 +3406,14 @@ Generated on: ${new Date().toLocaleString()}`;
         {/* TAB 5: GITHUB SYNC */}
         {activeTab === 'github' && (
           <div className="max-w-3xl mx-auto space-y-6">
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-5 shadow-2xl">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
                     <Github className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-base font-black text-white">kravowork-hub/Platnumz-Scoreboard</h3>
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-black text-white truncate">kravowork-hub/Platnumz-Scoreboard</h3>
                     <p className="text-xs text-slate-400">Branch: <span className="text-amber-400 font-mono">main</span></p>
                   </div>
                 </div>
@@ -3421,7 +3421,7 @@ Generated on: ${new Date().toLocaleString()}`;
                 <button
                   onClick={fetchGitStatus}
                   disabled={gitLoading}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-slate-700"
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 border border-slate-700 shrink-0"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${gitLoading ? 'animate-spin' : ''}`} /> Refresh
                 </button>
@@ -3430,9 +3430,9 @@ Generated on: ${new Date().toLocaleString()}`;
               {/* Status Display */}
               {gitStatusData && (
                 <div className="space-y-3">
-                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs">
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs overflow-x-auto">
                     <div className="text-slate-400 text-[11px] mb-1">Recent Commits:</div>
-                    <pre className="text-amber-300/90 whitespace-pre-wrap">{gitStatusData.log || 'No commits yet.'}</pre>
+                    <pre className="text-amber-300/90 whitespace-pre-wrap break-words">{gitStatusData.log || 'No commits yet.'}</pre>
                   </div>
                 </div>
               )}
@@ -3445,18 +3445,18 @@ Generated on: ${new Date().toLocaleString()}`;
                 <p className="text-xs text-slate-400">
                   Provide a GitHub Personal Access Token (with repo scope) to push all improvements to your GitHub repo.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="password"
                     placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-amber-400"
+                    className="flex-1 min-h-[42px] sm:min-h-0 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-base sm:text-xs text-white font-mono outline-none focus:border-amber-400"
                     value={githubToken}
                     onChange={(e) => setGithubToken(e.target.value)}
                   />
                   <button
                     onClick={handleGitPush}
                     disabled={gitLoading}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-md transition disabled:opacity-50"
+                    className="min-h-[42px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-md transition disabled:opacity-50 shrink-0"
                   >
                     {gitLoading ? 'Pushing…' : 'Push to GitHub'}
                   </button>

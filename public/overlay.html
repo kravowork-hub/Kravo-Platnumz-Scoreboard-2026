@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <script src="paho-mqtt-min.js"></script>
   <script>if (typeof Paho === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"><\/script>');</script>
 
@@ -834,6 +834,324 @@
     .stat-lbl {
       color: rgba(255, 255, 255, 0.6);
       margin-right: 4px;
+    }
+
+    /* ==========================================================
+       4. RESPONSIVE MOBILE & TABLET AUTO-ADJUSTMENT
+       ========================================================== */
+    @media (max-width: 1024px) {
+      #overlay-wrapper {
+        width: calc(100% - 24px);
+        bottom: 16px;
+      }
+
+      body.pos-top #overlay-wrapper {
+        top: 30px;
+      }
+
+      .score-bar {
+        padding: 0 12px;
+        gap: 10px;
+        height: 54px;
+        min-height: 52px;
+      }
+
+      .player-zone-1,
+      .player-zone-2 {
+        gap: 8px;
+        padding: 0 6px;
+      }
+
+      .flag-box {
+        width: 44px;
+        height: 31px;
+      }
+
+      .player-name {
+        font-size: clamp(13px, 1.8vw, 17px);
+      }
+
+      .score-box {
+        min-width: 48px;
+        height: 36px;
+        padding: 0 8px;
+        font-size: clamp(20px, 2.6vw, 28px);
+      }
+
+      .race-capsule {
+        padding: 0 14px;
+        height: 36px;
+      }
+
+      .race-text {
+        font-size: clamp(12px, 1.5vw, 15px);
+        letter-spacing: 0.9px;
+      }
+
+      .apple-badge {
+        height: 28px;
+        padding: 2px 7px;
+        gap: 4px;
+      }
+
+      .apple-emoji {
+        font-size: 18px;
+      }
+
+      .apple-count {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      #overlay-wrapper {
+        width: calc(100% - 16px);
+        bottom: max(12px, env(safe-area-inset-bottom, 12px));
+      }
+
+      body.pos-top #overlay-wrapper {
+        top: max(26px, env(safe-area-inset-top, 26px));
+      }
+
+      .bottom-ticker-bar {
+        padding: 6px 12px;
+        min-height: 0;
+      }
+
+      .ticker-row {
+        gap: 4px 10px;
+        flex-wrap: wrap;
+        white-space: normal;
+      }
+
+      .ticker-group {
+        overflow: visible;
+        max-width: 100%;
+      }
+
+      .ticker-val {
+        white-space: normal;
+        text-align: center;
+        overflow: visible;
+        text-overflow: clip;
+      }
+
+      #winner-banner {
+        min-width: 0;
+        width: min(520px, calc(100vw - 24px));
+        padding: 18px 16px;
+        max-height: calc(100vh - 24px);
+        overflow-y: auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      #overlay-wrapper {
+        width: calc(100% - 12px);
+        bottom: max(10px, env(safe-area-inset-bottom, 10px));
+        border-radius: 10px;
+      }
+
+      body.pos-top #overlay-wrapper {
+        top: max(10px, env(safe-area-inset-top, 10px));
+      }
+
+      .score-bar {
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        min-height: 0;
+        padding: 8px;
+        gap: 6px;
+        border-radius: 10px 10px 0 0;
+      }
+
+      .center-capsule-container {
+        order: -1;
+        width: 100%;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 0;
+      }
+
+      .race-capsule {
+        height: 28px;
+        padding: 0 14px;
+      }
+
+      .race-text {
+        font-size: 12.5px;
+        letter-spacing: 0.9px;
+      }
+
+      .hill-hill-badge {
+        position: static;
+        top: auto;
+        padding: 2px 7px;
+        font-size: 9px;
+      }
+
+      .player-zone-1,
+      .player-zone-2 {
+        width: 100%;
+        height: auto;
+        min-height: 44px;
+        padding: 6px 8px;
+        gap: 8px;
+        flex-direction: row;
+        justify-content: flex-start;
+      }
+
+      .flag-box {
+        order: 0;
+        width: 38px;
+        height: 27px;
+      }
+
+      .player-1-info,
+      .player-2-info {
+        order: 1;
+        flex: 1;
+        min-width: 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 4px 8px;
+      }
+
+      .player-name {
+        font-size: 14px;
+        letter-spacing: 0.4px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+        flex: 1 1 auto;
+      }
+
+      .player-2-info .player-name {
+        order: 0;
+        text-align: left;
+      }
+
+      .player-2-info .apple-badges-row {
+        order: 1;
+      }
+
+      .apple-badges-row {
+        gap: 5px;
+      }
+
+      .apple-badge {
+        height: 24px;
+        padding: 2px 6px;
+        gap: 4px;
+      }
+
+      .apple-emoji {
+        font-size: 15px;
+      }
+
+      .apple-count {
+        font-size: 13px;
+      }
+
+      .at-table-badge {
+        position: static;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        order: 2;
+        border-radius: 4px;
+        border-bottom: 1.5px solid rgba(255, 240, 170, 0.9);
+        padding: 2px 7px;
+        font-size: 9px;
+        letter-spacing: 0.7px;
+        box-shadow: 0 0 10px rgba(255, 200, 0, 0.55);
+        transform-origin: center center;
+      }
+
+      .score-box {
+        order: 3;
+        min-width: 44px;
+        height: 34px;
+        padding: 0 8px;
+        font-size: 20px;
+      }
+
+      .bottom-ticker-bar {
+        padding: 7px 10px;
+        border-radius: 0 0 10px 10px;
+      }
+
+      .ticker-content {
+        gap: 4px;
+      }
+
+      .ticker-label,
+      .ticker-val,
+      .brand-group {
+        font-size: 11.5px;
+        letter-spacing: 0.4px;
+      }
+
+      .ticker-divider {
+        font-size: 12px;
+        margin: 0 1px;
+      }
+
+      .kp-logo-icon {
+        width: 18px;
+        height: 15px;
+      }
+
+      #winner-banner {
+        padding: 16px 14px;
+        border-width: 2px;
+        border-radius: 16px;
+      }
+
+      .winner-trophy {
+        font-size: 30px;
+      }
+
+      .winner-player-name {
+        font-size: 22px;
+      }
+
+      .winner-stats-grid {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+
+      .winner-stat-divider {
+        display: none;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .flag-box {
+        width: 34px;
+        height: 24px;
+      }
+
+      .player-name {
+        font-size: 13px;
+      }
+
+      .score-box {
+        min-width: 40px;
+        height: 30px;
+        font-size: 18px;
+      }
+
+      .at-table-badge {
+        padding: 2px 5px;
+        font-size: 8.5px;
+      }
     }
   </style>
 </head>
